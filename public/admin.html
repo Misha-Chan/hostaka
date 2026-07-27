@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html class="page-admin" lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hostaka Admin</title>
+  <link rel="icon" href="hostaka-icon.png" type="image/png">
+  
+  <script defer src="/_vercel/insights/script.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="page-admin">
+
+<!-- Login -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-title">Hostaka Admin</div>
+    <div class="login-sub">لوحة الإدارة</div>
+    <div class="alert alert-err" id="loginErr"></div>
+    <label class="form-label">البريد الإلكتروني</label>
+    <input class="form-input" type="email" id="loginEmail" dir="ltr">
+    <label class="form-label">كلمة المرور</label>
+    <input class="form-input" type="password" id="loginPass">
+    <button class="btn-login-submit" id="loginBtn" onclick="doLogin()">دخول</button>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar" style="display:none;">
+  <div class="logo" style="display:flex;align-items:center;justify-content:space-between;">
+    Hostaka
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="تبديل الثيم">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+  </div>
+  <nav>
+    <button class="nav-item active" onclick="showPage('dashboard')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      الرئيسية
+    </button>
+    <button class="nav-item" onclick="showPage('users')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      المستخدمون
+    </button>
+    <button class="nav-item" onclick="showPage('posts')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      المنشورات
+    </button>
+    <button class="nav-item" onclick="showPage('verify')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      التوثيق
+      <span id="verifyBadge" style="background:var(--primary);color:#fff;font-size:0.65rem;padding:1px 6px;border-radius:var(--radius-full);margin-right:auto;display:none;"></span>
+    </button>
+    <button class="nav-item" onclick="showPage('notify')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      إرسال إشعار
+    </button>
+    <button class="nav-item" onclick="showPage('reports')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      البلاغات والدعم
+      <span id="reportsBadge" style="background:var(--danger);color:#fff;font-size:0.65rem;padding:1px 6px;border-radius:var(--radius-full);margin-right:auto;display:none;"></span>
+    </button>
+    <button class="nav-item" onclick="window.open('/', '_blank')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      عرض المنصة
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">مسجل كـ <span id="adminName"></span></div>
+    <button class="btn-logout" onclick="doLogout()">تسجيل الخروج</button>
+  </div>
+</aside>
+
+<main class="main" id="mainContent" style="display:none;">
+
+  <!-- Dashboard -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-title">مرحباً بك في Hostaka Admin</div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-n" id="sUsers">-</div><div class="stat-l">مستخدم</div></div>
+      <div class="stat-card"><div class="stat-n" id="sPosts">-</div><div class="stat-l">منشور</div></div>
+      <div class="stat-card"><div class="stat-n" id="sVerify">-</div><div class="stat-l">طلب توثيق</div></div>
+    </div>
+  </div>
+
+  <!-- Users -->
+  <div class="page" id="page-users">
+    <div class="page-title">المستخدمون</div>
+    <div class="card">
+      <table><thead><tr><th>المستخدم</th><th>البريد</th><th>الصلاحية</th><th>التوثيق</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+      <tbody id="usersTable"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;">جارٍ التحميل...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Posts -->
+  <div class="page" id="page-posts">
+    <div class="page-title">المنشورات</div>
+    <div class="card" id="postsList"><div style="text-align:center;color:var(--muted);padding:24px;">جارٍ التحميل...</div></div>
+  </div>
+
+  <!-- Verify -->
+  <div class="page" id="page-verify">
+    <div class="page-title">طلبات التوثيق</div>
+    <div class="card" id="verifyList"><div style="text-align:center;color:var(--muted);padding:24px;">جارٍ التحميل...</div></div>
+  </div>
+
+  <!-- Notify -->
+  <div class="page" id="page-notify">
+    <div class="page-title">إرسال إشعار للأعضاء</div>
+    <div class="card">
+      <label class="form-label">الوجهة</label>
+      <select class="form-input" id="ntTarget">
+        <option value="all">جميع الأعضاء</option>
+        <option value="user">مستخدم محدد</option>
+      </select>
+      <div id="ntUserWrap" style="display:none;">
+        <label class="form-label">اسم المستخدم (بدون @)</label>
+        <input class="form-input" type="text" id="ntUsername" placeholder="username" dir="ltr">
+      </div>
+      <label class="form-label">نص الإشعار *</label>
+      <input class="form-input" type="text" id="ntContent" placeholder="مثال: تحديث جديد على المنصة!">
+      <label class="form-label">رابط عند الضغط (اختياري)</label>
+      <input class="form-input" type="text" id="ntLink" placeholder="/ أو /profile?u=..." dir="ltr">
+      <button class="btn btn-dark" id="ntSendBtn" onclick="sendAdminNotif()">إرسال الإشعار</button>
+    </div>
+  </div>
+
+  <!-- Reports -->
+  <div class="page" id="page-reports">
+    <div class="page-title">البلاغات وطلبات الدعم</div>
+    <div style="display:flex;gap:6px;margin-bottom:16px;">
+      <button class="btn btn-dark btn-sm rf-tab active" data-status="pending" onclick="setReportsFilter('pending')">قيد المراجعة</button>
+      <button class="btn btn-ghost btn-sm rf-tab" data-status="resolved" onclick="setReportsFilter('resolved')">تم الحل</button>
+      <button class="btn btn-ghost btn-sm rf-tab" data-status="dismissed" onclick="setReportsFilter('dismissed')">مرفوض</button>
+      <button class="btn btn-ghost btn-sm rf-tab" data-status="" onclick="setReportsFilter('')">الكل</button>
+    </div>
+    <div id="reportsList"><div style="text-align:center;color:var(--muted);padding:24px;">جارٍ التحميل...</div></div>
+  </div>
+
+</main>
+<div class="toast" id="toast"></div>
+
+  <script src="/script.js" defer></script>
+</body>
+</html>

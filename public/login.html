@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html class="page-login" lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="icon" href="hostaka-icon.png" type="image/png">
+<title>تسجيل الدخول — Hostaka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="page-login">
+
+<div class="wrap">
+  <a href="/" class="back-link">→ العودة إلى Hostaka</a>
+  <div class="logo">
+    <img src="hostaka-icon.png" alt="" onerror="this.style.display='none'">
+    <span>Hostaka</span>
+  </div>
+
+  <div class="box">
+    <div class="tabs">
+      <button class="tab active" id="tabLoginBtn" onclick="switchTab('login')">دخول</button>
+      <button class="tab" id="tabRegisterBtn" onclick="switchTab('register')">حساب جديد</button>
+    </div>
+
+    <!-- ===== تسجيل الدخول (للحسابات الموجودة) ===== -->
+    <div class="pane active" id="paneLogin">
+      <div class="err" id="loginErr"></div>
+      <div class="fg">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="lEmail" dir="ltr" placeholder="example@mail.com" autocomplete="email">
+      </div>
+      <div class="fg">
+        <label>كلمة المرور</label>
+        <input type="password" id="lPass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn" id="loginBtn" onclick="doLogin()">دخول</button>
+      <div class="hint"><a href="#" onclick="goToForgot();return false;" style="color:var(--text)">هل نسيت كلمة المرور؟</a></div>
+    </div>
+
+    <!-- ===== إنشاء حساب — الخطوة 1: البيانات ===== -->
+    <div class="pane" id="paneRegStart">
+      <div class="err" id="regErr"></div>
+      <div class="fg">
+        <label>اسم المستخدم</label>
+        <input type="text" id="rUser" placeholder="اسمك على المنصة" autocomplete="username">
+      </div>
+      <div class="fg">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="rEmail" dir="ltr" placeholder="example@mail.com" autocomplete="email">
+      </div>
+      <div class="fg">
+        <label>كلمة المرور</label>
+        <input type="password" id="rPass" placeholder="6 أحرف على الأقل" autocomplete="new-password">
+      </div>
+      <button class="btn" id="regStartBtn" onclick="startRegister()">إرسال كود التأكيد</button>
+      <div class="hint">سنرسل لك كوداً مكوناً من 6 أرقام إلى بريدك الإلكتروني للتأكد من صحته.</div>
+    </div>
+
+    <!-- ===== إنشاء حساب — الخطوة 2: تأكيد الكود ===== -->
+    <div class="pane" id="paneRegVerify">
+      <div class="err" id="verifyErr"></div>
+      <div class="ok" id="verifyOk"></div>
+      <div class="step-title">تأكيد بريدك الإلكتروني</div>
+      <div class="step-sub">أرسلنا كود تأكيد إلى <b id="sentToEmail" style="color:var(--text)"></b>. أدخله بالأسفل لإنشاء حسابك.</div>
+      <div class="fg">
+        <label>كود التأكيد</label>
+        <input type="text" id="vCode" class="code-input" maxlength="6" inputmode="numeric" placeholder="000000">
+      </div>
+      <button class="btn" id="verifyBtn" onclick="verifyRegister()">تأكيد وإنشاء الحساب</button>
+      <button class="btn-ghost" id="resendBtn" onclick="resendCode()">إعادة إرسال الكود</button>
+      <div class="hint"><a href="#" onclick="backToStart();return false;" style="color:var(--text)">تغيير البريد الإلكتروني</a></div>
+    </div>
+
+    <!-- ===== نسيت كلمة المرور — الخطوة 1: طلب الكود ===== -->
+    <div class="pane" id="paneForgotStart">
+      <div class="err" id="forgotErr"></div>
+      <div class="step-title">استعادة كلمة المرور</div>
+      <div class="step-sub">أدخل بريدك الإلكتروني وسنرسل لك كود تأكيد لإعادة تعيين كلمة المرور.</div>
+      <div class="fg">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="fEmail" dir="ltr" placeholder="example@mail.com" autocomplete="email">
+      </div>
+      <button class="btn" id="forgotStartBtn" onclick="startForgot()">إرسال كود التأكيد</button>
+      <div class="hint"><a href="#" onclick="switchTab('login');return false;" style="color:var(--text)">العودة لتسجيل الدخول</a></div>
+    </div>
+
+    <!-- ===== نسيت كلمة المرور — الخطوة 2: الكود + كلمة مرور جديدة ===== -->
+    <div class="pane" id="paneForgotReset">
+      <div class="err" id="resetErr"></div>
+      <div class="ok" id="resetOk"></div>
+      <div class="step-title">تعيين كلمة مرور جديدة</div>
+      <div class="step-sub">أرسلنا كود تأكيد إلى <b id="sentToEmailForgot" style="color:var(--text)"></b>. أدخله مع كلمة المرور الجديدة.</div>
+      <div class="fg">
+        <label>كود التأكيد</label>
+        <input type="text" id="fCode" class="code-input" maxlength="6" inputmode="numeric" placeholder="000000">
+      </div>
+      <div class="fg">
+        <label>كلمة المرور الجديدة</label>
+        <input type="password" id="fNewPass" placeholder="6 أحرف على الأقل" autocomplete="new-password">
+      </div>
+      <button class="btn" id="resetBtn" onclick="doResetPassword()">تعيين كلمة المرور</button>
+      <button class="btn-ghost" id="resendForgotBtn" onclick="resendForgotCode()">إعادة إرسال الكود</button>
+      <div class="hint"><a href="#" onclick="backToForgotStart();return false;" style="color:var(--text)">تغيير البريد الإلكتروني</a></div>
+    </div>
+  </div>
+</div>
+
+  <script src="/script.js" defer></script>
+</body>
+</html>
