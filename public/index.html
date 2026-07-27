@@ -1,1 +1,328 @@
-djka
+<!DOCTYPE html>
+<html class="page-index" lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="icon" href="hostaka-icon.png" type="image/png">
+  <title>Hostaka</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </style>
+<base target="_blank">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="page-index">
+
+<div class="splash-screen" id="splashScreen">
+  <div class="splash-inner" id="splashInner">
+    <div class="splash-avatar" id="splashAvatar">H</div>
+    <div class="splash-greeting" id="splashGreeting"></div>
+    <div class="splash-sub" id="splashSub"></div>
+    <div class="splash-actions" id="splashActions"></div>
+    <div class="splash-hint" id="splashHint"></div>
+  </div>
+</div>
+
+<div class="wallpaper-bg" id="wallpaperBg"></div>
+<div class="wallpaper-overlay" id="wallpaperOverlayEl"></div>
+
+<header class="topbar" id="topbar">
+  <div class="topbar-left">
+    <img src="hostaka-icon.png" class="topbar-logo" style="width:auto;height:34px;border-radius:6px;object-fit:contain;" onerror="this.style.display='none'" alt="Hostaka">
+    <span class="topbar-title" id="topbarTitle">Hostaka</span>
+  </div>
+  <div class="topbar-right">
+    <!-- زر Shizi AI أصبح عادياً (لا ألوان خاصة) -->
+    <a href="/shiziai" class="icon-btn" id="shiziBtn" title="Shizi AI">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/>
+        <path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2z"/>
+      </svg>
+    </a>
+    <div class="notif-wrap" id="notifWrap" style="position:relative;display:none;">
+      <button class="icon-btn" id="notifBtn" onclick="toggleNotifDrop()" title="الإشعارات">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="badge" id="notifUnread"></span>
+      </button>
+      <div class="notif-dropdown" id="notifDrop">
+        <div class="notif-head">
+          <span>الإشعارات</span>
+          <button class="notif-markall" onclick="markAllNotifRead()">تعليم الكل كمقروء</button>
+        </div>
+        <div class="notif-list" id="notifList">
+          <div style="text-align:center;padding:26px 10px;color:var(--muted);font-size:0.82rem;">لا توجد إشعارات</div>
+        </div>
+      </div>
+    </div>
+    <a href="/chat" class="icon-btn" id="chatBtn" title="الرسائل">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span class="badge" id="chatUnread"></span>
+    </a>
+    <button id="btnLogin" class="btn-login" onclick="openAuth()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      <span id="loginBtnText">دخول / تسجيل</span>
+    </button>
+    <div class="user-badge-wrap" id="userBadgeWrap" style="display:none;">
+      <div class="user-badge" id="userBadgeEl" onclick="toggleDrop()"></div>
+      <div class="user-dropdown" id="userDrop">
+        <div class="dropdown-name" id="dropName"></div>
+        <div class="account-switcher" id="accountSwitcher"></div>
+        <a href="/short" id="reelsBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2.5"/><polygon points="10.5 9.5 15 12 10.5 14.5" fill="currentColor" stroke="none"/></svg>
+          <span>الريلز</span>
+        </a>
+        <button id="verifyBtn" onclick="requestVerify()" style="display:none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <span>طلب التوثيق</span>
+        </button>
+        <button onclick="location.href='/manager'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span class="drop-manager">إدارة الحساب</span>
+        </button>
+        <button onclick="location.href='/save'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          <span class="drop-save">المحفوظات</span>
+        </button>
+        <button id="themeToggle" onclick="toggleTheme()">
+          <span class="ti-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg></span>
+          <span>تبديل الثيم</span>
+        </button>
+        <button id="wallpaperToggle" onclick="openWallpaperModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <path d="M21 15l-5-5L5 21"/>
+          </svg>
+          <span>خلفية المنصة</span>
+        </button>
+        <div class="lang-selector" id="langToggle" onclick="toggleLangMenu()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          <span>تغيير اللغة</span>
+          <div class="lang-menu" id="langMenu">
+            <button onclick="setLang('ar')"><span class="flag"><svg viewBox="0 0 20 20" width="16" height="16"><clipPath id="fc-ar"><circle cx="10" cy="10" r="10"/></clipPath><g clip-path="url(#fc-ar)"><rect width="20" height="20" fill="#006c35"/><rect x="4" y="9" width="12" height="2" rx="1" fill="#fff"/></g></svg></span> العربية</button>
+            <button onclick="setLang('en')"><span class="flag"><svg viewBox="0 0 20 20" width="16" height="16"><clipPath id="fc-en"><circle cx="10" cy="10" r="10"/></clipPath><g clip-path="url(#fc-en)"><rect width="20" height="20" fill="#012169"/><path d="M0 0L20 20M20 0L0 20" stroke="#fff" stroke-width="3"/><path d="M10 0V20M0 10H20" stroke="#fff" stroke-width="4"/><path d="M10 0V20M0 10H20" stroke="#C8102E" stroke-width="1.6"/></g></svg></span> English</button>
+            <button onclick="setLang('fr')"><span class="flag"><svg viewBox="0 0 20 20" width="16" height="16"><clipPath id="fc-fr"><circle cx="10" cy="10" r="10"/></clipPath><g clip-path="url(#fc-fr)"><rect width="6.7" height="20" fill="#0055A4"/><rect x="6.7" width="6.6" height="20" fill="#fff"/><rect x="13.3" width="6.7" height="20" fill="#EF4135"/></g></svg></span> Français</button>
+            <button onclick="setLang('ru')"><span class="flag"><svg viewBox="0 0 20 20" width="16" height="16"><clipPath id="fc-ru"><circle cx="10" cy="10" r="10"/></clipPath><g clip-path="url(#fc-ru)"><rect width="20" height="6.7" fill="#fff"/><rect y="6.7" width="20" height="6.6" fill="#0039A6"/><rect y="13.3" width="20" height="6.7" fill="#D52B1E"/></g></svg></span> Русский</button>
+            <button onclick="setLang('zh')"><span class="flag"><svg viewBox="0 0 20 20" width="16" height="16"><clipPath id="fc-zh"><circle cx="10" cy="10" r="10"/></clipPath><g clip-path="url(#fc-zh)"><rect width="20" height="20" fill="#DE2910"/><path d="M6 4l1 3h3l-2.5 2 1 3-2.5-2-2.5 2 1-3-2.5-2h3z" fill="#FFDE00"/></g></svg></span> 中文</button>
+            <button onclick="setLang('ja')"><span class="flag"><svg viewBox="0 0 20 20" width="16" height="16"><clipPath id="fc-ja"><circle cx="10" cy="10" r="10"/></clipPath><g clip-path="url(#fc-ja)"><rect width="20" height="20" fill="#fff"/><circle cx="10" cy="10" r="5.5" fill="#BC002D"/></g></svg></span> 日本語</button>
+          </div>
+        </div>
+        <div class="dropdown-sep"></div>
+        <button id="adminBtn" onclick="location.href='/admin'" style="display:none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M21 12h-2M5 12H3M12 21v-2M12 5V3"/></svg>
+          <span class="drop-admin">لوحة الإدارة</span>
+        </button>
+        <button onclick="location.href='/profile'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span class="drop-profile">الملف الشخصي</span>
+        </button>
+        <button onclick="window.open('https://www.mediafire.com/file/cj90k9ac3jja29i/Hostaka_V1.2.apk/file', '_blank')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span class="drop-download">تحميل تطبيق الأندرويد</span>
+        </button>
+        <button onclick="location.href='/support'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span class="drop-support">الدعم والمساعدة</span>
+        </button>
+        <button onclick="doLogout()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span class="drop-logout">تسجيل الخروج</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="page-header">
+  <h1 id="pageTitle">Hostaka</h1>
+  <p id="pageSubtitle">منصة تواصل اجتماعي مفتوحة للجميع</p>
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="ابحث في المنشورات..." autocomplete="off">
+    <span class="search-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+  </div>
+</section>
+
+<!-- شريط القصص: صف أفقي تحت البحث بالموبايل، ويتحول إلى عمود ثابت في الفراغ الجانبي بالشاشات الواسعة -->
+<div class="stories-rail" id="storiesRail" style="display:none;">
+  <div class="stories-track" id="storiesTrack"></div>
+</div>
+
+<div id="feed" class="feed">
+  <div class="loading">
+    <div class="spinner"></div>
+    <div id="loadingText">جارٍ تحميل المنشورات...</div>
+  </div>
+</div>
+
+<!-- ===== Modals (Auth) ===== -->
+<div class="modal-bd" id="authModal">
+  <div class="modal-box">
+    <div class="tabs">
+      <button class="tab active" id="tabLoginBtn" onclick="switchTab('login')">دخول</button>
+      <button class="tab" id="tabRegisterBtn" onclick="switchTab('register')">حساب جديد</button>
+    </div>
+    <div class="tab-pane active" id="tabLogin">
+      <div class="err" id="loginErr"></div>
+      <div class="fg"><label id="lEmailLabel">البريد الإلكتروني</label><input type="email" id="lEmail" dir="ltr" placeholder="example@mail.com" autocomplete="email"></div>
+      <div class="fg"><label id="lPassLabel">كلمة المرور</label><input type="password" id="lPass" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn-submit" id="loginBtn" onclick="doLogin()"><span id="loginSubmitText">دخول</span></button>
+    </div>
+    <div class="tab-pane" id="tabReg">
+      <div class="err" id="regErr"></div>
+      <div class="fg"><label id="rUserLabel">اسم المستخدم</label><input type="text" id="rUser" placeholder="اسمك على المنصة" autocomplete="username"></div>
+      <div class="fg"><label id="rEmailLabel">البريد الإلكتروني</label><input type="email" id="rEmail" dir="ltr" placeholder="example@mail.com" autocomplete="email"></div>
+      <div class="fg"><label id="rPassLabel">كلمة المرور</label><input type="password" id="rPass" placeholder="••••••••" autocomplete="new-password"></div>
+      <button class="btn-submit" id="regBtn" onclick="doRegister()"><span id="registerSubmitText">إنشاء الحساب</span></button>
+    </div>
+    <div class="tab-pane" id="tab2FA">
+      <div class="modal-t" style="margin-bottom:14px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>تأكيد المصادقة الثنائية</span>
+      </div>
+      <div class="err" id="login2faErr"></div>
+      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:14px;">افتح تطبيق المصادقة على جهازك وأدخل الكود المكوّن من 6 أرقام، أو استخدم أحد أكواد الاسترجاع الاحتياطية.</p>
+      <div class="fg"><input type="text" id="login2faCode" class="f-input" placeholder="000000" maxlength="10" autocomplete="one-time-code" style="text-align:center;letter-spacing:4px;font-size:1.2rem;"></div>
+      <button class="btn-submit" id="login2faBtn" onclick="submit2FALogin()">تأكيد الدخول</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- نافذة إنشاء قصة -->
+<div class="modal-bd" id="storyCreateModal">
+  <div class="modal-box">
+    <div class="modal-t">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <span id="storyCreateTitle">إنشاء قصة</span>
+    </div>
+    <div class="err" id="storyErr"></div>
+    <div class="story-upload-zone" id="storyUploadZone" onclick="document.getElementById('storyMediaFile').click()">
+      <div id="storyUploadPlaceholder" class="story-upload-placeholder"></div>
+      <div id="storyMediaPreview" class="story-media-preview" style="display:none;"></div>
+    </div>
+    <input type="file" id="storyMediaFile" accept=".jpg,.jpeg,image/jpeg,.mp4,.webm,video/*" style="display:none;" onchange="onStoryMedia(event)">
+    <div class="fg" style="margin-top:12px;">
+      <input type="text" id="storyCaptionInput" placeholder="اكتب تعليقاً (اختياري)..." maxlength="120">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('storyCreateModal')"><span id="storyCancelBtn">إلغاء</span></button>
+      <button class="btn-submit" style="width:auto;padding:10px 26px;" id="storyPublishBtn" onclick="submitStory()"><span id="storyPublishBtnText">نشر القصة</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- عارض القصص (ملء الشاشة) -->
+<div class="story-viewer" id="storyViewer">
+  <div class="story-viewer-progress" id="storyProgressWrap"></div>
+  <div class="story-viewer-head">
+    <div class="story-viewer-user">
+      <div class="story-viewer-avatar" id="storyViewerAvatar"></div>
+      <div>
+        <div class="story-viewer-name" id="storyViewerName"></div>
+        <div class="story-viewer-time" id="storyViewerTime"></div>
+      </div>
+    </div>
+    <div class="story-viewer-actions">
+      <button class="story-viewer-delete" id="storyViewerDelete" onclick="deleteCurrentStory()" style="display:none;" title="حذف">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </button>
+      <button class="story-viewer-close" onclick="closeStoryViewer()" title="إغلاق">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="story-viewer-media" id="storyViewerMedia"></div>
+  <div class="story-viewer-caption" id="storyViewerCaption"></div>
+  <div class="story-viewer-nav">
+    <div class="story-nav-zone story-nav-prev" onclick="prevStory()"></div>
+    <div class="story-nav-zone story-nav-next" onclick="nextStory()"></div>
+  </div>
+</div>
+
+<div class="modal-bd" id="wallpaperModal">
+  <div class="modal-box">
+    <div class="modal-t">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <span>خلفية المنصة</span>
+    </div>
+    <p style="color:var(--muted);font-size:0.82rem;line-height:1.7;margin-bottom:16px;">اختر صورة خلفية خاصة بك — ستتكيّف ألوان المنصة (أزرار، تفاعلات، صور رمزية) تلقائيًا مع ألوان الصورة لتجربة بصرية متناسقة.</p>
+
+    <div id="wallpaperPreviewBox" style="width:100%;height:120px;border-radius:16px;border:1px solid var(--border);background:var(--input-bg);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.8rem;margin-bottom:16px;overflow:hidden;">
+      <span id="wallpaperPreviewEmpty">لا توجد خلفية محددة</span>
+    </div>
+
+    <input type="file" id="wallpaperFile" accept="image/*" style="display:none;" onchange="onWallpaperFile(event)">
+    <button class="btn-post" style="width:100%;justify-content:center;margin-bottom:10px;" onclick="document.getElementById('wallpaperFile').click()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span>رفع صورة خلفية</span>
+    </button>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 6px;">
+      <label style="font-size:0.82rem;color:var(--muted);display:flex;align-items:center;gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 2v10l7 4"/></svg>
+        تمويه الخلفية
+      </label>
+      <input type="range" id="wallpaperBlurRange" min="0" max="30" value="6" oninput="updateWallpaperTuning()" style="flex:1;">
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px;">
+      <label style="font-size:0.82rem;color:var(--muted);display:flex;align-items:center;gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+        إضاءة التراكب
+      </label>
+      <input type="range" id="wallpaperDimRange" min="0" max="80" value="35" oninput="updateWallpaperTuning()" style="flex:1;">
+    </div>
+
+    <label style="display:flex;align-items:center;gap:8px;font-size:0.82rem;color:var(--muted);margin-bottom:18px;cursor:pointer;">
+      <input type="checkbox" id="wallpaperAutoTheme" checked onchange="updateWallpaperTuning()">
+      تغيير الثيم تلقائيًا حسب ألوان الخلفية
+    </label>
+
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="removeWallpaper()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:4px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        إزالة الخلفية
+      </button>
+      <button class="btn-submit" style="width:auto;padding:10px 26px;" onclick="closeModal('wallpaperModal')">تم</button>
+    </div>
+  </div>
+</div>
+
+<!-- الإبلاغ عن منشور / مستخدم -->
+<div class="modal-bd" id="reportModal">
+  <div class="modal-box">
+    <div class="modal-t">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span id="reportModalTitle">الإبلاغ</span>
+    </div>
+    <select class="f-input" id="reportReason" style="width:100%;padding:11px 13px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Cairo',sans-serif;font-size:0.88rem;margin-bottom:10px;">
+      <option value="spam">محتوى مزعج / سبام</option>
+      <option value="abuse">إساءة أو تنمر</option>
+      <option value="nudity">محتوى غير لائق</option>
+      <option value="fake">حساب مزيف أو منتحل</option>
+      <option value="other">سبب آخر</option>
+    </select>
+    <textarea id="reportDetails" placeholder="تفاصيل إضافية (اختياري)" style="width:100%;min-height:90px;padding:11px 13px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Cairo',sans-serif;font-size:0.88rem;resize:vertical;"></textarea>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('reportModal')">إلغاء</button>
+      <button class="btn-submit" id="reportSubmitBtn" style="width:auto;padding:10px 26px;" onclick="submitReport()">إرسال البلاغ</button>
+    </div>
+  </div>
+</div>
+
+  <script src="/script.js" defer></script>
+</body>
+</html>
