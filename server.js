@@ -1275,6 +1275,41 @@ app.get('/api/reels', async (req, res) => {
 });
 
 // ============================================================
+// Hostaka Video (فيديوهات عادية/أفقية — تُعرض بطريقة يوتيوب في /video)
+// ============================================================
+app.get('/api/videos', async (req, res) => {
+  try {
+    const u = verifyToken(req);
+    const records = await q.listVideos(u ? u.id : 0);
+    if (!records.length) return res.json([]);
+    const [allR, allC, urList] = await Promise.all([
+      q.getAllReactions(),
+      q.getAllComments(),
+      u ? q.getUserAllReactions(u.id) : Promise.resolve([])
+    ]);
+    const rMap = {}, cMap = {}, urMap = {};
+    allR.forEach(r => {
+      if (!rMap[r.record_id]) rMap[r.record_id] = [];
+      rMap[r.record_id].push({ emoji: r.emoji, count: r.count });
+    });
+    allC.forEach(c => {
+      if (!cMap[c.record_id]) cMap[c.record_id] = [];
+      cMap[c.record_id].push(c);
+    });
+    urList.forEach(r => { urMap[r.record_id] = r.emoji; });
+    res.json(records.map(r => ({
+      ...r,
+      reactions: rMap[r.id] || [],
+      comments: cMap[r.id] || [],
+      userReaction: urMap[r.id] || null
+    })));
+  } catch(e) {
+    console.error('List videos error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ============================================================
 // Stories (القصص - تختفي تلقائياً بعد 24 ساعة)
 // ============================================================
 app.get('/api/stories', async (req, res) => {
@@ -1414,7 +1449,12 @@ app.post('/api/records/:id/save', requireAuth, async (req, res) => {
       await q.unsavePost(req.user.id, recordId);
       return res.json({ success:true, saved:false });
     } else {
-      await q.savePost(req.user.id, recordId);
+      let collectionId = req.body?.collection_id || null;
+      if (collectionId) {
+        const col = await q.getSaveCollection(req.user.id, collectionId);
+        if (!col) collectionId = null;
+      }
+      await q.savePost(req.user.id, recordId, collectionId);
       return res.json({ success:true, saved:true });
     }
   } catch(e) {
@@ -1422,10 +1462,11 @@ app.post('/api/records/:id/save', requireAuth, async (req, res) => {
   }
 });
 
-// قائمة كل المنشورات/الريلز المحفوظة للمستخدم الحالي
+// قائمة كل المنشورات/الريلز المحفوظة للمستخدم الحالي (اختيارياً حسب مجموعة حفظ: ?collection_id=)
 app.get('/api/saved', requireAuth, async (req, res) => {
   try {
-    const records = await q.getSavedPosts(req.user.id);
+    const collectionId = (req.query.collection_id || '').trim();
+    const records = await q.getSavedPosts(req.user.id, collectionId || null);
     if (!records.length) return res.json([]);
     const [allR, allC, urList] = await Promise.all([
       q.getAllReactions(),
@@ -1444,6 +1485,77 @@ app.get('/api/saved', requireAuth, async (req, res) => {
     })));
   } catch(e) {
     console.error('❌ /api/saved error:', e);
+    res.status(500).json({ error:'خطأ في الخادم' });
+  }
+});
+
+// ============================================================
+// مجموعات الحفظ الخاصة (Save Collections) — مثل "ماينكرافت"، "ذكاء اصطناعي" ...
+// ============================================================
+app.get('/api/save-collections', requireAuth, async (req, res) => {
+  try {
+    const list = await q.listSaveCollections(req.user.id);
+    res.json(list);
+  } catch(e) {
+    console.error('List save collections error:', e);
+    res.status(500).json({ error:'خطأ في الخادم' });
+  }
+});
+
+app.post('/api/save-collections', requireAuth, async (req, res) => {
+  try {
+    const name = (req.body?.name || '').trim();
+    if (!name) return res.status(400).json({ error:'اسم المجموعة مطلوب' });
+    if (name.length > 40) return res.status(400).json({ error:'الاسم طويل جداً' });
+    const result = await q.createSaveCollection(req.user.id, name);
+    res.json({ success:true, id: Number(result.lastInsertRowid), name });
+  } catch(e) {
+    console.error('Create save collection error:', e);
+    res.status(500).json({ error:'خطأ في الخادم' });
+  }
+});
+
+app.put('/api/save-collections/:id', requireAuth, async (req, res) => {
+  try {
+    const name = (req.body?.name || '').trim();
+    if (!name) return res.status(400).json({ error:'اسم المجموعة مطلوب' });
+    const col = await q.getSaveCollection(req.user.id, req.params.id);
+    if (!col) return res.status(404).json({ error:'المجموعة غير موجودة' });
+    await q.renameSaveCollection(req.user.id, req.params.id, name);
+    res.json({ success:true });
+  } catch(e) {
+    res.status(500).json({ error:'خطأ في الخادم' });
+  }
+});
+
+app.delete('/api/save-collections/:id', requireAuth, async (req, res) => {
+  try {
+    const col = await q.getSaveCollection(req.user.id, req.params.id);
+    if (!col) return res.status(404).json({ error:'المجموعة غير موجودة' });
+    await q.deleteSaveCollection(req.user.id, req.params.id);
+    res.json({ success:true });
+  } catch(e) {
+    res.status(500).json({ error:'خطأ في الخادم' });
+  }
+});
+
+// نقل منشور محفوظ إلى مجموعة حفظ معيّنة (أو إلغاء تصنيفه بإرسال collection_id=null)
+app.put('/api/saved/:recordId/collection', requireAuth, async (req, res) => {
+  try {
+    const recordId = Number(req.params.recordId);
+    const already = await q.isPostSaved(req.user.id, recordId);
+    if (!already) return res.status(404).json({ error:'هذا المنشور غير محفوظ أصلاً' });
+    let collectionId = req.body?.collection_id;
+    if (collectionId) {
+      const col = await q.getSaveCollection(req.user.id, collectionId);
+      if (!col) return res.status(404).json({ error:'المجموعة غير موجودة' });
+    } else {
+      collectionId = null;
+    }
+    await q.setSavedPostCollection(req.user.id, recordId, collectionId);
+    res.json({ success:true, collection_id: collectionId });
+  } catch(e) {
+    console.error('Set saved post collection error:', e);
     res.status(500).json({ error:'خطأ في الخادم' });
   }
 });
@@ -2991,6 +3103,25 @@ app.get('/short', async (req, res) => {
     } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
   }
   sendOG(req, res, 'short.html', meta);
+});
+
+app.get('/video', async (req, res) => {
+  const meta = baseMeta(req, 'Hostaka Video');
+  meta.type = 'video.other';
+  const id = (req.query.id || '').trim();
+  if (id) {
+    try {
+      const rec = await q.getRecordById(id);
+      if (rec) {
+        const who = rec.publisher_name || rec.publisher;
+        meta.title = `${who} على Hostaka Video`;
+        meta.description = ogTruncate(rec.content) || DEFAULT_DESC;
+        if (rec.image) meta.image = absUrl(req, rec.image);
+        if (rec.video) meta.video = absUrl(req, rec.video);
+      }
+    } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
+  }
+  sendOG(req, res, 'video.html', meta);
 });
 
 app.get('*', async (req, res) => {
