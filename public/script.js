@@ -46,6 +46,29 @@ function setThemeIcon(html) {
   });
 })();
 
+/* ================= تتبّع الزيارات (لوحة الإدارة) ================= */
+(function () {
+  try {
+    if (document.body.classList.contains('page-admin')) return; // لا نتتبع استخدام لوحة الإدارة نفسها
+    let sid = localStorage.getItem('hostaka_sid');
+    if (!sid) {
+      sid = 'v_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 12);
+      localStorage.setItem('hostaka_sid', sid);
+    }
+    function send(url, extra) {
+      const token = localStorage.getItem('hostaka_token') || '';
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(Object.assign({ sid, path: location.pathname }, extra || {})),
+        keepalive: true
+      }).catch(()=>{});
+    }
+    send('/api/track', { ref: document.referrer || '' });
+    setInterval(() => { if (!document.hidden) send('/api/track/ping'); }, 25000);
+  } catch (e) { /* التتبع لا يجب أن يكسر أي صفحة */ }
+})();
+
 /* ================= admin.html ================= */
 if (document.body.classList.contains('page-admin')) {
 window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
@@ -128,6 +151,7 @@ function showPage(name){
   if(name==='verify') loadVerify();
   if(name==='dashboard') loadDashboard();
   if(name==='reports') loadReports();
+  if(name==='logs') loadLogs();
 }
 
 document.getElementById('ntTarget')?.addEventListener('change', function(){
@@ -173,6 +197,113 @@ async function loadDashboard(){
     if(Array.isArray(pending) && pending.length){ rb.textContent=pending.length; rb.style.display='inline'; }
     else if(rb){ rb.style.display='none'; }
   }catch(e){}
+  loadAnalytics();
+  startActiveNowPolling();
+}
+
+// ============================================================
+// التحليلات (Analytics) — الزيارات، النشطون الآن، معدل الارتداد
+// ============================================================
+let activeNowTimer = null;
+function startActiveNowPolling(){
+  if(activeNowTimer) clearInterval(activeNowTimer);
+  activeNowTimer = setInterval(async ()=>{
+    if(!document.getElementById('page-dashboard')?.classList.contains('active')){
+      clearInterval(activeNowTimer); activeNowTimer=null; return;
+    }
+    try{
+      const d = await api('/api/admin/analytics/overview');
+      document.getElementById('aActiveNow').textContent = d.activeNow ?? 0;
+    }catch(e){}
+  }, 15000);
+}
+
+function fmtShortDate(d){
+  try{ return toUTCDate(d).toLocaleDateString('ar-SA',{month:'short',day:'numeric'}); }catch(e){ return d; }
+}
+
+async function loadAnalytics(){
+  try{
+    const d = await api('/api/admin/analytics/overview');
+    document.getElementById('aActiveNow').textContent = d.activeNow ?? 0;
+    document.getElementById('aViewsToday').textContent = d.viewsToday ?? 0;
+    document.getElementById('aViews7d').textContent = d.views7d ?? 0;
+    document.getElementById('aUniqueToday').textContent = d.uniqueToday ?? 0;
+    document.getElementById('aBounce').textContent = (d.bounceRate7d ?? 0) + '%';
+    document.getElementById('aNewSignups').textContent = d.newSignupsToday ?? 0;
+
+    // رسم بياني بسيط بالأعمدة لآخر 14 يوم (بدون أي مكتبة خارجية)
+    const series = d.dailySeries || [];
+    const max = Math.max(1, ...series.map(s=>s.c));
+    document.getElementById('analyticsChart').innerHTML = series.length ? series.map(s => `
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;" title="${esc(s.d)}: ${s.c} زيارة">
+        <div style="width:100%;background:var(--primary);border-radius:4px 4px 0 0;height:${Math.max(4, Math.round((s.c/max)*100))}px;transition:height .3s;"></div>
+        <div style="font-size:0.62rem;color:var(--muted);white-space:nowrap;">${fmtShortDate(s.d)}</div>
+      </div>`).join('') : '<div style="color:var(--muted);font-size:0.82rem;">لا توجد بيانات كافية بعد</div>';
+
+    const tp = d.topPages || [];
+    document.getElementById('topPagesList').innerHTML = tp.length ? tp.map(p => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.84rem;">
+        <span style="direction:ltr;text-align:right;color:var(--text);">${esc(p.path)}</span>
+        <span style="font-weight:800;color:var(--primary);flex-shrink:0;margin-right:10px;">${p.c}</span>
+      </div>`).join('') : '<div style="color:var(--muted);font-size:0.82rem;">لا توجد بيانات كافية بعد</div>';
+
+    const tr = d.topReferrers || [];
+    document.getElementById('topRefList').innerHTML = tr.length ? tr.map(r => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.84rem;">
+        <span style="direction:ltr;text-align:right;color:var(--text);word-break:break-all;">${esc(r.ref)}</span>
+        <span style="font-weight:800;color:var(--primary);flex-shrink:0;margin-right:10px;">${r.c}</span>
+      </div>`).join('') : '<div style="color:var(--muted);font-size:0.82rem;">لا توجد بيانات كافية بعد</div>';
+  }catch(e){}
+}
+
+// ============================================================
+// السجلات (Logs) — مثل Vercel Logs
+// ============================================================
+let logsFilter = '';
+function setLogsFilter(level){
+  logsFilter = level;
+  document.querySelectorAll('.lg-tab').forEach(b=>{
+    const active = b.dataset.level === level;
+    b.classList.toggle('btn-dark', active);
+    b.classList.toggle('btn-ghost', !active);
+  });
+  loadLogs();
+}
+
+const LOG_LEVEL_COLORS = { error:'var(--danger)', warn:'#a16207', http:'var(--muted)', info:'var(--primary)' };
+
+async function loadLogs(){
+  const el = document.getElementById('logsList');
+  el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px;">جارٍ التحميل...</div>';
+  try{
+    const url = logsFilter ? '/api/admin/logs?level='+logsFilter : '/api/admin/logs';
+    const logs = await api(url);
+    if(!Array.isArray(logs) || !logs.length){
+      el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px;">لا توجد سجلات — كل شيء يعمل بشكل طبيعي ✅</div>';
+      const lb=document.getElementById('logsBadge'); if(lb) lb.style.display='none';
+      return;
+    }
+    el.innerHTML = `<div class="card" style="padding:0;overflow:hidden;">` + logs.map(l => `
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-family:'SF Mono',Consolas,monospace;font-size:0.78rem;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap;">
+          <span style="color:${LOG_LEVEL_COLORS[l.level]||'var(--muted)'};font-weight:800;text-transform:uppercase;">${esc(l.level)}</span>
+          ${l.status_code ? `<span style="color:var(--muted);">${esc(l.method||'')} ${esc(l.path||'')} → ${l.status_code}</span>` : ''}
+          <span style="color:var(--muted);margin-right:auto;font-family:'Cairo';">${fmtDate(l.created_at)} ${toUTCDate(l.created_at).toLocaleTimeString('ar-SA')}</span>
+        </div>
+        <div style="white-space:pre-wrap;word-break:break-all;color:var(--text);line-height:1.6;">${esc(l.message)}</div>
+      </div>`).join('') + `</div>`;
+    const errCount = logs.filter(l=>l.level==='error').length;
+    const lb=document.getElementById('logsBadge');
+    if(lb){ if(errCount){ lb.textContent=errCount; lb.style.display='inline'; } else lb.style.display='none'; }
+  }catch(e){ el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px;">فشل تحميل السجلات</div>'; }
+}
+
+async function clearLogs(){
+  if(!confirm('مسح كل السجلات نهائياً؟')) return;
+  const d = await api('/api/admin/logs','DELETE');
+  if(d.success){ toast('تم مسح السجلات'); loadLogs(); }
+  else toast(d.error||'فشل المسح');
 }
 
 async function loadUsers(){
@@ -378,6 +509,10 @@ try { window.rejectVerify = rejectVerify; } catch(e) {}
 try { window.setReportsFilter = setReportsFilter; } catch(e) {}
 try { window.loadReports = loadReports; } catch(e) {}
 try { window.replyReport = replyReport; } catch(e) {}
+try { window.loadAnalytics = loadAnalytics; } catch(e) {}
+try { window.setLogsFilter = setLogsFilter; } catch(e) {}
+try { window.loadLogs = loadLogs; } catch(e) {}
+try { window.clearLogs = clearLogs; } catch(e) {}
 }
 
 /* ================= chat.html ================= */
