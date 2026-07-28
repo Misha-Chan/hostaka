@@ -367,6 +367,11 @@ async function initDB() {
     "ALTER TABLE group_members ADD COLUMN last_read_message_id INTEGER DEFAULT 0", // آخر رسالة قرأها العضو في المجموعة
     "CREATE TABLE IF NOT EXISTS typing_status (id INTEGER PRIMARY KEY AUTOINCREMENT, chat_key TEXT NOT NULL, user_id INTEGER NOT NULL, updated_at TEXT NOT NULL DEFAULT (datetime('now')), UNIQUE(chat_key, user_id))",
     "CREATE INDEX IF NOT EXISTS idx_typing_chat ON typing_status(chat_key)",
+    // ✅ مجموعات الحفظ الخاصة (مثل "ماينكرافت"، "ذكاء اصطناعي" ...)
+    "CREATE TABLE IF NOT EXISTS save_collections (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, name TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')))",
+    "CREATE INDEX IF NOT EXISTS idx_save_collections_user ON save_collections(user_id, created_at DESC)",
+    "ALTER TABLE saved_posts ADD COLUMN collection_id INTEGER DEFAULT NULL",
+    "CREATE INDEX IF NOT EXISTS idx_saved_posts_collection ON saved_posts(user_id, collection_id)",
   ];
   for (const sql of migrations) {
     try { await db.execute(sql); } catch(e) { /* column/table already exists */ }
@@ -595,21 +600,31 @@ const q = {
 
   // ── حفظ المنشورات/الريلز ──
   isPostSaved: (userId, recordId) => db.execute({ sql:'SELECT id FROM saved_posts WHERE user_id=? AND record_id=?', args:[userId, recordId] }).then(r => !!first(r)),
-  savePost:    (userId, recordId) => db.execute({ sql:'INSERT OR IGNORE INTO saved_posts (user_id, record_id) VALUES (?,?)', args:[userId, recordId] }),
+  savePost:    (userId, recordId, collectionId) => db.execute({ sql:'INSERT OR IGNORE INTO saved_posts (user_id, record_id, collection_id) VALUES (?,?,?)', args:[userId, recordId, collectionId || null] }),
   unsavePost:  (userId, recordId) => db.execute({ sql:'DELETE FROM saved_posts WHERE user_id=? AND record_id=?', args:[userId, recordId] }),
-  getSavedPosts: (userId) => db.execute({ sql:`
+  getSavedPosts: (userId, collectionId) => {
+    let sql = `
     SELECT r.*,
            COALESCE(u.avatar, r.user_avatar, '') as user_avatar,
            COALESCE(u.display_name, u.username, r.publisher, '') as publisher_name,
            COALESCE(u.verified, 0) as publisher_verified,
            1 as is_saved,
+           sp.collection_id as collection_id,
            sp.created_at as saved_at
     FROM saved_posts sp
     JOIN records r ON r.id = sp.record_id
     LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND u.username = r.publisher)
-    WHERE sp.user_id = ?
-    ORDER BY sp.created_at DESC
-  `, args:[userId] }).then(rows),
+    WHERE sp.user_id = ?`;
+    const args = [userId];
+    if (collectionId === 'uncategorized') {
+      sql += ' AND sp.collection_id IS NULL';
+    } else if (collectionId) {
+      sql += ' AND sp.collection_id = ?';
+      args.push(collectionId);
+    }
+    sql += ' ORDER BY sp.created_at DESC';
+    return db.execute({ sql, args }).then(rows);
+  },
 
   // ── Reels (فيديوهات عمودية) ──
   listReels: (viewerId) => db.execute({ sql: `
@@ -628,6 +643,51 @@ const q = {
       AND (r.scheduled_at IS NULL OR r.scheduled_at = '' OR r.scheduled_at <= datetime('now'))
     ORDER BY RANDOM()
   `, args: [viewerId || 0, viewerId || 0] }).then(rows),
+
+  // ── Hostaka Video (فيديوهات أفقية/عادية بطريقة يوتيوب) ──
+  listVideos: (viewerId) => db.execute({ sql: `
+    SELECT r.*,
+           COALESCE(u.avatar, r.user_avatar, '') as user_avatar,
+           COALESCE(u.display_name, u.username, r.publisher, '') as publisher_name,
+           COALESCE(u.verified, 0) as publisher_verified,
+           CASE WHEN f.follower_id IS NOT NULL THEN 1 ELSE 0 END as is_followed_author,
+           CASE WHEN sp.id IS NOT NULL THEN 1 ELSE 0 END as is_saved
+    FROM records r
+    LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND u.username = r.publisher)
+    LEFT JOIN follows f ON f.follower_id = ? AND f.followed_id = r.user_id
+    LEFT JOIN saved_posts sp ON sp.record_id = r.id AND sp.user_id = ?
+    WHERE r.video IS NOT NULL AND r.video != '' AND COALESCE(r.is_reel,0) = 0
+      AND COALESCE(r.privacy,'public') = 'public'
+      AND (r.scheduled_at IS NULL OR r.scheduled_at = '' OR r.scheduled_at <= datetime('now'))
+    ORDER BY r.created_at DESC
+  `, args: [viewerId || 0, viewerId || 0] }).then(rows),
+
+  // ── مجموعات الحفظ الخاصة (Save Collections) ──
+  listSaveCollections: (userId) => db.execute({ sql: `
+    SELECT sc.*, COUNT(sp.id) as items_count
+    FROM save_collections sc
+    LEFT JOIN saved_posts sp ON sp.collection_id = sc.id AND sp.user_id = sc.user_id
+    WHERE sc.user_id = ?
+    GROUP BY sc.id
+    ORDER BY sc.created_at DESC
+  `, args: [userId] }).then(rows),
+  createSaveCollection: (userId, name) => db.execute({
+    sql: 'INSERT INTO save_collections (user_id, name) VALUES (?,?)',
+    args: [userId, name]
+  }),
+  getSaveCollection: (userId, id) => db.execute({ sql:'SELECT * FROM save_collections WHERE id=? AND user_id=?', args:[id, userId] }).then(first),
+  deleteSaveCollection: async (userId, id) => {
+    await db.execute({ sql:'UPDATE saved_posts SET collection_id=NULL WHERE collection_id=? AND user_id=?', args:[id, userId] });
+    return db.execute({ sql:'DELETE FROM save_collections WHERE id=? AND user_id=?', args:[id, userId] });
+  },
+  renameSaveCollection: (userId, id, name) => db.execute({
+    sql: 'UPDATE save_collections SET name=? WHERE id=? AND user_id=?',
+    args: [name, id, userId]
+  }),
+  setSavedPostCollection: (userId, recordId, collectionId) => db.execute({
+    sql: 'UPDATE saved_posts SET collection_id=? WHERE user_id=? AND record_id=?',
+    args: [collectionId || null, userId, recordId]
+  }),
 
   // ── Reactions ──
   getAllReactions:      () => db.execute('SELECT record_id,emoji,COUNT(*) as count FROM record_reactions GROUP BY record_id,emoji').then(rows),
