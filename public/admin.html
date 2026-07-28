@@ -62,6 +62,11 @@
       البلاغات والدعم
       <span id="reportsBadge" style="background:var(--danger);color:#fff;font-size:0.65rem;padding:1px 6px;border-radius:var(--radius-full);margin-right:auto;display:none;"></span>
     </button>
+    <button class="nav-item" onclick="showPage('logs')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z" opacity="0"/><polyline points="4 17 10 11 13 14 20 7"/><polyline points="14 7 20 7 20 13"/></svg>
+      السجلات (Logs)
+      <span id="logsBadge" style="background:var(--danger);color:#fff;font-size:0.65rem;padding:1px 6px;border-radius:var(--radius-full);margin-right:auto;display:none;"></span>
+    </button>
     <button class="nav-item" onclick="window.open('/', '_blank')">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
       عرض المنصة
@@ -83,6 +88,45 @@
       <div class="stat-card"><div class="stat-n" id="sPosts">-</div><div class="stat-l">منشور</div></div>
       <div class="stat-card"><div class="stat-n" id="sVerify">-</div><div class="stat-l">طلب توثيق</div></div>
     </div>
+
+    <div class="page-title" style="font-size:1rem;margin-top:26px;">التحليلات (Analytics)</div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-n" id="aActiveNow">-</div><div class="stat-l">نشط الآن 🟢</div></div>
+      <div class="stat-card"><div class="stat-n" id="aViewsToday">-</div><div class="stat-l">زيارات اليوم</div></div>
+      <div class="stat-card"><div class="stat-n" id="aViews7d">-</div><div class="stat-l">زيارات آخر 7 أيام</div></div>
+      <div class="stat-card"><div class="stat-n" id="aUniqueToday">-</div><div class="stat-l">زوار فريدون اليوم</div></div>
+      <div class="stat-card"><div class="stat-n" id="aBounce">-</div><div class="stat-l">معدل الارتداد (7 أيام)</div></div>
+      <div class="stat-card"><div class="stat-n" id="aNewSignups">-</div><div class="stat-l">تسجيلات جديدة اليوم</div></div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div style="font-weight:800;font-size:0.9rem;margin-bottom:14px;">الزيارات — آخر 14 يوم</div>
+      <div id="analyticsChart" style="display:flex;align-items:flex-end;gap:6px;height:120px;"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+      <div class="card">
+        <div style="font-weight:800;font-size:0.9rem;margin-bottom:10px;">أكثر الصفحات زيارة (7 أيام)</div>
+        <div id="topPagesList"><div style="color:var(--muted);font-size:0.82rem;">جارٍ التحميل...</div></div>
+      </div>
+      <div class="card">
+        <div style="font-weight:800;font-size:0.9rem;margin-bottom:10px;">مصادر الزيارات (7 أيام)</div>
+        <div id="topRefList"><div style="color:var(--muted);font-size:0.82rem;">جارٍ التحميل...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logs -->
+  <div class="page" id="page-logs">
+    <div class="page-title">السجلات (Logs)</div>
+    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-dark btn-sm lg-tab active" data-level="" onclick="setLogsFilter('')">الكل</button>
+      <button class="btn btn-ghost btn-sm lg-tab" data-level="error" onclick="setLogsFilter('error')">أخطاء</button>
+      <button class="btn btn-ghost btn-sm lg-tab" data-level="warn" onclick="setLogsFilter('warn')">تحذيرات</button>
+      <button class="btn btn-ghost btn-sm" style="margin-right:auto;" onclick="loadLogs()">تحديث</button>
+      <button class="btn btn-ghost btn-sm" style="color:var(--danger);" onclick="clearLogs()">مسح كل السجلات</button>
+    </div>
+    <div id="logsList"><div style="text-align:center;color:var(--muted);padding:24px;">جارٍ التحميل...</div></div>
   </div>
 
   <!-- Users -->
