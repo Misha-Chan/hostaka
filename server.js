@@ -14,6 +14,39 @@ const { authenticator } = require('otplib');
 authenticator.options = { window: 2 };
 const QRCode = require('qrcode');
 
+// ============================================================
+// سجلات الأخطاء (Server Logs) — يلتقط كل console.error/console.warn
+// ويحفظها بقاعدة البيانات لعرضها بلوحة الإدارة بطريقة شبيهة بـ Vercel Logs،
+// دون الحاجة لتعديل كل try/catch موجود بالملف.
+// ============================================================
+const _origConsoleError = console.error.bind(console);
+const _origConsoleWarn  = console.warn.bind(console);
+function _stringifyLogArg(a) {
+  if (a instanceof Error) return a.stack || a.message;
+  if (typeof a === 'object') { try { return JSON.stringify(a); } catch(e) { return String(a); } }
+  return String(a);
+}
+function persistServerLog(level, message, path, method, statusCode) {
+  try { q.insertServerLog(level, message, null, path || null, method || null, statusCode || null).catch(()=>{}); }
+  catch(e) { /* لا نكسر أي شيء بسبب فشل تسجيل اللوق نفسه */ }
+}
+console.error = function(...args) {
+  _origConsoleError(...args);
+  persistServerLog('error', args.map(_stringifyLogArg).join(' '));
+};
+console.warn = function(...args) {
+  _origConsoleWarn(...args);
+  persistServerLog('warn', args.map(_stringifyLogArg).join(' '));
+};
+process.on('uncaughtException', (err) => {
+  _origConsoleError('❌ Uncaught Exception:', err);
+  persistServerLog('error', 'Uncaught Exception: ' + (err.stack || err.message));
+});
+process.on('unhandledRejection', (reason) => {
+  _origConsoleError('❌ Unhandled Rejection:', reason);
+  persistServerLog('error', 'Unhandled Rejection: ' + (reason && (reason.stack || reason.message) || reason));
+});
+
 const app = express();
 app.use(express.json({ limit: '25mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -44,6 +77,16 @@ app.use((req, res, next) => {
   ensureDbReady()
     .then(() => next())
     .catch(() => res.status(503).json({ error: 'تعذر الاتصال بقاعدة البيانات مؤقتاً، الرجاء إعادة المحاولة خلال لحظات' }));
+});
+
+// تسجيل تلقائي لأي طلب ينتهي بخطأ خادم (5xx) — حتى لو ما فيه console.error صريح
+app.use((req, res, next) => {
+  res.on('finish', () => {
+    if (res.statusCode >= 500) {
+      persistServerLog('error', `${req.method} ${req.originalUrl} → ${res.statusCode}`, req.originalUrl, req.method, res.statusCode);
+    }
+  });
+  next();
 });
 
 // ============================================================
@@ -2958,6 +3001,64 @@ app.post('/api/shizi/chat', requireAuth, async (req, res) => {
 // ============================================================
 // Admin
 // ============================================================
+// ============================================================
+// Analytics — تتبّع الزيارات (يُستدعى تلقائياً من كل صفحة)
+// ============================================================
+app.post('/api/track', (req, res) => {
+  // لا يجب أن يُعطّل هذا أي شيء بالموقع أبداً — نرد فوراً وننفذ التسجيل بالخلفية
+  res.json({ ok: true });
+  try {
+    const { path: p, sid, ref } = req.body || {};
+    if (!sid) return;
+    const u = verifyToken(req);
+    q.trackPageView(String(p||'/').slice(0,200), String(sid).slice(0,64), u ? u.id : null, String(ref||'').slice(0,300), String(req.get('user-agent')||'').slice(0,300)).catch(()=>{});
+    q.heartbeatPing(String(sid).slice(0,64), String(p||'/').slice(0,200)).catch(()=>{});
+    if (Math.random() < 0.01) q.pruneAnalyticsData().catch(()=>{}); // تنظيف دوري خفيف بدون الحاجة لـ cron
+  } catch(e) { /* التتبع لا يجب أن يكسر أي شيء */ }
+});
+
+app.post('/api/track/ping', (req, res) => {
+  res.json({ ok: true });
+  try {
+    const { sid, path: p } = req.body || {};
+    if (!sid) return;
+    q.heartbeatPing(String(sid).slice(0,64), String(p||'/').slice(0,200)).catch(()=>{});
+  } catch(e) { /* لا يكسر أي شيء */ }
+});
+
+// ============================================================
+// Admin
+// ============================================================
+app.get('/api/admin/analytics/overview', requireAdmin, async (req, res) => {
+  try {
+    const data = await q.getAnalyticsOverview();
+    res.json(data);
+  } catch(e) {
+    console.error('Analytics overview error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.get('/api/admin/logs', requireAdmin, async (req, res) => {
+  try {
+    const level = (req.query.level || '').trim();
+    const limit = Math.min(Number(req.query.limit) || 150, 500);
+    const logs = await q.getServerLogs(level || null, limit);
+    res.json(logs);
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.delete('/api/admin/logs', requireAdmin, async (req, res) => {
+  try {
+    await q.clearServerLogs();
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
 app.get('/api/admin/users', requireAdmin, async (req, res) => {
   try {
     res.json(await q.listUsers());

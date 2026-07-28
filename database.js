@@ -372,6 +372,14 @@ async function initDB() {
     "CREATE INDEX IF NOT EXISTS idx_save_collections_user ON save_collections(user_id, created_at DESC)",
     "ALTER TABLE saved_posts ADD COLUMN collection_id INTEGER DEFAULT NULL",
     "CREATE INDEX IF NOT EXISTS idx_saved_posts_collection ON saved_posts(user_id, collection_id)",
+    // ✅ لوحة الإدارة — تحليلات الزيارات + سجلات الأخطاء (مثل Vercel Logs)
+    "CREATE TABLE IF NOT EXISTS page_views (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT, session_id TEXT, user_id INTEGER, referrer TEXT, user_agent TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')))",
+    "CREATE INDEX IF NOT EXISTS idx_page_views_created ON page_views(created_at)",
+    "CREATE INDEX IF NOT EXISTS idx_page_views_session ON page_views(session_id, created_at)",
+    "CREATE TABLE IF NOT EXISTS visitor_heartbeats (session_id TEXT PRIMARY KEY, path TEXT, last_seen TEXT NOT NULL DEFAULT (datetime('now')), first_seen TEXT NOT NULL DEFAULT (datetime('now')))",
+    "CREATE INDEX IF NOT EXISTS idx_heartbeats_last_seen ON visitor_heartbeats(last_seen)",
+    "CREATE TABLE IF NOT EXISTS server_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, level TEXT NOT NULL DEFAULT 'error', message TEXT, meta TEXT, path TEXT, method TEXT, status_code INTEGER, created_at TEXT NOT NULL DEFAULT (datetime('now')))",
+    "CREATE INDEX IF NOT EXISTS idx_server_logs_created ON server_logs(created_at)",
   ];
   for (const sql of migrations) {
     try { await db.execute(sql); } catch(e) { /* column/table already exists */ }
@@ -940,6 +948,74 @@ const q = {
   unfollowPage: (page_id, user_id) => db.execute({ sql:'DELETE FROM page_follows WHERE page_id=? AND user_id=?', args:[page_id, user_id] }),
   isFollowingPage: (page_id, user_id) => db.execute({ sql:'SELECT id FROM page_follows WHERE page_id=? AND user_id=?', args:[page_id, user_id] }).then(first),
   getPageFollowerCount: (page_id) => db.execute({ sql:'SELECT COUNT(*) as c FROM page_follows WHERE page_id=?', args:[page_id] }).then(first).then(r => r?.c || 0),
+
+  // ============================================================
+  // لوحة الإدارة — تحليلات الزيارات (Analytics)
+  // ============================================================
+  trackPageView: (path, sessionId, userId, referrer, userAgent) => db.execute({
+    sql: 'INSERT INTO page_views (path, session_id, user_id, referrer, user_agent) VALUES (?,?,?,?,?)',
+    args: [path || '/', sessionId || null, userId || null, referrer || '', userAgent || '']
+  }),
+  heartbeatPing: (sessionId, path) => db.execute({
+    sql: `INSERT INTO visitor_heartbeats (session_id, path, last_seen, first_seen) VALUES (?,?,datetime('now'),datetime('now'))
+          ON CONFLICT(session_id) DO UPDATE SET last_seen=datetime('now'), path=excluded.path`,
+    args: [sessionId, path || '/']
+  }),
+  getActiveNowCount: (thresholdSeconds) => db.execute({
+    sql: `SELECT COUNT(*) as c FROM visitor_heartbeats WHERE last_seen >= datetime('now', ?)`,
+    args: [`-${thresholdSeconds || 120} seconds`]
+  }).then(first).then(r => r?.c || 0),
+
+  getAnalyticsOverview: async () => {
+    const [
+      viewsToday, views7d, views30d,
+      uniqueToday, unique7d,
+      sessions7dTotal, sessions7dSingle,
+      topPages, dailySeries, newSignupsToday, activeNow, topReferrers
+    ] = await Promise.all([
+      db.execute({ sql:`SELECT COUNT(*) as c FROM page_views WHERE date(created_at)=date('now')` }).then(first).then(r=>r?.c||0),
+      db.execute({ sql:`SELECT COUNT(*) as c FROM page_views WHERE created_at >= datetime('now','-7 days')` }).then(first).then(r=>r?.c||0),
+      db.execute({ sql:`SELECT COUNT(*) as c FROM page_views WHERE created_at >= datetime('now','-30 days')` }).then(first).then(r=>r?.c||0),
+      db.execute({ sql:`SELECT COUNT(DISTINCT session_id) as c FROM page_views WHERE date(created_at)=date('now')` }).then(first).then(r=>r?.c||0),
+      db.execute({ sql:`SELECT COUNT(DISTINCT session_id) as c FROM page_views WHERE created_at >= datetime('now','-7 days')` }).then(first).then(r=>r?.c||0),
+      db.execute({ sql:`SELECT COUNT(*) as c FROM (SELECT session_id FROM page_views WHERE created_at >= datetime('now','-7 days') GROUP BY session_id)` }).then(first).then(r=>r?.c||0),
+      db.execute({ sql:`SELECT COUNT(*) as c FROM (SELECT session_id FROM page_views WHERE created_at >= datetime('now','-7 days') GROUP BY session_id HAVING COUNT(*)=1)` }).then(first).then(r=>r?.c||0),
+      db.execute({ sql:`SELECT path, COUNT(*) as c FROM page_views WHERE created_at >= datetime('now','-7 days') GROUP BY path ORDER BY c DESC LIMIT 8` }).then(rows),
+      db.execute({ sql:`SELECT date(created_at) as d, COUNT(*) as c FROM page_views WHERE created_at >= datetime('now','-14 days') GROUP BY date(created_at) ORDER BY d ASC` }).then(rows),
+      db.execute({ sql:`SELECT COUNT(*) as c FROM users WHERE date(created_at)=date('now')` }).then(first).then(r=>r?.c||0),
+      db.execute({ sql:`SELECT COUNT(*) as c FROM visitor_heartbeats WHERE last_seen >= datetime('now','-120 seconds')` }).then(first).then(r=>r?.c||0),
+      db.execute({ sql:`SELECT CASE WHEN referrer IS NULL OR referrer='' THEN 'مباشر' ELSE referrer END as ref, COUNT(*) as c FROM page_views WHERE created_at >= datetime('now','-7 days') GROUP BY ref ORDER BY c DESC LIMIT 6` }).then(rows),
+    ]);
+    const bounceRate7d = sessions7dTotal ? Math.round((sessions7dSingle / sessions7dTotal) * 1000) / 10 : 0;
+    return {
+      viewsToday, views7d, views30d,
+      uniqueToday, unique7d,
+      sessions7d: sessions7dTotal, bounceRate7d,
+      topPages, dailySeries, newSignupsToday, activeNow, topReferrers,
+    };
+  },
+
+  // ============================================================
+  // لوحة الإدارة — سجلات الأخطاء (مثل Vercel Logs)
+  // ============================================================
+  insertServerLog: (level, message, meta, path, method, statusCode) => db.execute({
+    sql: 'INSERT INTO server_logs (level, message, meta, path, method, status_code) VALUES (?,?,?,?,?,?)',
+    args: [level || 'error', String(message||'').slice(0, 3000), meta ? String(meta).slice(0, 4000) : null, path || null, method || null, statusCode || null]
+  }),
+  getServerLogs: (level, limit) => {
+    let sql = 'SELECT * FROM server_logs';
+    const args = [];
+    if (level) { sql += ' WHERE level=?'; args.push(level); }
+    sql += ' ORDER BY created_at DESC LIMIT ?';
+    args.push(limit || 100);
+    return db.execute({ sql, args }).then(rows);
+  },
+  clearServerLogs: () => db.execute({ sql:'DELETE FROM server_logs' }),
+  pruneAnalyticsData: () => Promise.all([
+    db.execute({ sql:`DELETE FROM page_views WHERE created_at < datetime('now','-60 days')` }),
+    db.execute({ sql:`DELETE FROM visitor_heartbeats WHERE last_seen < datetime('now','-1 day')` }),
+    db.execute({ sql:`DELETE FROM server_logs WHERE created_at < datetime('now','-30 days')` }),
+  ]),
 };
 
 module.exports = { db, q, initDB };
