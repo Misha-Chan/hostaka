@@ -973,18 +973,18 @@ const q = {
       sessions7dTotal, sessions7dSingle,
       topPages, dailySeries, newSignupsToday, activeNow, topReferrers
     ] = await Promise.all([
-      db.execute({ sql:`SELECT COUNT(*) as c FROM page_views WHERE date(created_at)=date('now')` }).then(first).then(r=>r?.c||0),
-      db.execute({ sql:`SELECT COUNT(*) as c FROM page_views WHERE created_at >= datetime('now','-7 days')` }).then(first).then(r=>r?.c||0),
-      db.execute({ sql:`SELECT COUNT(*) as c FROM page_views WHERE created_at >= datetime('now','-30 days')` }).then(first).then(r=>r?.c||0),
-      db.execute({ sql:`SELECT COUNT(DISTINCT session_id) as c FROM page_views WHERE date(created_at)=date('now')` }).then(first).then(r=>r?.c||0),
-      db.execute({ sql:`SELECT COUNT(DISTINCT session_id) as c FROM page_views WHERE created_at >= datetime('now','-7 days')` }).then(first).then(r=>r?.c||0),
-      db.execute({ sql:`SELECT COUNT(*) as c FROM (SELECT session_id FROM page_views WHERE created_at >= datetime('now','-7 days') GROUP BY session_id)` }).then(first).then(r=>r?.c||0),
-      db.execute({ sql:`SELECT COUNT(*) as c FROM (SELECT session_id FROM page_views WHERE created_at >= datetime('now','-7 days') GROUP BY session_id HAVING COUNT(*)=1)` }).then(first).then(r=>r?.c||0),
-      db.execute({ sql:`SELECT path, COUNT(*) as c FROM page_views WHERE created_at >= datetime('now','-7 days') GROUP BY path ORDER BY c DESC LIMIT 8` }).then(rows),
-      db.execute({ sql:`SELECT date(created_at) as d, COUNT(*) as c FROM page_views WHERE created_at >= datetime('now','-14 days') GROUP BY date(created_at) ORDER BY d ASC` }).then(rows),
-      db.execute({ sql:`SELECT COUNT(*) as c FROM users WHERE date(created_at)=date('now')` }).then(first).then(r=>r?.c||0),
-      db.execute({ sql:`SELECT COUNT(*) as c FROM visitor_heartbeats WHERE last_seen >= datetime('now','-120 seconds')` }).then(first).then(r=>r?.c||0),
-      db.execute({ sql:`SELECT CASE WHEN referrer IS NULL OR referrer='' THEN 'مباشر' ELSE referrer END as ref, COUNT(*) as c FROM page_views WHERE created_at >= datetime('now','-7 days') GROUP BY ref ORDER BY c DESC LIMIT 6` }).then(rows),
+      db.execute(`SELECT COUNT(*) as c FROM page_views WHERE date(created_at)=date('now')`).then(first).then(r=>r?.c||0),
+      db.execute(`SELECT COUNT(*) as c FROM page_views WHERE created_at >= datetime('now','-7 days')`).then(first).then(r=>r?.c||0),
+      db.execute(`SELECT COUNT(*) as c FROM page_views WHERE created_at >= datetime('now','-30 days')`).then(first).then(r=>r?.c||0),
+      db.execute(`SELECT COUNT(DISTINCT session_id) as c FROM page_views WHERE date(created_at)=date('now')`).then(first).then(r=>r?.c||0),
+      db.execute(`SELECT COUNT(DISTINCT session_id) as c FROM page_views WHERE created_at >= datetime('now','-7 days')`).then(first).then(r=>r?.c||0),
+      db.execute(`SELECT COUNT(*) as c FROM (SELECT session_id FROM page_views WHERE created_at >= datetime('now','-7 days') GROUP BY session_id)`).then(first).then(r=>r?.c||0),
+      db.execute(`SELECT COUNT(*) as c FROM (SELECT session_id FROM page_views WHERE created_at >= datetime('now','-7 days') GROUP BY session_id HAVING COUNT(*)=1)`).then(first).then(r=>r?.c||0),
+      db.execute(`SELECT path, COUNT(*) as c FROM page_views WHERE created_at >= datetime('now','-7 days') GROUP BY path ORDER BY c DESC LIMIT 8`).then(rows),
+      db.execute(`SELECT date(created_at) as d, COUNT(*) as c FROM page_views WHERE created_at >= datetime('now','-14 days') GROUP BY date(created_at) ORDER BY d ASC`).then(rows),
+      db.execute(`SELECT COUNT(*) as c FROM users WHERE date(created_at)=date('now')`).then(first).then(r=>r?.c||0),
+      db.execute(`SELECT COUNT(*) as c FROM visitor_heartbeats WHERE last_seen >= datetime('now','-120 seconds')`).then(first).then(r=>r?.c||0),
+      db.execute(`SELECT CASE WHEN referrer IS NULL OR referrer='' THEN 'مباشر' ELSE referrer END as ref, COUNT(*) as c FROM page_views WHERE created_at >= datetime('now','-7 days') GROUP BY ref ORDER BY c DESC LIMIT 6`).then(rows),
     ]);
     const bounceRate7d = sessions7dTotal ? Math.round((sessions7dSingle / sessions7dTotal) * 1000) / 10 : 0;
     return {
@@ -1010,11 +1010,11 @@ const q = {
     args.push(limit || 100);
     return db.execute({ sql, args }).then(rows);
   },
-  clearServerLogs: () => db.execute({ sql:'DELETE FROM server_logs' }),
+  clearServerLogs: () => db.execute('DELETE FROM server_logs'),
   pruneAnalyticsData: () => Promise.all([
-    db.execute({ sql:`DELETE FROM page_views WHERE created_at < datetime('now','-60 days')` }),
-    db.execute({ sql:`DELETE FROM visitor_heartbeats WHERE last_seen < datetime('now','-1 day')` }),
-    db.execute({ sql:`DELETE FROM server_logs WHERE created_at < datetime('now','-30 days')` }),
+    db.execute(`DELETE FROM page_views WHERE created_at < datetime('now','-60 days')`),
+    db.execute(`DELETE FROM visitor_heartbeats WHERE last_seen < datetime('now','-1 day')`),
+    db.execute(`DELETE FROM server_logs WHERE created_at < datetime('now','-30 days')`),
   ]),
 };
 
