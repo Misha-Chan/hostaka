@@ -9920,9 +9920,8 @@ function linkifyV(html){
 }
 
 async function watchVideo(id){
-  let v = allVideos.find(x => x.id === id);
-  if(!v){ try { v = await apiFetch('/api/videos/'); } catch(e){} }
-  if(!v) return;
+  const v = allVideos.find(x => x.id === id);
+  if(!v){ showToast('تعذر العثور على الفيديو', 'error'); return; }
   window.scrollTo(0,0);
   renderWatch(v);
 }
@@ -9995,20 +9994,25 @@ function renderEmptyVideos(){
 }
 
 async function initVideoPage(){
-  try{ ME = await apiFetch('/api/me'); }catch(e){ ME = null; }
   try {
-    allVideos = await apiFetch('/api/videos');
-    if(!Array.isArray(allVideos)) allVideos = [];
-  } catch(e){ allVideos = []; }
+    try{ ME = await apiFetch('/api/me'); }catch(e){ ME = null; }
+    try {
+      allVideos = await apiFetch('/api/videos');
+      if(!Array.isArray(allVideos)) allVideos = [];
+    } catch(e){ allVideos = []; }
 
-  if(!allVideos.length){ renderEmptyVideos(); return; }
+    if(!allVideos.length){ renderEmptyVideos(); return; }
 
-  const wantedId = getIdFromUrl();
-  if(wantedId){
-    const v = allVideos.find(x => String(x.id) === String(wantedId));
-    if(v){ renderWatch(v); return; }
+    const wantedId = getIdFromUrl();
+    if(wantedId){
+      const v = allVideos.find(x => String(x.id) === String(wantedId));
+      if(v){ renderWatch(v); return; }
+    }
+    renderGrid();
+  } finally {
+    const loaderEl = document.getElementById('loader');
+    if(loaderEl) loaderEl.style.display = 'none';
   }
-  renderGrid();
 }
 
 initVideoPage();
