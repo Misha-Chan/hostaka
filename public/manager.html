@@ -1,118 +1,119 @@
 <!DOCTYPE html>
-<html class="page-manager" lang="ar" dir="rtl">
+<html class="page-manager" lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <link rel="icon" href="hostaka-icon.png" type="image/png">
-<title>Hostaka — إدارة الحساب</title>
+<title data-i18n="manager.pageTitle">Hostaka — Account Settings</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/style.css">
+<script src="/i18n.js"></script>
 </head>
 <body class="page-manager">
 
 <div class="topbar">
   <a href="/" class="back-btn">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-    إدارة الحساب
+    <span data-i18n="manager.title">Account Settings</span>
   </a>
-  <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="تبديل الثيم">
+  <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" data-i18n-title="common.toggleTheme" title="Toggle theme">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
   </button>
 </div>
 
 <div class="wrap" id="wrap">
-  <div style="text-align:center;padding:60px;color:var(--muted);">جارٍ التحميل...</div>
+  <div style="text-align:center;padding:60px;color:var(--muted);" data-i18n="common.loading">Loading...</div>
 </div>
 
-<!-- نافذة تأكيد الكود المرسل للبريد (مشتركة لكل العمليات) -->
+<!-- OTP confirmation modal (shared for all operations) -->
 <div class="modal-bd" id="otpModal">
   <div class="modal-box">
     <div class="modal-t">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <span id="otpTitle">تأكيد العملية</span>
+      <span id="otpTitle" data-i18n="manager.confirmOperation">Confirm operation</span>
     </div>
     <p id="otpDesc" style="color:var(--muted);font-size:0.85rem;line-height:1.7;margin-bottom:16px;"></p>
     <div class="err" id="otpErr"></div>
     <input type="text" id="otpCode" class="otp-input" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
     <div class="otp-actions">
-      <button class="link-btn" id="otpResendBtn" onclick="resendOtp()">إعادة إرسال الكود</button>
+      <button class="link-btn" id="otpResendBtn" onclick="resendOtp()" data-i18n="login.resendCode">Resend code</button>
       <span id="otpCooldown"></span>
     </div>
     <div class="modal-footer">
-      <button class="btn-ghost" onclick="closeOtpModal()">إلغاء</button>
-      <button class="btn-submit" style="width:auto;padding:10px 26px;" id="otpConfirmBtn" onclick="confirmOtp()">تأكيد</button>
+      <button class="btn-ghost" onclick="closeOtpModal()" data-i18n="common.cancel">Cancel</button>
+      <button class="btn-submit" style="width:auto;padding:10px 26px;" id="otpConfirmBtn" onclick="confirmOtp()" data-i18n="common.confirm">Confirm</button>
     </div>
   </div>
 </div>
 
-<!-- نافذة تأكيد حذف الحساب -->
+<!-- Delete account confirmation modal -->
 <div class="modal-bd" id="deleteModal">
   <div class="modal-box">
     <div class="modal-t danger-t">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-      <span>حذف الحساب نهائياً</span>
+      <span data-i18n="manager.deleteAccountPermanently">Permanently delete account</span>
     </div>
-    <p style="color:var(--muted);font-size:0.85rem;line-height:1.7;margin-bottom:16px;">
-      هذا الإجراء لا يمكن التراجع عنه. سيتم حذف حسابك، منشوراتك، رسائلك، وكل بياناتك على هوستاكا نهائياً بعد تأكيد كلمة المرور وكود يُرسل إلى بريدك الإلكتروني.
+    <p style="color:var(--muted);font-size:0.85rem;line-height:1.7;margin-bottom:16px;" data-i18n="manager.deleteAccountDesc">
+      This action cannot be undone. Your account, posts, messages, and all your Hostaka data will be permanently deleted after confirming your password and a code sent to your email.
     </p>
     <div class="err" id="deleteErr"></div>
     <div class="fg">
-      <label class="f-label">كلمة المرور الحالية</label>
+      <label class="f-label" data-i18n="manager.currentPassword">Current password</label>
       <input type="password" id="deletePassword" class="f-input" placeholder="••••••••" autocomplete="current-password">
     </div>
     <div class="modal-footer">
-      <button class="btn-ghost" onclick="closeModal('deleteModal')">إلغاء</button>
-      <button class="btn-danger" id="deleteConfirmBtn" onclick="requestDeleteAccount()">متابعة الحذف</button>
+      <button class="btn-ghost" onclick="closeModal('deleteModal')" data-i18n="common.cancel">Cancel</button>
+      <button class="btn-danger" id="deleteConfirmBtn" onclick="requestDeleteAccount()" data-i18n="manager.continueDelete">Continue deletion</button>
     </div>
   </div>
 </div>
 
-<!-- نافذة إعداد المصادقة الثنائية -->
+<!-- 2FA setup modal -->
 <div class="modal-bd" id="tfaSetupModal">
   <div class="modal-box">
     <div class="modal-t">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <span id="tfaStepTitle">تفعيل المصادقة الثنائية</span>
+      <span id="tfaStepTitle" data-i18n="manager.enable2FA">Enable Two-Factor Authentication</span>
     </div>
     <div class="err" id="tfaErr"></div>
 
     <div id="tfaStepQr">
-      <p style="color:var(--muted);font-size:0.85rem;line-height:1.7;margin-bottom:14px;">امسح رمز QR التالي بتطبيق مصادقة مثل Google Authenticator أو Authy، ثم أدخل الكود المكوّن من 6 أرقام الذي يظهر لتأكيد التفعيل.</p>
+      <p style="color:var(--muted);font-size:0.85rem;line-height:1.7;margin-bottom:14px;" data-i18n="manager.scanQrDesc">Scan the QR code below with an authenticator app like Google Authenticator or Authy, then enter the 6-digit code shown to confirm activation.</p>
       <div style="text-align:center;margin-bottom:14px;">
         <img id="tfaQrImg" src="" alt="QR" style="width:200px;height:200px;border-radius:12px;background:#fff;padding:8px;">
       </div>
-      <div class="f-current" style="text-align:center;word-break:break-all;">أو أدخل هذا السر يدوياً: <b id="tfaSecretText" dir="ltr"></b></div>
+      <div class="f-current" style="text-align:center;word-break:break-all;"><span data-i18n="manager.orEnterSecret">Or enter this secret manually:</span> <b id="tfaSecretText" dir="ltr"></b></div>
       <div class="fg" style="margin-top:14px;"><input type="text" id="tfaEnableCode" class="f-input" placeholder="000000" maxlength="6" inputmode="numeric" style="text-align:center;letter-spacing:6px;font-size:1.2rem;"></div>
       <div class="modal-footer">
-        <button class="btn-ghost" onclick="closeModal('tfaSetupModal')">إلغاء</button>
-        <button class="btn-submit" style="width:auto;padding:10px 26px;" id="tfaEnableBtn" onclick="confirm2FAEnable()">تفعيل</button>
+        <button class="btn-ghost" onclick="closeModal('tfaSetupModal')" data-i18n="common.cancel">Cancel</button>
+        <button class="btn-submit" style="width:auto;padding:10px 26px;" id="tfaEnableBtn" onclick="confirm2FAEnable()" data-i18n="manager.enable">Enable</button>
       </div>
     </div>
 
     <div id="tfaStepBackup" style="display:none;">
-      <p style="color:var(--muted);font-size:0.85rem;line-height:1.7;margin-bottom:14px;">تم التفعيل بنجاح ✓ احفظ أكواد الاسترجاع التالية في مكان آمن — كل كود يُستخدم مرة واحدة فقط لو فقدت الوصول لتطبيق المصادقة. لن تظهر هذه الأكواد مرة أخرى.</p>
+      <p style="color:var(--muted);font-size:0.85rem;line-height:1.7;margin-bottom:14px;" data-i18n="manager.enabledSuccessDesc">Successfully enabled ✓ Save the following recovery codes somewhere safe — each code can only be used once if you lose access to your authenticator app. These codes will not be shown again.</p>
       <div id="tfaBackupCodesList" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--input-bg);border-radius:10px;padding:14px;font-family:monospace;direction:ltr;text-align:center;font-size:0.9rem;font-weight:700;"></div>
       <div class="modal-footer">
-        <button class="btn-submit" style="width:auto;padding:10px 26px;" onclick="finish2FASetup()">تم، لقد حفظتها</button>
+        <button class="btn-submit" style="width:auto;padding:10px 26px;" onclick="finish2FASetup()" data-i18n="manager.savedCodes">Done, I saved them</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- نافذة إلغاء تفعيل المصادقة الثنائية -->
+<!-- 2FA disable confirmation modal -->
 <div class="modal-bd" id="tfaDisableModal">
   <div class="modal-box">
     <div class="modal-t danger-t">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <span>إلغاء تفعيل المصادقة الثنائية</span>
+      <span data-i18n="manager.disable2FA">Disable Two-Factor Authentication</span>
     </div>
     <div class="err" id="tfaDisableErr"></div>
-    <div class="fg"><label class="f-label">كلمة المرور الحالية</label><input type="password" id="tfaDisablePassword" class="f-input" placeholder="••••••••" autocomplete="current-password"></div>
-    <div class="fg"><label class="f-label">كود المصادقة الحالي أو كود احتياطي</label><input type="text" id="tfaDisableCode" class="f-input" placeholder="000000" autocomplete="one-time-code"></div>
+    <div class="fg"><label class="f-label" data-i18n="manager.currentPassword">Current password</label><input type="password" id="tfaDisablePassword" class="f-input" placeholder="••••••••" autocomplete="current-password"></div>
+    <div class="fg"><label class="f-label" data-i18n="manager.currentOrBackupCode">Current authentication code or a backup code</label><input type="text" id="tfaDisableCode" class="f-input" placeholder="000000" autocomplete="one-time-code"></div>
     <div class="modal-footer">
-      <button class="btn-ghost" onclick="closeModal('tfaDisableModal')">إلغاء</button>
-      <button class="btn-danger" id="tfaDisableBtn" onclick="submit2FADisable()">إلغاء التفعيل</button>
+      <button class="btn-ghost" onclick="closeModal('tfaDisableModal')" data-i18n="common.cancel">Cancel</button>
+      <button class="btn-danger" id="tfaDisableBtn" onclick="submit2FADisable()" data-i18n="manager.disableIt">Disable</button>
     </div>
   </div>
 </div>

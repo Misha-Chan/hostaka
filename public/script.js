@@ -882,6 +882,7 @@ document.addEventListener('click', (e) => {
 function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('hostaka_lang', lang);
+  if (window.setHostakaLang) window.setHostakaLang(lang);
   document.getElementById('langMenu').classList.remove('show');
   applyLang();
   renderSidebar();
@@ -2370,6 +2371,7 @@ document.addEventListener('click', e => {
 function setLang(lang){
   currentLang = lang;
   localStorage.setItem('hostaka_lang', lang);
+  if (window.setHostakaLang) window.setHostakaLang(lang);
   document.getElementById('langMenu').classList.remove('show');
   applyLang();
   if (group) loadMsgs(false);
@@ -3831,6 +3833,7 @@ document.addEventListener('click', (e) => {
 function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('hostaka_lang', lang);
+  if (window.setHostakaLang) window.setHostakaLang(lang);
   document.getElementById('langMenu').classList.remove('show');
   applyLang();
   if (allPosts.length) renderFeed(allPosts);
@@ -6029,6 +6032,7 @@ document.addEventListener('click', (e) => {
 function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('hostaka_lang', lang);
+  if (window.setHostakaLang) window.setHostakaLang(lang);
   document.getElementById('langMenu').classList.remove('show');
   applyLang();
   if (viewUsername) loadPublicProfile(viewUsername);
@@ -7600,6 +7604,7 @@ document.addEventListener('click', e => {
 function setLang(lang){
   currentLang = lang;
   localStorage.setItem('hostaka_lang', lang);
+  if (window.setHostakaLang) window.setHostakaLang(lang);
   document.getElementById('langMenu').classList.remove('show');
   applyLang();
 }
