@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="page-shiziai" lang="ar" dir="rtl">
+<html class="page-shiziai" lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -9,6 +9,7 @@
   
   <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/style.css">
+<script src="/i18n.js"></script>
 </head>
 <body class="page-shiziai">
 
@@ -25,15 +26,15 @@
       <div class="shizi-av"><img src="shizi-icon.png" alt="Shizi AI"></div>
       <div>
         <div class="shizi-name">Shizi AI</div>
-        <div class="shizi-status"><span class="dot"></span><span id="statusText">متصلة الآن</span></div>
+        <div class="shizi-status"><span class="dot"></span><span id="statusText" data-i18n="shiziai.online">Online now</span></div>
       </div>
     </div>
   </div>
   <div class="topbar-right">
-    <button class="icon-btn" id="clearBtn" onclick="clearChat()" title="محادثة جديدة">
+    <button class="icon-btn" id="clearBtn" onclick="clearChat()" data-i18n-title="shiziai.newChat" title="New chat">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
     </button>
-    <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="تبديل الثيم">
+    <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" data-i18n-title="common.toggleTheme" title="Toggle theme">
       <span class="ti-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="5"/>
         <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
@@ -42,14 +43,14 @@
         <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
       </svg></span>
     </button>
-    <button class="icon-btn" id="wallpaperToggle" onclick="openWallpaperModal()" title="خلفية المنصة">
+    <button class="icon-btn" id="wallpaperToggle" onclick="openWallpaperModal()" data-i18n-title="shiziai.wallpaperTitle" title="Platform background">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <rect x="3" y="3" width="18" height="18" rx="2"/>
         <circle cx="8.5" cy="8.5" r="1.5"/>
         <path d="M21 15l-5-5L5 21"/>
       </svg>
     </button>
-    <div class="lang-selector icon-btn" id="langToggle" onclick="toggleLangMenu()" title="تغيير اللغة">
+    <div class="lang-selector icon-btn" id="langToggle" onclick="toggleLangMenu()" data-i18n-title="common.changeLanguage" title="Change language">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
@@ -71,7 +72,7 @@
 </div>
 
 <div class="input-area" id="inputArea" style="display:none;">
-  <textarea class="msg-input" id="msgInput" placeholder="اكتب رسالتك..." rows="1" onkeydown="onKey(event)" oninput="autoResize(this)"></textarea>
+  <textarea class="msg-input" id="msgInput" placeholder="Type your message..." data-i18n-placeholder="shiziai.typeMessage" rows="1" onkeydown="onKey(event)" oninput="autoResize(this)"></textarea>
   <button class="send-btn" id="sendBtn" onclick="sendMsg()">
     <svg viewBox="0 0 24 24" fill="none" stroke="var(--black)" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
   </button>
@@ -81,30 +82,30 @@
   <div class="wp-box">
     <div class="wp-title">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-      <span>خلفية المنصة</span>
+      <span data-i18n="shiziai.wallpaperTitle">Platform background</span>
     </div>
-    <p class="wp-desc">اختر صورة خلفية خاصة بك، مثل خلفية سطح المكتب — تتحول الواجهة لبطاقات زجاجية، ويتكيّف الثيم تلقائيًا مع ألوان الصورة.</p>
-    <div class="wp-preview" id="wallpaperPreviewBox"><span id="wallpaperPreviewEmpty">لا توجد خلفية محددة</span></div>
+    <p class="wp-desc" data-i18n="shiziai.wallpaperDesc">Choose a background image of your own, like a desktop wallpaper — the interface turns into glass cards, and the theme automatically adapts to the image's colors.</p>
+    <div class="wp-preview" id="wallpaperPreviewBox"><span id="wallpaperPreviewEmpty" data-i18n="shiziai.noWallpaper">No background set</span></div>
     <input type="file" id="wallpaperFile" accept="image/*" style="display:none;" onchange="onWallpaperFile(event)">
     <button class="wp-upload-btn" onclick="document.getElementById('wallpaperFile').click()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      رفع صورة خلفية
+      <span data-i18n="shiziai.uploadWallpaper">Upload background image</span>
     </button>
     <div class="wp-row">
-      <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 2v10l7 4"/></svg> تمويه الخلفية</label>
+      <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 2v10l7 4"/></svg> <span data-i18n="shiziai.blur">Background blur</span></label>
       <input type="range" id="wallpaperBlurRange" min="0" max="30" value="6" oninput="updateWallpaperTuning()">
     </div>
     <div class="wp-row">
-      <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg> إضاءة التراكب</label>
+      <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg> <span data-i18n="shiziai.overlayDim">Overlay brightness</span></label>
       <input type="range" id="wallpaperDimRange" min="0" max="80" value="35" oninput="updateWallpaperTuning()">
     </div>
-    <label class="wp-check"><input type="checkbox" id="wallpaperAutoTheme" checked onchange="updateWallpaperTuning()"> تغيير الثيم تلقائيًا حسب ألوان الخلفية</label>
+    <label class="wp-check"><input type="checkbox" id="wallpaperAutoTheme" checked onchange="updateWallpaperTuning()"> <span data-i18n="shiziai.autoTheme">Auto-change theme based on background colors</span></label>
     <div class="wp-footer">
       <button class="wp-btn-ghost" onclick="removeWallpaper()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-        إزالة الخلفية
+        <span data-i18n="shiziai.removeWallpaper">Remove background</span>
       </button>
-      <button class="wp-btn-primary" onclick="document.getElementById('wallpaperModal').classList.remove('show')">تم</button>
+      <button class="wp-btn-primary" onclick="document.getElementById('wallpaperModal').classList.remove('show')" data-i18n="common.done">Done</button>
     </div>
   </div>
 </div>

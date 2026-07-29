@@ -1,14 +1,15 @@
 <!DOCTYPE html>
-<html class="page-group" lang="ar" dir="rtl">
+<html class="page-group" lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" href="hostaka-icon.png" type="image/png">
-  <title>Hostaka — المجموعة</title>
+  <title data-i18n="group.pageTitle">Hostaka — Group</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/style.css">
+<script src="/i18n.js"></script>
 </head>
 <body class="page-group">
 
@@ -19,7 +20,7 @@
   <div class="topbar-left">
     <a href="/chat" class="back-btn" id="backBtn">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-      <span id="backText">الرسائل</span>
+      <span id="backText" data-i18n="chat.title">Messages</span>
     </a>
     <div class="topbar-peer" id="topbarPeer" onclick="openGroupSettings()">
       <div class="topbar-peer-av" id="groupAvWrap">G</div>
@@ -30,7 +31,7 @@
     </div>
   </div>
   <div class="topbar-right">
-    <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="تبديل الثيم">
+    <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" data-i18n-title="common.toggleTheme" title="Toggle theme">
       <span class="ti-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
         <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
@@ -38,14 +39,14 @@
         <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
       </svg></span>
     </button>
-    <button class="icon-btn" id="wallpaperToggle" onclick="openWallpaperModal()" title="خلفية المنصة">
+    <button class="icon-btn" id="wallpaperToggle" onclick="openWallpaperModal()" data-i18n-title="shiziai.wallpaperTitle" title="Platform background">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <rect x="3" y="3" width="18" height="18" rx="2"/>
         <circle cx="8.5" cy="8.5" r="1.5"/>
         <path d="M21 15l-5-5L5 21"/>
       </svg>
     </button>
-    <div class="lang-selector icon-btn" id="langToggle" onclick="toggleLangMenu()" title="تغيير اللغة">
+    <div class="lang-selector icon-btn" id="langToggle" onclick="toggleLangMenu()" data-i18n-title="common.changeLanguage" title="Change language">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
@@ -69,16 +70,16 @@
   <div class="chat-main" id="chatMain">
     <div class="empty-state" id="emptyState">
       <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <span id="loadingText">جارٍ التحميل...</span>
+      <span id="loadingText" data-i18n="common.loading">Loading...</span>
     </div>
   </div>
 
   <div class="sidebar" id="sidebar">
     <div class="sidebar-head">
-      <span class="sidebar-head-title" id="membersTitle">الأعضاء</span>
+      <span class="sidebar-head-title" id="membersTitle" data-i18n="group.members">Members</span>
       <button class="btn-add-member" onclick="openAddMember()" id="addMemberBtn" style="display:none;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        <span id="addMemberText">إضافة</span>
+        <span id="addMemberText" data-i18n="group.add">Add</span>
       </button>
     </div>
     <div class="member-list" id="memberList">
@@ -89,12 +90,12 @@
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-<!-- إعدادات المجموعة -->
+<!-- Group settings -->
 <div class="modal-bg" id="groupSettingsModal">
   <div class="modal-box">
     <div class="modal-title">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      <span id="settingsTitle">إعدادات المجموعة</span>
+      <span id="settingsTitle" data-i18n="group.groupSettings">Group settings</span>
     </div>
     <div style="display:flex;justify-content:center;margin-bottom:14px;">
       <div id="gsAvatarPreview" onclick="document.getElementById('gsAvatarFile').click()" style="width:76px;height:76px;border-radius:50%;background:var(--avatar-gradient);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;font-weight:800;font-size:1.6rem;color:#fff;position:relative;border:2px solid var(--border);">
@@ -102,21 +103,21 @@
       </div>
       <input type="file" id="gsAvatarFile" accept="image/*" style="display:none;" onchange="onGroupAvatarFile(event)">
     </div>
-    <input class="m-input" type="text" id="gsName" placeholder="اسم المجموعة *">
-    <input class="m-input" type="text" id="gsDesc" placeholder="وصف المجموعة (اختياري)">
+    <input class="m-input" type="text" id="gsName" placeholder="Group name *" data-i18n-placeholder="chat.groupNamePlaceholder">
+    <input class="m-input" type="text" id="gsDesc" placeholder="Group description (optional)" data-i18n-placeholder="group.descPlaceholder">
     <div class="m-footer">
-      <button class="btn-cancel" onclick="closeModal('groupSettingsModal')" id="gsCancelBtn">إلغاء</button>
-      <button class="btn-confirm" id="gsSaveBtn" onclick="saveGroupSettings()"><span id="gsSaveText">حفظ</span></button>
+      <button class="btn-cancel" onclick="closeModal('groupSettingsModal')" id="gsCancelBtn" data-i18n="common.cancel">Cancel</button>
+      <button class="btn-confirm" id="gsSaveBtn" onclick="saveGroupSettings()"><span id="gsSaveText" data-i18n="common.save">Save</span></button>
     </div>
     <div style="border-top:1px solid var(--border);margin-top:18px;padding-top:14px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
       <label class="cs-toggle-row" style="flex:1 1 100%;">
-        <span>إظهار مؤشر قراءة الرسائل</span>
+        <span data-i18n="group.showReadReceipts">Show read receipts</span>
         <input type="checkbox" id="gsReadReceipts" onchange="toggleGroupReadReceipts(this.checked)">
       </label>
-      <button class="btn-confirm" onclick="openGroupMedia()" style="background:rgba(128,128,128,0.12);color:var(--text);" id="gsMediaBtn">عرض وسائط المحادثة</button>
-      <button class="btn-confirm" onclick="openReportGroupModal()" style="background:rgba(128,128,128,0.12);color:var(--text);" id="gsReportBtn">الإبلاغ عن الدردشة الجماعية</button>
-      <button class="btn-confirm" onclick="leaveGroup()" id="leaveGroupBtn" style="background:rgba(128,128,128,0.12);color:var(--text);">مغادرة المجموعة</button>
-      <button class="btn-confirm btn-danger" onclick="deleteGroupConfirm()" id="deleteGroupBtn" style="display:none;">حذف المجموعة</button>
+      <button class="btn-confirm" onclick="openGroupMedia()" style="background:rgba(128,128,128,0.12);color:var(--text);" id="gsMediaBtn" data-i18n="group.viewChatMedia">View chat media</button>
+      <button class="btn-confirm" onclick="openReportGroupModal()" style="background:rgba(128,128,128,0.12);color:var(--text);" id="gsReportBtn" data-i18n="group.reportGroupChat">Report group chat</button>
+      <button class="btn-confirm" onclick="leaveGroup()" id="leaveGroupBtn" style="background:rgba(128,128,128,0.12);color:var(--text);" data-i18n="group.leaveGroup">Leave group</button>
+      <button class="btn-confirm btn-danger" onclick="deleteGroupConfirm()" id="deleteGroupBtn" style="display:none;" data-i18n="group.deleteGroup">Delete group</button>
     </div>
   </div>
 </div>
@@ -125,11 +126,11 @@
   <div class="modal-box cs-box">
     <div class="modal-title">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-      <span>وسائط المحادثة</span>
+      <span data-i18n="chat.chatMedia">Chat media</span>
     </div>
     <div class="media-grid" id="mediaGrid"></div>
     <div class="m-footer">
-      <button class="btn-cancel" onclick="closeModal('mediaViewModal')">إغلاق</button>
+      <button class="btn-cancel" onclick="closeModal('mediaViewModal')" data-i18n="common.close">Close</button>
     </div>
   </div>
 </div>
@@ -138,33 +139,33 @@
   <div class="modal-box">
     <div class="modal-title">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <span>الإبلاغ عن الدردشة الجماعية</span>
+      <span data-i18n="group.reportGroupChat">Report group chat</span>
     </div>
     <select id="reportGroupReason" class="m-input" style="margin-bottom:10px;">
-      <option value="abuse">إساءة أو تنمر</option>
-      <option value="spam">رسائل مزعجة</option>
-      <option value="nudity">محتوى غير لائق</option>
-      <option value="other">سبب آخر</option>
+      <option value="abuse" data-i18n="profile.reasonAbuse">Abuse or harassment</option>
+      <option value="spam" data-i18n="chat.reasonSpamMsgs">Spam messages</option>
+      <option value="nudity" data-i18n="group.reasonNudity">Inappropriate content</option>
+      <option value="other" data-i18n="profile.reasonOther">Other reason</option>
     </select>
-    <textarea id="reportGroupDetails" class="m-input" placeholder="تفاصيل إضافية (اختياري)" style="min-height:90px;resize:vertical;"></textarea>
+    <textarea id="reportGroupDetails" class="m-input" placeholder="Additional details (optional)" data-i18n-placeholder="profile.additionalDetails" style="min-height:90px;resize:vertical;"></textarea>
     <div class="m-footer">
-      <button class="btn-cancel" onclick="closeModal('reportGroupModal')">إلغاء</button>
-      <button class="btn-confirm" id="reportGroupBtn" onclick="submitReportGroup()"><span>إرسال البلاغ</span></button>
+      <button class="btn-cancel" onclick="closeModal('reportGroupModal')" data-i18n="common.cancel">Cancel</button>
+      <button class="btn-confirm" id="reportGroupBtn" onclick="submitReportGroup()"><span data-i18n="profile.sendReport">Send report</span></button>
     </div>
   </div>
 </div>
 
-<!-- إضافة عضو -->
+<!-- Add member -->
 <div class="modal-bg" id="addMemberModal">
   <div class="modal-box">
     <div class="modal-title">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      <span id="addMemberTitle">إضافة أعضاء</span>
+      <span id="addMemberTitle" data-i18n="group.addMembers">Add members</span>
     </div>
     <div id="addMemberOptions" style="max-height:280px;overflow-y:auto;margin-bottom:4px;"></div>
     <div class="m-footer">
-      <button class="btn-cancel" onclick="closeModal('addMemberModal')" id="amCancelBtn">إلغاء</button>
-      <button class="btn-confirm" id="amConfirmBtn" onclick="confirmAddMembers()"><span id="amConfirmText">إضافة</span></button>
+      <button class="btn-cancel" onclick="closeModal('addMemberModal')" id="amCancelBtn" data-i18n="common.cancel">Cancel</button>
+      <button class="btn-confirm" id="amConfirmBtn" onclick="confirmAddMembers()"><span id="amConfirmText" data-i18n="group.add">Add</span></button>
     </div>
   </div>
 </div>
@@ -173,18 +174,18 @@
   <div class="modal-box">
     <div class="modal-title">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <span id="reportMsgModalTitle">الإبلاغ عن رسالة</span>
+      <span id="reportMsgModalTitle" data-i18n="group.reportMessage">Report message</span>
     </div>
     <select id="reportMsgReason" class="m-input" style="margin-bottom:10px;">
-      <option value="spam">محتوى مزعج / سبام</option>
-      <option value="abuse">إساءة أو تنمر</option>
-      <option value="nudity">محتوى غير لائق</option>
-      <option value="other">سبب آخر</option>
+      <option value="spam" data-i18n="profile.reasonSpam">Spam / unwanted content</option>
+      <option value="abuse" data-i18n="profile.reasonAbuse">Abuse or harassment</option>
+      <option value="nudity" data-i18n="group.reasonNudity">Inappropriate content</option>
+      <option value="other" data-i18n="profile.reasonOther">Other reason</option>
     </select>
-    <textarea id="reportMsgDetails" class="m-input" placeholder="تفاصيل إضافية (اختياري)" style="min-height:90px;resize:vertical;"></textarea>
+    <textarea id="reportMsgDetails" class="m-input" placeholder="Additional details (optional)" data-i18n-placeholder="profile.additionalDetails" style="min-height:90px;resize:vertical;"></textarea>
     <div class="m-footer">
-      <button class="btn-cancel" onclick="closeModal('reportMsgModal')">إلغاء</button>
-      <button class="btn-confirm" id="reportMsgBtn" onclick="submitReportMsg()"><span>إرسال البلاغ</span></button>
+      <button class="btn-cancel" onclick="closeModal('reportMsgModal')" data-i18n="common.cancel">Cancel</button>
+      <button class="btn-confirm" id="reportMsgBtn" onclick="submitReportMsg()"><span data-i18n="profile.sendReport">Send report</span></button>
     </div>
   </div>
 </div>
@@ -193,30 +194,30 @@
   <div class="wp-box">
     <div class="wp-title">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-      <span>خلفية المنصة</span>
+      <span data-i18n="shiziai.wallpaperTitle">Platform background</span>
     </div>
-    <p class="wp-desc">اختر صورة خلفية خاصة بك، مثل خلفية سطح المكتب — تتحول الواجهة لبطاقات زجاجية، ويتكيّف الثيم تلقائيًا مع ألوان الصورة.</p>
-    <div class="wp-preview" id="wallpaperPreviewBox"><span id="wallpaperPreviewEmpty">لا توجد خلفية محددة</span></div>
+    <p class="wp-desc" data-i18n="shiziai.wallpaperDesc">Choose a background image of your own, like a desktop wallpaper — the interface turns into glass cards, and the theme automatically adapts to the image's colors.</p>
+    <div class="wp-preview" id="wallpaperPreviewBox"><span id="wallpaperPreviewEmpty" data-i18n="shiziai.noWallpaper">No background set</span></div>
     <input type="file" id="wallpaperFile" accept="image/*" style="display:none;" onchange="onWallpaperFile(event)">
     <button class="wp-upload-btn" onclick="document.getElementById('wallpaperFile').click()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      رفع صورة خلفية
+      <span data-i18n="shiziai.uploadWallpaper">Upload background image</span>
     </button>
     <div class="wp-row">
-      <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 2v10l7 4"/></svg> تمويه الخلفية</label>
+      <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 2v10l7 4"/></svg> <span data-i18n="shiziai.blur">Background blur</span></label>
       <input type="range" id="wallpaperBlurRange" min="0" max="30" value="6" oninput="updateWallpaperTuning()">
     </div>
     <div class="wp-row">
-      <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg> إضاءة التراكب</label>
+      <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg> <span data-i18n="shiziai.overlayDim">Overlay brightness</span></label>
       <input type="range" id="wallpaperDimRange" min="0" max="80" value="35" oninput="updateWallpaperTuning()">
     </div>
-    <label class="wp-check"><input type="checkbox" id="wallpaperAutoTheme" checked onchange="updateWallpaperTuning()"> تغيير الثيم تلقائيًا حسب ألوان الخلفية</label>
+    <label class="wp-check"><input type="checkbox" id="wallpaperAutoTheme" checked onchange="updateWallpaperTuning()"> <span data-i18n="shiziai.autoTheme">Auto-change theme based on background colors</span></label>
     <div class="wp-footer">
       <button class="wp-btn-ghost" onclick="removeWallpaper()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-        إزالة الخلفية
+        <span data-i18n="shiziai.removeWallpaper">Remove background</span>
       </button>
-      <button class="wp-btn-primary" onclick="document.getElementById('wallpaperModal').classList.remove('show')">تم</button>
+      <button class="wp-btn-primary" onclick="document.getElementById('wallpaperModal').classList.remove('show')" data-i18n="common.done">Done</button>
     </div>
   </div>
 </div>
@@ -225,11 +226,11 @@
   <div class="img-viewer-topbar">
     <button class="iv-btn" onclick="closeImgViewer(event)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      إغلاق
+      <span data-i18n="common.close">Close</span>
     </button>
     <button class="iv-btn" onclick="saveViewerImage(event)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      حفظ
+      <span data-i18n="common.save">Save</span>
     </button>
   </div>
   <img class="img-viewer-img" id="imgViewerImg" src="" alt="" onclick="event.stopPropagation()">

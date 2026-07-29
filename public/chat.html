@@ -1,48 +1,49 @@
 <!DOCTYPE html>
-<html class="page-chat" lang="ar" dir="rtl">
+<html class="page-chat" lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" href="hostaka-icon.png" type="image/png">
-  <title>Hostaka — الرسائل</title>
+  <title data-i18n="chat.pageTitle">Hostaka — Messages</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
   
 <base target="_blank">
 <base target="_blank">
   <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/style.css">
+<script src="/i18n.js"></script>
 </head>
 <body class="page-chat">
 
 <div class="wallpaper-bg" id="wallpaperBg"></div>
 <div class="wallpaper-overlay" id="wallpaperOverlayEl"></div>
 
-<!-- ===== الشريط العلوي ===== -->
+<!-- ===== Top bar ===== -->
 <div class="topbar" id="topbar">
   <div class="topbar-left">
     <a href="/" class="back-btn" id="backBtn">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
       <span id="backText">Hostaka</span>
     </a>
-    <span class="topbar-title" id="topbarTitle">الرسائل</span>
+    <span class="topbar-title" id="topbarTitle" data-i18n="chat.title">Messages</span>
   </div>
   <div class="topbar-right">
     <div class="peer-opts-wrap" id="peerOptsWrap" style="position:relative;display:none;">
-      <button class="icon-btn" onclick="togglePeerOpts()" title="خيارات المحادثة">
+      <button class="icon-btn" onclick="togglePeerOpts()" data-i18n-title="chat.chatOptions" title="Chat options">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
       </button>
       <div class="peer-opts-menu" id="peerOptsMenu">
         <button onclick="openReportPeerModal()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          الإبلاغ عن المستخدم
+          <span data-i18n="chat.reportUser">Report user</span>
         </button>
         <button class="danger" id="peerBlockBtn" onclick="togglePeerBlock()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-          <span id="peerBlockText">حظر المستخدم</span>
+          <span id="peerBlockText" data-i18n="chat.blockUser">Block user</span>
         </button>
       </div>
     </div>
-    <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="تبديل الثيم">
+    <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" data-i18n-title="common.toggleTheme" title="Toggle theme">
       <span class="ti-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="5"/>
         <line x1="12" y1="1" x2="12" y2="3"/>
@@ -55,14 +56,14 @@
         <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
       </svg></span>
     </button>
-    <button class="icon-btn" id="wallpaperToggle" onclick="openWallpaperModal()" title="خلفية المنصة">
+    <button class="icon-btn" id="wallpaperToggle" onclick="openWallpaperModal()" data-i18n-title="shiziai.wallpaperTitle" title="Platform background">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <rect x="3" y="3" width="18" height="18" rx="2"/>
         <circle cx="8.5" cy="8.5" r="1.5"/>
         <path d="M21 15l-5-5L5 21"/>
       </svg>
     </button>
-    <div class="lang-selector icon-btn" id="langToggle" onclick="toggleLangMenu()" title="تغيير اللغة">
+    <div class="lang-selector icon-btn" id="langToggle" onclick="toggleLangMenu()" data-i18n-title="common.changeLanguage" title="Change language">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"/>
         <line x1="2" y1="12" x2="22" y2="12"/>
@@ -83,44 +84,44 @@
   </div>
 </div>
 
-<!-- ===== التخطيط ===== -->
+<!-- ===== Layout ===== -->
 <div class="chat-layout">
   <div class="chat-main" id="chatMain">
     <div class="empty-state" id="emptyState">
       <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <span id="emptyStateText">اختر محادثة من القائمة</span>
+      <span id="emptyStateText" data-i18n="chat.selectConversation">Select a conversation from the list</span>
     </div>
   </div>
 
   <div class="sidebar" id="sidebar">
     <div class="sidebar-head">
-      <span class="sidebar-head-title" id="sidebarTitle">الرسائل</span>
+      <span class="sidebar-head-title" id="sidebarTitle" data-i18n="chat.title">Messages</span>
       <button class="btn-new-group" onclick="openCreateGroup()" id="newGroupBtn">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        <span id="newGroupText">جروب جديد</span>
+        <span id="newGroupText" data-i18n="chat.newGroup">New group</span>
       </button>
     </div>
     <div class="user-list" id="userList">
-      <div style="text-align:center;padding:30px;color:var(--muted);font-size:0.84rem;" id="loadingUsers">جارٍ التحميل...</div>
+      <div style="text-align:center;padding:30px;color:var(--muted);font-size:0.84rem;" id="loadingUsers" data-i18n="common.loading">Loading...</div>
     </div>
   </div>
 </div>
 
-<!-- ===== طبقة الشريط الجانبي ===== -->
+<!-- ===== Sidebar overlay ===== -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-<!-- ===== مودال إنشاء مجموعة ===== -->
+<!-- ===== Create group modal ===== -->
 <div class="modal-bg" id="createGroupModal">
   <div class="modal-box">
     <div class="modal-title">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      <span id="modalGroupTitle">إنشاء مجموعة جديدة</span>
+      <span id="modalGroupTitle" data-i18n="chat.createNewGroup">Create new group</span>
     </div>
-    <input class="m-input" type="text" id="cgName" placeholder="اسم المجموعة *">
+    <input class="m-input" type="text" id="cgName" placeholder="Group name *" data-i18n-placeholder="chat.groupNamePlaceholder">
     <div id="cgMembers" style="max-height:220px;overflow-y:auto;margin-bottom:4px;"></div>
     <div class="m-footer">
-      <button class="btn-cancel" onclick="closeCreateGroup()" id="modalCancelBtn">إلغاء</button>
-      <button class="btn-confirm" id="createGroupBtn" onclick="createGroup()"><span id="modalCreateBtn">إنشاء</span></button>
+      <button class="btn-cancel" onclick="closeCreateGroup()" id="modalCancelBtn" data-i18n="common.cancel">Cancel</button>
+      <button class="btn-confirm" id="createGroupBtn" onclick="createGroup()"><span id="modalCreateBtn" data-i18n="common.create">Create</span></button>
     </div>
   </div>
 </div>
@@ -129,18 +130,18 @@
   <div class="modal-box">
     <div class="modal-title">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <span id="reportPeerModalTitle">الإبلاغ عن المستخدم</span>
+      <span id="reportPeerModalTitle" data-i18n="chat.reportUser">Report user</span>
     </div>
     <select id="reportPeerReason" class="m-input" style="margin-bottom:10px;">
-      <option value="abuse">إساءة أو تنمر</option>
-      <option value="spam">رسائل مزعجة</option>
-      <option value="fake">حساب مزيف أو منتحل</option>
-      <option value="other">سبب آخر</option>
+      <option value="abuse" data-i18n="profile.reasonAbuse">Abuse or harassment</option>
+      <option value="spam" data-i18n="chat.reasonSpamMsgs">Spam messages</option>
+      <option value="fake" data-i18n="profile.reasonFake">Fake or impersonation account</option>
+      <option value="other" data-i18n="profile.reasonOther">Other reason</option>
     </select>
-    <textarea id="reportPeerDetails" class="m-input" placeholder="تفاصيل إضافية (اختياري)" style="min-height:90px;resize:vertical;"></textarea>
+    <textarea id="reportPeerDetails" class="m-input" placeholder="Additional details (optional)" data-i18n-placeholder="profile.additionalDetails" style="min-height:90px;resize:vertical;"></textarea>
     <div class="m-footer">
-      <button class="btn-cancel" onclick="closeModal('reportPeerModal')">إلغاء</button>
-      <button class="btn-confirm" id="reportPeerBtn" onclick="submitPeerReport()"><span>إرسال البلاغ</span></button>
+      <button class="btn-cancel" onclick="closeModal('reportPeerModal')" data-i18n="common.cancel">Cancel</button>
+      <button class="btn-confirm" id="reportPeerBtn" onclick="submitPeerReport()"><span data-i18n="profile.sendReport">Send report</span></button>
     </div>
   </div>
 </div>
@@ -149,30 +150,30 @@
   <div class="wp-box">
     <div class="wp-title">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-      <span>خلفية المنصة</span>
+      <span data-i18n="shiziai.wallpaperTitle">Platform background</span>
     </div>
-    <p class="wp-desc">اختر صورة خلفية خاصة بك، مثل خلفية سطح المكتب — تتحول الواجهة لبطاقات زجاجية، ويتكيّف الثيم تلقائيًا مع ألوان الصورة.</p>
-    <div class="wp-preview" id="wallpaperPreviewBox"><span id="wallpaperPreviewEmpty">لا توجد خلفية محددة</span></div>
+    <p class="wp-desc" data-i18n="shiziai.wallpaperDesc">Choose a background image of your own, like a desktop wallpaper — the interface turns into glass cards, and the theme automatically adapts to the image's colors.</p>
+    <div class="wp-preview" id="wallpaperPreviewBox"><span id="wallpaperPreviewEmpty" data-i18n="shiziai.noWallpaper">No background set</span></div>
     <input type="file" id="wallpaperFile" accept="image/*" style="display:none;" onchange="onWallpaperFile(event)">
     <button class="wp-upload-btn" onclick="document.getElementById('wallpaperFile').click()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      رفع صورة خلفية
+      <span data-i18n="shiziai.uploadWallpaper">Upload background image</span>
     </button>
     <div class="wp-row">
-      <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 2v10l7 4"/></svg> تمويه الخلفية</label>
+      <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 2v10l7 4"/></svg> <span data-i18n="shiziai.blur">Background blur</span></label>
       <input type="range" id="wallpaperBlurRange" min="0" max="30" value="6" oninput="updateWallpaperTuning()">
     </div>
     <div class="wp-row">
-      <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg> إضاءة التراكب</label>
+      <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg> <span data-i18n="shiziai.overlayDim">Overlay brightness</span></label>
       <input type="range" id="wallpaperDimRange" min="0" max="80" value="35" oninput="updateWallpaperTuning()">
     </div>
-    <label class="wp-check"><input type="checkbox" id="wallpaperAutoTheme" checked onchange="updateWallpaperTuning()"> تغيير الثيم تلقائيًا حسب ألوان الخلفية</label>
+    <label class="wp-check"><input type="checkbox" id="wallpaperAutoTheme" checked onchange="updateWallpaperTuning()"> <span data-i18n="shiziai.autoTheme">Auto-change theme based on background colors</span></label>
     <div class="wp-footer">
       <button class="wp-btn-ghost" onclick="removeWallpaper()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-        إزالة الخلفية
+        <span data-i18n="shiziai.removeWallpaper">Remove background</span>
       </button>
-      <button class="wp-btn-primary" onclick="document.getElementById('wallpaperModal').classList.remove('show')">تم</button>
+      <button class="wp-btn-primary" onclick="document.getElementById('wallpaperModal').classList.remove('show')" data-i18n="common.done">Done</button>
     </div>
   </div>
 </div>
@@ -181,11 +182,11 @@
   <div class="modal-box cs-box">
     <div class="modal-title">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      <span id="chatSettingsTitle">إعدادات المحادثة</span>
+      <span id="chatSettingsTitle" data-i18n="chat.chatSettings">Chat settings</span>
     </div>
     <div id="chatSettingsBody"></div>
     <div class="m-footer">
-      <button class="btn-cancel" onclick="closeChatSettings()">إغلاق</button>
+      <button class="btn-cancel" onclick="closeChatSettings()" data-i18n="common.close">Close</button>
     </div>
   </div>
 </div>
@@ -194,11 +195,11 @@
   <div class="modal-box cs-box">
     <div class="modal-title">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-      <span>وسائط المحادثة</span>
+      <span data-i18n="chat.chatMedia">Chat media</span>
     </div>
     <div class="media-grid" id="mediaGrid"></div>
     <div class="m-footer">
-      <button class="btn-cancel" onclick="closeModal('mediaViewModal')">إغلاق</button>
+      <button class="btn-cancel" onclick="closeModal('mediaViewModal')" data-i18n="common.close">Close</button>
     </div>
   </div>
 </div>
@@ -207,11 +208,11 @@
   <div class="img-viewer-topbar">
     <button class="iv-btn" onclick="closeImgViewer(event)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      إغلاق
+      <span data-i18n="common.close">Close</span>
     </button>
     <button class="iv-btn" onclick="saveViewerImage(event)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      حفظ
+      <span data-i18n="common.save">Save</span>
     </button>
   </div>
   <img class="img-viewer-img" id="imgViewerImg" src="" alt="" onclick="event.stopPropagation()">
