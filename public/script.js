@@ -152,6 +152,17 @@ function showPage(name){
   if(name==='dashboard') loadDashboard();
   if(name==='reports') loadReports();
   if(name==='logs') loadLogs();
+  toggleAdminSidebar(false); // إغلاق الشريط الجانبي تلقائياً بعد التنقل على الجوال
+}
+
+// فتح/إغلاق الشريط الجانبي على الشاشات الصغيرة (لوحة الإدارة)
+function toggleAdminSidebar(force){
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('adminSidebarBackdrop');
+  if(!sidebar || !backdrop) return;
+  const shouldOpen = typeof force === 'boolean' ? force : !sidebar.classList.contains('open');
+  sidebar.classList.toggle('open', shouldOpen);
+  backdrop.classList.toggle('show', shouldOpen);
 }
 
 document.getElementById('ntTarget')?.addEventListener('change', function(){

@@ -78,6 +78,38 @@ html.page-admin {
     body.page-admin .btn-login-submit:hover {background:var(--primary-h);transform:translateY(-1px);}
     body.page-admin .btn-login-submit:disabled {opacity:0.5;cursor:not-allowed;transform:none;}
 
+    /* ===== Mobile responsiveness (Phase 2) ===== */
+    body.page-admin .table-scroll {width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    body.page-admin .admin-mobile-toggle {
+      display:none;position:fixed;top:14px;right:14px;z-index:70;
+      width:44px;height:44px;align-items:center;justify-content:center;
+      border-radius:var(--radius-full);border:1px solid var(--border);
+      background:var(--card);color:var(--text);cursor:pointer;box-shadow:var(--shadow);
+    }
+    body.page-admin .admin-sidebar-backdrop {
+      display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:59;
+    }
+    body.page-admin .admin-sidebar-backdrop.show {display:block;}
+    @media(max-width:900px){
+      body.page-admin .admin-mobile-toggle {display:flex;}
+      body.page-admin .sidebar {
+        transform:translateX(100%);
+        transition:transform var(--transition-base);
+        z-index:60;box-shadow:var(--shadow-lg);width:260px;
+      }
+      body.page-admin .sidebar.open {transform:translateX(0);}
+      body.page-admin .main {margin-right:0;padding:76px 18px 32px;}
+      body.page-admin .nav-item {min-height:44px;font-size:0.92rem;}
+      body.page-admin .btn, body.page-admin .theme-toggle, body.page-admin .icon-btn {min-height:40px;}
+    }
+    @media(max-width:560px){
+      body.page-admin .stats-grid {grid-template-columns:repeat(2,1fr);}
+      body.page-admin .main {padding:72px 14px 28px;}
+      body.page-admin table {font-size:0.78rem;}
+      body.page-admin th, body.page-admin td {padding:8px 8px;white-space:nowrap;}
+      body.page-admin .login-box {padding:26px 20px;max-width:100%;}
+    }
+
 /* ================= chat.html ================= */
 /* ===== الثيمات ===== */
     html.page-chat {
@@ -5010,3 +5042,70 @@ body.page-save .save-item-menu button:hover {background:var(--input-bg);}
 body.page-save .save-item-menu button.active {color:var(--primary);font-weight:800;}
 body.page-save .collection-modal-input {width:100%;padding:12px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--input-bg);color:var(--text);font-family:'Cairo';font-size:0.9rem;outline:none;margin-bottom:14px;}
 body.page-save .collection-modal-input:focus {border-color:var(--primary);}
+
+/* ============================================================
+   PHASE 2 — Global Responsive & Touch-Target Safety Net
+   Loaded last, so it can safely tighten up any page without
+   needing to touch each page's individual rules.
+   ============================================================ */
+
+/* Never allow a stray element to force horizontal scrolling. */
+html, body { max-width: 100%; overflow-x: hidden; }
+
+/* Any table on any page becomes horizontally scrollable
+   instead of squeezing/breaking layout on small screens. */
+table { max-width: 100%; }
+.table-scroll, .card:has(> table) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Any modal-like box never exceeds the viewport width on small screens
+   (only kicks in when the viewport is narrower than the modal itself,
+   so it never shrinks modals that are intentionally wider on desktop). */
+@media (max-width: 480px) {
+  [class*="modal-box"], [class*="modal-bd"] > div {
+    max-width: calc(100vw - 32px);
+  }
+}
+
+/* Touch target sizing: on coarse-pointer (touch) devices, guarantee
+   at least a 44x44 hit area on the most common interactive controls
+   across every page, without changing their visual size on desktop
+   (uses min-width/min-height, which never shrinks an element — it
+   only grows ones that were declared smaller). */
+@media (pointer: coarse) {
+  [class*="icon-btn"],
+  [class*="theme-toggle"],
+  [class*="nav-item"],
+  [class*="sidebar-toggle"],
+  [class*="back-btn"],
+  [class*="btn-icon"],
+  [class*="menu-btn"],
+  a.btn, button.btn,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  /* Keep dense table/action icon buttons usable without breaking
+     tight admin/table layouts — apply padding instead of forcing size. */
+  table [class*="btn"] {
+    min-height: 38px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+}
+
+/* Respect safe-area insets on notched phones for fixed bottom/top bars. */
+@supports (padding: max(0px)) {
+  .topbar, [class*="topbar"] {
+    padding-top: max(0px, env(safe-area-inset-top));
+  }
+  [class*="input-area"], [class*="bottom-nav"] {
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 380px) {
+  /* Extra-small phones: prevent the main content container from touching edges
+     on the simple pages (manager/save/post/video/support) that share `.wrap`. */
+  .wrap { padding-left: 12px; padding-right: 12px; }
+}
