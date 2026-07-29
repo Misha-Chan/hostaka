@@ -1,0 +1,124 @@
+/* =========================================================================
+   Hostaka Design System — theme.css
+   Shared design tokens for the whole platform (extracted from H-001..H-004
+   mockups). Load this BEFORE style.css / any per-page CSS on every page.
+
+   Notes:
+   - Per-page blocks in style.css (html.page-*) still declare their own
+     copies of these variables for historical/isolation reasons; this file
+     is the single source of truth going forward and the values here match
+     what style.css now uses. When style.css is split per page (Phase 5),
+     each page file should reference these tokens instead of redefining them.
+   - DO NOT hardcode colors anywhere else. Always use var(--token).
+   - User color customization (script.js extractColorsFromImage / theme
+     picker) sets `--primary`, `--primary-h`, `--primary-light`,
+     `--primary-mid`, `--primary-border` as *inline* styles on <html>, which
+     naturally override these defaults (inline style beats stylesheet rules)
+     — so changing the default here never breaks that mechanism.
+   ========================================================================= */
+
+:root,
+html {
+  /* ---------- Brand / Primary (default: brown) ---------- */
+  --primary: #8B5E3C;
+  --primary-h: #6D4A2E;              /* hover / pressed */
+  --primary-light: rgba(139, 94, 60, 0.08);
+  --primary-mid: rgba(139, 94, 60, 0.15);
+  --primary-border: rgba(139, 94, 60, 0.25);
+  --accent: #8B5E3C;
+  --avatar-gradient: linear-gradient(145deg, #8B5E3C, #C9986B);
+
+  /* ---------- Surfaces / neutrals (light) ---------- */
+  --black: #ffffff;
+  --dark: #f5f5f7;
+  --bg: var(--dark);
+  --card: #ffffff;
+  --border: rgba(0, 0, 0, 0.08);
+  --text: #1c1c1e;
+  --muted: #8e8e93;
+
+  /* ---------- Status colors ---------- */
+  --success: #34c759;
+  --warning: #ff9500;
+  --danger: #ff3b30;
+
+  /* ---------- Spacing scale ---------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ---------- Typography scale ---------- */
+  --font-family: 'Cairo', sans-serif;
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.85rem;    /* 13.6px */
+  --text-base: 0.95rem;  /* 15.2px */
+  --text-lg: 1.1rem;     /* 17.6px */
+  --text-xl: 1.4rem;     /* 22.4px */
+  --text-2xl: 1.8rem;    /* 28.8px */
+  --text-3xl: 2.4rem;    /* 38.4px */
+  --font-weight-regular: 400;
+  --font-weight-medium: 600;
+  --font-weight-bold: 700;
+  --font-weight-black: 900;
+
+  /* ---------- Radius scale ---------- */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-full: 999px;
+
+  /* ---------- Shadows ---------- */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.12);
+
+  /* ---------- Motion ---------- */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- Dark mode ---------- */
+[data-theme="dark"] {
+  --primary: #C9986B;
+  --primary-h: #E0B78E;
+  --primary-light: rgba(201, 152, 107, 0.12);
+  --primary-mid: rgba(201, 152, 107, 0.2);
+  --primary-border: rgba(201, 152, 107, 0.3);
+  --accent: #C9986B;
+  --avatar-gradient: linear-gradient(145deg, #C9986B, #D9AF8B);
+
+  --black: #000000;
+  --dark: #121212;
+  --card: #1c1c1e;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #f5f5f7;
+  --muted: #8e8e93;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- Base reset shared by every page ---------- */
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-family);
+  background: var(--bg);
+  color: var(--text);
+  transition: background var(--transition-base), color var(--transition-base);
+}
+
+/* ---------- Focus visibility (accessibility baseline) ---------- */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
