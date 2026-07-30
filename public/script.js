@@ -73,6 +73,70 @@ function setThemeIcon(html) {
 if (document.body.classList.contains('page-admin')) {
 window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
 
+const LANG = {
+  ar: {
+    login: 'دخول', enter2faCode: 'أدخل كود المصادقة الثنائية من تطبيق المصادقة:',
+    noAdminPerm: 'ليس لديك صلاحية admin', connFail: 'فشل الاتصال',
+    writeNotifText: 'اكتب نص الإشعار', selectUsername: 'حدد اسم المستخدم', sending: 'جارٍ الإرسال...',
+    notifSentTo: 'تم إرسال الإشعار إلى {count} عضو', sendFail: 'فشل الإرسال', cantConnect: 'تعذر الاتصال',
+    sendNotifBtn: 'إرسال الإشعار', noEnoughData: 'لا توجد بيانات كافية بعد', loading: 'جارٍ التحميل...',
+    noLogs: 'لا توجد سجلات — كل شيء يعمل بشكل طبيعي ✅', fetchLogsFail: 'فشل تحميل السجلات',
+    confirmClearLogs: 'مسح كل السجلات نهائياً؟', logsCleared: 'تم مسح السجلات', clearFail: 'فشل المسح',
+    suspended: 'معلّق', active: 'نشط', promote: 'ترقية', suspend: 'تعليق', unsuspend: 'رفع التعليق',
+    disable2FATitle: 'لو المستخدم محظور دخوله بسبب مشكلة بكود المصادقة الثنائية', disable2FABtn: 'إلغاء 2FA',
+    del: 'حذف', fetchUsersFail: 'فشل تحميل المستخدمين', confirmPromote: 'ترقية هذا المستخدم لـ admin؟',
+    promoted: 'تمت الترقية', confirmDeleteUser: 'حذف {name}؟', deleted: 'تم الحذف',
+    suspendReasonPrompt: 'سبب تعليق حساب @{name} (اختياري):', suspendedToast: 'تم تعليق الحساب',
+    confirmUnsuspend: 'رفع التعليق عن @{name}؟', unsuspendedToast: 'تم رفع التعليق',
+    confirmDisable2FA: 'إلغاء تفعيل المصادقة الثنائية لحساب @{name}؟ استخدم هذا فقط لو المستخدم محظور دخوله بسبب مشكلة بكود المصادقة.',
+    disabled2FAToast: 'تم إلغاء تفعيل المصادقة الثنائية لحساب @{name}', execFail: 'تعذر التنفيذ',
+    noPosts: 'لا توجد منشورات', fetchPostsFail: 'فشل تحميل المنشورات', confirmDeletePost: 'حذف هذا المنشور؟',
+    noPendingRequests: 'لا توجد طلبات معلقة', approve: 'موافقة', reject: 'رفض', verifyGranted: 'تم منح التوثيق',
+    confirmRejectRequest: 'رفض الطلب؟', rejected: 'تم الرفض', fetchRequestsFail: 'فشل تحميل الطلبات',
+    reportTypePost: 'منشور', reportTypeComment: 'تعليق', reportTypeMessage: 'رسالة', reportTypeUser: 'مستخدم',
+    reportTypeGeneral: 'عام', reportTypeBug: 'مشكلة تقنية', reportTypeAbuse: 'إساءة استخدام',
+    reportTypeAccount: 'مشكلة حساب', reportTypeSuggestion: 'اقتراح',
+    reportStatusPending: 'قيد المراجعة', reportStatusResolved: 'تم الحل', reportStatusDismissed: 'مرفوض',
+    reporterDefault: 'مستخدم', againstPrefix: '← بحق @', prevReply: 'ردك السابق',
+    replyPlaceholder: 'اكتب رداً (اختياري)...', resolveReply: 'حل + رد', noReportsHere: 'لا توجد بلاغات هنا',
+    fetchReportsFail: 'فشل تحميل البلاغات', saved: 'تم الحفظ', saveFail: 'فشل الحفظ', visitsWord: 'زيارة'
+  },
+  en: {
+    login: 'Log In', enter2faCode: 'Enter the two-factor code from your authenticator app:',
+    noAdminPerm: 'You do not have admin permission', connFail: 'Connection failed',
+    writeNotifText: 'Write the notification text', selectUsername: 'Specify a username', sending: 'Sending...',
+    notifSentTo: 'Notification sent to {count} member(s)', sendFail: 'Failed to send', cantConnect: 'Could not connect',
+    sendNotifBtn: 'Send notification', noEnoughData: 'Not enough data yet', loading: 'Loading...',
+    noLogs: 'No logs — everything is running normally ✅', fetchLogsFail: 'Failed to load logs',
+    confirmClearLogs: 'Permanently clear all logs?', logsCleared: 'Logs cleared', clearFail: 'Clear failed',
+    suspended: 'Suspended', active: 'Active', promote: 'Promote', suspend: 'Suspend', unsuspend: 'Unsuspend',
+    disable2FATitle: 'Use only if the user is locked out due to a two-factor code issue', disable2FABtn: 'Disable 2FA',
+    del: 'Delete', fetchUsersFail: 'Failed to load users', confirmPromote: 'Promote this user to admin?',
+    promoted: 'Promoted', confirmDeleteUser: 'Delete {name}?', deleted: 'Deleted',
+    suspendReasonPrompt: 'Reason for suspending @{name} (optional):', suspendedToast: 'Account suspended',
+    confirmUnsuspend: 'Unsuspend @{name}?', unsuspendedToast: 'Suspension lifted',
+    confirmDisable2FA: 'Disable two-factor authentication for @{name}? Use this only if the user is locked out due to a 2FA code issue.',
+    disabled2FAToast: 'Disabled two-factor authentication for @{name}', execFail: 'Could not execute',
+    noPosts: 'No posts', fetchPostsFail: 'Failed to load posts', confirmDeletePost: 'Delete this post?',
+    noPendingRequests: 'No pending requests', approve: 'Approve', reject: 'Reject', verifyGranted: 'Verification granted',
+    confirmRejectRequest: 'Reject this request?', rejected: 'Rejected', fetchRequestsFail: 'Failed to load requests',
+    reportTypePost: 'Post', reportTypeComment: 'Comment', reportTypeMessage: 'Message', reportTypeUser: 'User',
+    reportTypeGeneral: 'General', reportTypeBug: 'Technical issue', reportTypeAbuse: 'Abuse',
+    reportTypeAccount: 'Account issue', reportTypeSuggestion: 'Suggestion',
+    reportStatusPending: 'Pending', reportStatusResolved: 'Resolved', reportStatusDismissed: 'Dismissed',
+    reporterDefault: 'User', againstPrefix: '← against @', prevReply: 'Your previous reply',
+    replyPlaceholder: 'Write a reply (optional)...', resolveReply: 'Resolve + reply', noReportsHere: 'No reports here',
+    fetchReportsFail: 'Failed to load reports', saved: 'Saved', saveFail: 'Save failed', visitsWord: 'visits'
+  }
+};
+let currentLang = localStorage.getItem('hostaka_lang') || 'en';
+function t(key, vars){
+  var s = (LANG[currentLang] || LANG.en)[key];
+  if (s === undefined) return key;
+  if (vars) Object.keys(vars).forEach(function(k){ s = s.replace('{'+k+'}', vars[k]); });
+  return s;
+}
+
 // ===== Theme =====
 const THEME_ICON_DARK = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
 const THEME_ICON_LIGHT = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
@@ -110,14 +174,14 @@ async function doLogin(){
   try{
     let d=await api('/api/login','POST',{email,password:pass});
     if(d.requires2FA){
-      const code = window.prompt('أدخل كود المصادقة الثنائية من تطبيق المصادقة:');
-      if(!code){ btn.disabled=false; btn.textContent='دخول'; return; }
+      const code = window.prompt(t('enter2faCode'));
+      if(!code){ btn.disabled=false; btn.textContent=t('login'); return; }
       d = await api('/api/login/2fa-verify','POST',{ pendingToken:d.pendingToken, code:code.trim() });
     }
-    if(!d.success || d.role!=='admin'){errEl.textContent=d.error||'ليس لديك صلاحية admin';errEl.style.display='block';btn.disabled=false;btn.textContent='دخول';return;}
+    if(!d.success || d.role!=='admin'){errEl.textContent=d.error||t('noAdminPerm');errEl.style.display='block';btn.disabled=false;btn.textContent=t('login');return;}
     TOKEN=d.token; localStorage.setItem('hostaka_token',TOKEN);
     initAdmin(d.username);
-  }catch(e){errEl.textContent='فشل الاتصال';errEl.style.display='block';btn.disabled=false;btn.textContent='دخول';}
+  }catch(e){errEl.textContent=t('connFail');errEl.style.display='block';btn.disabled=false;btn.textContent=t('login');}
 }
 document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
@@ -152,10 +216,10 @@ function showPage(name){
   if(name==='dashboard') loadDashboard();
   if(name==='reports') loadReports();
   if(name==='logs') loadLogs();
-  toggleAdminSidebar(false); // إغلاق الشريط الجانبي تلقائياً بعد التنقل على الجوال
+  toggleAdminSidebar(false); // close sidebar automatically after mobile navigation
 }
 
-// فتح/إغلاق الشريط الجانبي على الشاشات الصغيرة (لوحة الإدارة)
+// Open/close sidebar on small screens (admin panel)
 function toggleAdminSidebar(force){
   const sidebar = document.getElementById('sidebar');
   const backdrop = document.getElementById('adminSidebarBackdrop');
@@ -175,22 +239,22 @@ async function sendAdminNotif(){
     : 'all';
   const content = document.getElementById('ntContent').value.trim();
   const link = document.getElementById('ntLink').value.trim();
-  if(!content){ toast('اكتب نص الإشعار'); return; }
-  if(target !== 'all' && !target){ toast('حدد اسم المستخدم'); return; }
+  if(!content){ toast(t('writeNotifText')); return; }
+  if(target !== 'all' && !target){ toast(t('selectUsername')); return; }
   const btn = document.getElementById('ntSendBtn');
-  btn.disabled = true; btn.textContent = 'جارٍ الإرسال...';
+  btn.disabled = true; btn.textContent = t('sending');
   try{
     const d = await api('/api/admin/notifications', 'POST', { content, link, target });
     if(d.success){
-      toast('تم إرسال الإشعار إلى ' + d.count + ' عضو');
+      toast(t('notifSentTo',{count:d.count}));
       document.getElementById('ntContent').value = '';
       document.getElementById('ntLink').value = '';
       document.getElementById('ntUsername').value = '';
     } else {
-      toast(d.error || 'فشل الإرسال');
+      toast(d.error || t('sendFail'));
     }
-  }catch(e){ toast('تعذر الاتصال'); }
-  btn.disabled = false; btn.textContent = 'إرسال الإشعار';
+  }catch(e){ toast(t('cantConnect')); }
+  btn.disabled = false; btn.textContent = t('sendNotifBtn');
 }
 
 async function loadDashboard(){
@@ -213,7 +277,7 @@ async function loadDashboard(){
 }
 
 // ============================================================
-// التحليلات (Analytics) — الزيارات، النشطون الآن، معدل الارتداد
+// Analytics — visits, active now, bounce rate
 // ============================================================
 let activeNowTimer = null;
 function startActiveNowPolling(){
@@ -243,33 +307,33 @@ async function loadAnalytics(){
     document.getElementById('aBounce').textContent = (d.bounceRate7d ?? 0) + '%';
     document.getElementById('aNewSignups').textContent = d.newSignupsToday ?? 0;
 
-    // رسم بياني بسيط بالأعمدة لآخر 14 يوم (بدون أي مكتبة خارجية)
+    // simple bar chart for the last 14 days (no external library)
     const series = d.dailySeries || [];
     const max = Math.max(1, ...series.map(s=>s.c));
     document.getElementById('analyticsChart').innerHTML = series.length ? series.map(s => `
-      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;" title="${esc(s.d)}: ${s.c} زيارة">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;" title="${esc(s.d)}: ${s.c} ${t('visitsWord')}">
         <div style="width:100%;background:var(--primary);border-radius:4px 4px 0 0;height:${Math.max(4, Math.round((s.c/max)*100))}px;transition:height .3s;"></div>
         <div style="font-size:0.62rem;color:var(--muted);white-space:nowrap;">${fmtShortDate(s.d)}</div>
-      </div>`).join('') : '<div style="color:var(--muted);font-size:0.82rem;">لا توجد بيانات كافية بعد</div>';
+      </div>`).join('') : `<div style="color:var(--muted);font-size:0.82rem;">${t('noEnoughData')}</div>`;
 
     const tp = d.topPages || [];
     document.getElementById('topPagesList').innerHTML = tp.length ? tp.map(p => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.84rem;">
         <span style="direction:ltr;text-align:right;color:var(--text);">${esc(p.path)}</span>
         <span style="font-weight:800;color:var(--primary);flex-shrink:0;margin-right:10px;">${p.c}</span>
-      </div>`).join('') : '<div style="color:var(--muted);font-size:0.82rem;">لا توجد بيانات كافية بعد</div>';
+      </div>`).join('') : `<div style="color:var(--muted);font-size:0.82rem;">${t('noEnoughData')}</div>`;
 
     const tr = d.topReferrers || [];
     document.getElementById('topRefList').innerHTML = tr.length ? tr.map(r => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.84rem;">
         <span style="direction:ltr;text-align:right;color:var(--text);word-break:break-all;">${esc(r.ref)}</span>
         <span style="font-weight:800;color:var(--primary);flex-shrink:0;margin-right:10px;">${r.c}</span>
-      </div>`).join('') : '<div style="color:var(--muted);font-size:0.82rem;">لا توجد بيانات كافية بعد</div>';
+      </div>`).join('') : `<div style="color:var(--muted);font-size:0.82rem;">${t('noEnoughData')}</div>`;
   }catch(e){}
 }
 
 // ============================================================
-// السجلات (Logs) — مثل Vercel Logs
+// Logs — like Vercel Logs
 // ============================================================
 let logsFilter = '';
 function setLogsFilter(level){
@@ -286,12 +350,12 @@ const LOG_LEVEL_COLORS = { error:'var(--danger)', warn:'#a16207', http:'var(--mu
 
 async function loadLogs(){
   const el = document.getElementById('logsList');
-  el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px;">جارٍ التحميل...</div>';
+  el.innerHTML = `<div style="text-align:center;color:var(--muted);padding:24px;">${t('loading')}</div>`;
   try{
     const url = logsFilter ? '/api/admin/logs?level='+logsFilter : '/api/admin/logs';
     const logs = await api(url);
     if(!Array.isArray(logs) || !logs.length){
-      el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px;">لا توجد سجلات — كل شيء يعمل بشكل طبيعي ✅</div>';
+      el.innerHTML = `<div style="text-align:center;color:var(--muted);padding:24px;">${t('noLogs')}</div>`;
       const lb=document.getElementById('logsBadge'); if(lb) lb.style.display='none';
       return;
     }
@@ -307,14 +371,14 @@ async function loadLogs(){
     const errCount = logs.filter(l=>l.level==='error').length;
     const lb=document.getElementById('logsBadge');
     if(lb){ if(errCount){ lb.textContent=errCount; lb.style.display='inline'; } else lb.style.display='none'; }
-  }catch(e){ el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px;">فشل تحميل السجلات</div>'; }
+  }catch(e){ el.innerHTML = `<div style="text-align:center;color:var(--muted);padding:24px;">${t('fetchLogsFail')}</div>`; }
 }
 
 async function clearLogs(){
-  if(!confirm('مسح كل السجلات نهائياً؟')) return;
+  if(!confirm(t('confirmClearLogs'))) return;
   const d = await api('/api/admin/logs','DELETE');
-  if(d.success){ toast('تم مسح السجلات'); loadLogs(); }
-  else toast(d.error||'فشل المسح');
+  if(d.success){ toast(t('logsCleared')); loadLogs(); }
+  else toast(d.error||t('clearFail'));
 }
 
 async function loadUsers(){
@@ -328,55 +392,55 @@ async function loadUsers(){
         <td>${u.verified?'<svg width="14" height="14" viewBox="0 0 24 24" fill="#3b9eff"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>':'–'}</td>
         <td>
           ${u.suspended
-            ? `<span class="badge badge-suspended" title="${esc(u.suspend_reason||'')}">معلّق</span>`
-            : `<span class="badge badge-active">نشط</span>`}
+            ? `<span class="badge badge-suspended" title="${esc(u.suspend_reason||'')}">${t('suspended')}</span>`
+            : `<span class="badge badge-active">${t('active')}</span>`}
         </td>
         <td>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            ${u.role!=='admin'?`<button class="btn btn-dark btn-sm" onclick="promoteUser(${u.id})">ترقية</button>`:''}
-            ${u.role!=='admin' && !u.suspended?`<button class="btn btn-ghost btn-sm" onclick="suspendUser(${u.id},'${esc(u.username)}')" style="color:var(--danger);">تعليق</button>`:''}
-            ${u.role!=='admin' && u.suspended?`<button class="btn btn-ghost btn-sm" onclick="unsuspendUser(${u.id},'${esc(u.username)}')" style="color:#15803d;">رفع التعليق</button>`:''}
-            ${Number(u.totp_enabled)===1?`<button class="btn btn-ghost btn-sm" onclick="adminDisable2FA(${u.id},'${esc(u.username)}')" style="color:#a16207;" title="لو المستخدم محظور دخوله بسبب مشكلة بكود المصادقة الثنائية">إلغاء 2FA</button>`:''}
-            ${u.role!=='admin'?`<button class="btn btn-ghost btn-sm" onclick="deleteUser(${u.id},'${esc(u.username)}')">حذف</button>`:''}
+            ${u.role!=='admin'?`<button class="btn btn-dark btn-sm" onclick="promoteUser(${u.id})">${t('promote')}</button>`:''}
+            ${u.role!=='admin' && !u.suspended?`<button class="btn btn-ghost btn-sm" onclick="suspendUser(${u.id},'${esc(u.username)}')" style="color:var(--danger);">${t('suspend')}</button>`:''}
+            ${u.role!=='admin' && u.suspended?`<button class="btn btn-ghost btn-sm" onclick="unsuspendUser(${u.id},'${esc(u.username)}')" style="color:#15803d;">${t('unsuspend')}</button>`:''}
+            ${Number(u.totp_enabled)===1?`<button class="btn btn-ghost btn-sm" onclick="adminDisable2FA(${u.id},'${esc(u.username)}')" style="color:#a16207;" title="${t('disable2FATitle')}">${t('disable2FABtn')}</button>`:''}
+            ${u.role!=='admin'?`<button class="btn btn-ghost btn-sm" onclick="deleteUser(${u.id},'${esc(u.username)}')">${t('del')}</button>`:''}
           </div>
         </td>
       </tr>`).join('');
-  }catch(e){toast('فشل تحميل المستخدمين');}
+  }catch(e){toast(t('fetchUsersFail'));}
 }
 
 async function promoteUser(id){
-  if(!confirm('ترقية هذا المستخدم لـ admin؟')) return;
+  if(!confirm(t('confirmPromote'))) return;
   await api('/api/admin/users/'+id+'/role','PUT',{role:'admin'});
-  toast('تمت الترقية'); loadUsers();
+  toast(t('promoted')); loadUsers();
 }
 async function deleteUser(id,name){
-  if(!confirm('حذف '+name+'؟')) return;
+  if(!confirm(t('confirmDeleteUser',{name}))) return;
   await api('/api/admin/users/'+id,'DELETE');
-  toast('تم الحذف'); loadUsers();
+  toast(t('deleted')); loadUsers();
 }
 async function suspendUser(id,name){
-  const reason = prompt('سبب تعليق حساب @'+name+' (اختياري):','');
+  const reason = prompt(t('suspendReasonPrompt',{name}),'');
   if(reason===null) return;
   await api('/api/admin/users/'+id+'/suspend','PUT',{reason});
-  toast('تم تعليق الحساب'); loadUsers();
+  toast(t('suspendedToast')); loadUsers();
 }
 async function unsuspendUser(id,name){
-  if(!confirm('رفع التعليق عن @'+name+'؟')) return;
+  if(!confirm(t('confirmUnsuspend',{name}))) return;
   await api('/api/admin/users/'+id+'/unsuspend','PUT');
-  toast('تم رفع التعليق'); loadUsers();
+  toast(t('unsuspendedToast')); loadUsers();
 }
 async function adminDisable2FA(id,name){
-  if(!confirm('إلغاء تفعيل المصادقة الثنائية لحساب @'+name+'؟ استخدم هذا فقط لو المستخدم محظور دخوله بسبب مشكلة بكود المصادقة.')) return;
+  if(!confirm(t('confirmDisable2FA',{name}))) return;
   const d = await api('/api/admin/users/'+id+'/2fa/disable','PUT');
-  if(d.success){ toast('تم إلغاء تفعيل المصادقة الثنائية لحساب @'+name); loadUsers(); }
-  else toast(d.error||'تعذر التنفيذ');
+  if(d.success){ toast(t('disabled2FAToast',{name})); loadUsers(); }
+  else toast(d.error||t('execFail'));
 }
 
 async function loadPosts(){
   try{
     const posts=await api('/api/records');
     const el=document.getElementById('postsList');
-    if(!posts.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:24px;">لا توجد منشورات</div>';return;}
+    if(!posts.length){el.innerHTML=`<div style="text-align:center;color:var(--muted);padding:24px;">${t('noPosts')}</div>`;return;}
     el.innerHTML=posts.map(p=>`
       <div style="border-bottom:1px solid var(--border);padding:14px 0;display:flex;gap:12px;align-items:flex-start;">
         <div style="flex:1;">
@@ -387,22 +451,22 @@ async function loadPosts(){
           </div>
           <div style="font-size:0.85rem;color:#444;line-height:1.6;">${(p.content||'').replace(/<[^>]+>/g,'').slice(0,120)}${(p.content||'').length>120?'...':''}</div>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="deletePost(${p.id})">حذف</button>
+        <button class="btn btn-ghost btn-sm" onclick="deletePost(${p.id})">${t('del')}</button>
       </div>`).join('');
-  }catch(e){toast('فشل تحميل المنشورات');}
+  }catch(e){toast(t('fetchPostsFail'));}
 }
 
 async function deletePost(id){
-  if(!confirm('حذف هذا المنشور؟')) return;
+  if(!confirm(t('confirmDeletePost'))) return;
   await api('/api/records/'+id,'DELETE');
-  toast('تم الحذف'); loadPosts();
+  toast(t('deleted')); loadPosts();
 }
 
 async function loadVerify(){
   try{
     const reqs=await api('/api/admin/verify');
     const el=document.getElementById('verifyList');
-    if(!reqs.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:24px;">لا توجد طلبات معلقة</div>';return;}
+    if(!reqs.length){el.innerHTML=`<div style="text-align:center;color:var(--muted);padding:24px;">${t('noPendingRequests')}</div>`;return;}
     el.innerHTML=reqs.map(r=>`
       <div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);">
         <div style="width:38px;height:38px;border-radius:var(--radius-full);background:var(--avatar-gradient, var(--primary));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;flex-shrink:0;overflow:hidden;">
@@ -413,31 +477,31 @@ async function loadVerify(){
           <div style="font-size:0.75rem;color:var(--muted);">@${esc(r.username)} · ${fmtDate(r.created_at)}</div>
         </div>
         <div style="display:flex;gap:8px;">
-          <button class="btn btn-dark btn-sm" onclick="approveVerify(${r.user_id})">موافقة</button>
-          <button class="btn btn-ghost btn-sm" onclick="rejectVerify(${r.user_id})">رفض</button>
+          <button class="btn btn-dark btn-sm" onclick="approveVerify(${r.user_id})">${t('approve')}</button>
+          <button class="btn btn-ghost btn-sm" onclick="rejectVerify(${r.user_id})">${t('reject')}</button>
         </div>
       </div>`).join('');
     const vb=document.getElementById('verifyBadge');
     if(reqs.length){vb.textContent=reqs.length;vb.style.display='inline';}
-  }catch(e){toast('فشل تحميل الطلبات');}
+  }catch(e){toast(t('fetchRequestsFail'));}
 }
 
 async function approveVerify(id){
   await api('/api/admin/verify/'+id,'PUT',{action:'approve'});
-  toast('تم منح التوثيق'); loadVerify(); loadDashboard();
+  toast(t('verifyGranted')); loadVerify(); loadDashboard();
 }
 async function rejectVerify(id){
-  if(!confirm('رفض الطلب؟')) return;
+  if(!confirm(t('confirmRejectRequest'))) return;
   await api('/api/admin/verify/'+id,'PUT',{action:'reject'});
-  toast('تم الرفض'); loadVerify();
+  toast(t('rejected')); loadVerify();
 }
 
 // ============================================================
-// البلاغات وطلبات الدعم
+// Reports and support requests
 // ============================================================
 let reportsFilter = 'pending';
-const REPORT_TYPE_LABELS = { post:'منشور', comment:'تعليق', message:'رسالة', user:'مستخدم', general:'عام', bug:'مشكلة تقنية', abuse:'إساءة استخدام', account:'مشكلة حساب', suggestion:'اقتراح' };
-const REPORT_STATUS_LABELS = { pending:'قيد المراجعة', resolved:'تم الحل', dismissed:'مرفوض' };
+function REPORT_TYPE_LABELS(key){ return { post:t('reportTypePost'), comment:t('reportTypeComment'), message:t('reportTypeMessage'), user:t('reportTypeUser'), general:t('reportTypeGeneral'), bug:t('reportTypeBug'), abuse:t('reportTypeAbuse'), account:t('reportTypeAccount'), suggestion:t('reportTypeSuggestion') }[key]; }
+function REPORT_STATUS_LABELS(key){ return { pending:t('reportStatusPending'), resolved:t('reportStatusResolved'), dismissed:t('reportStatusDismissed') }[key]; }
 
 function setReportsFilter(status){
   reportsFilter = status;
@@ -451,35 +515,35 @@ function setReportsFilter(status){
 
 async function loadReports(){
   const el = document.getElementById('reportsList');
-  el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px;">جارٍ التحميل...</div>';
+  el.innerHTML = `<div style="text-align:center;color:var(--muted);padding:24px;">${t('loading')}</div>`;
   try{
     const url = reportsFilter ? '/api/admin/reports?status='+reportsFilter : '/api/admin/reports';
     const reports = await api(url);
     if(!Array.isArray(reports) || !reports.length){
-      el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px;">لا توجد بلاغات هنا</div>';
+      el.innerHTML = `<div style="text-align:center;color:var(--muted);padding:24px;">${t('noReportsHere')}</div>`;
       return;
     }
     el.innerHTML = reports.map(r => `
       <div class="card" style="margin-bottom:12px;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <span class="badge badge-user">${esc(REPORT_TYPE_LABELS[r.type]||r.type)}</span>
-            <strong style="font-size:0.86rem;">${esc(r.reporter_name||'مستخدم')}</strong>
-            ${r.target_owner_name ? `<span style="font-size:0.78rem;color:var(--muted);">← بحق @${esc(r.target_owner_name)}</span>` : ''}
+            <span class="badge badge-user">${esc(REPORT_TYPE_LABELS(r.type)||r.type)}</span>
+            <strong style="font-size:0.86rem;">${esc(r.reporter_name||t('reporterDefault'))}</strong>
+            ${r.target_owner_name ? `<span style="font-size:0.78rem;color:var(--muted);">${t('againstPrefix')}${esc(r.target_owner_name)}</span>` : ''}
           </div>
-          <span class="badge badge-${r.status==='pending'?'pending':(r.status==='resolved'?'active':'suspended')}">${esc(REPORT_STATUS_LABELS[r.status]||r.status)}</span>
+          <span class="badge badge-${r.status==='pending'?'pending':(r.status==='resolved'?'active':'suspended')}">${esc(REPORT_STATUS_LABELS(r.status)||r.status)}</span>
         </div>
         ${r.subject ? `<div style="font-weight:700;font-size:0.88rem;margin-bottom:4px;">${esc(r.subject)}</div>` : ''}
         <div style="font-size:0.84rem;color:#444;line-height:1.6;margin-bottom:10px;">${esc(r.reason)}</div>
-        ${r.admin_reply ? `<div style="background:var(--primary-light);border-radius:var(--radius-sm);padding:8px 10px;font-size:0.82rem;margin-bottom:10px;"><strong style="font-size:0.72rem;color:var(--muted);display:block;margin-bottom:3px;">ردك السابق</strong>${esc(r.admin_reply)}</div>` : ''}
+        ${r.admin_reply ? `<div style="background:var(--primary-light);border-radius:var(--radius-sm);padding:8px 10px;font-size:0.82rem;margin-bottom:10px;"><strong style="font-size:0.72rem;color:var(--muted);display:block;margin-bottom:3px;">${t('prevReply')}</strong>${esc(r.admin_reply)}</div>` : ''}
         <div style="font-size:0.72rem;color:var(--muted);margin-bottom:10px;">${fmtDate(r.created_at)}</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-          <input type="text" class="form-input" id="reply-${r.id}" placeholder="اكتب رداً (اختياري)..." style="flex:1;min-width:180px;margin-bottom:0;">
-          <button class="btn btn-dark btn-sm" onclick="replyReport(${r.id},'resolved')">حل + رد</button>
-          <button class="btn btn-ghost btn-sm" onclick="replyReport(${r.id},'dismissed')">رفض</button>
+          <input type="text" class="form-input" id="reply-${r.id}" placeholder="${t('replyPlaceholder')}" style="flex:1;min-width:180px;margin-bottom:0;">
+          <button class="btn btn-dark btn-sm" onclick="replyReport(${r.id},'resolved')">${t('resolveReply')}</button>
+          <button class="btn btn-ghost btn-sm" onclick="replyReport(${r.id},'dismissed')">${t('reject')}</button>
         </div>
       </div>`).join('');
-  }catch(e){ el.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px;">فشل تحميل البلاغات</div>'; }
+  }catch(e){ el.innerHTML = `<div style="text-align:center;color:var(--muted);padding:24px;">${t('fetchReportsFail')}</div>`; }
 }
 
 async function replyReport(id, status){
@@ -487,9 +551,9 @@ async function replyReport(id, status){
   const admin_reply = replyEl ? replyEl.value.trim() : '';
   try{
     const d = await api('/api/admin/reports/'+id, 'PUT', { status, admin_reply });
-    if(d.success){ toast('تم الحفظ'); loadReports(); loadDashboard(); }
-    else { toast(d.error || 'فشل الحفظ'); }
-  }catch(e){ toast('تعذر الاتصال'); }
+    if(d.success){ toast(t('saved')); loadReports(); loadDashboard(); }
+    else { toast(d.error || t('saveFail')); }
+  }catch(e){ toast(t('cantConnect')); }
 }
 
 /* expose top-level functions for inline onclick handlers */
@@ -552,9 +616,15 @@ const LANG = {
     noMessages: 'ابدأ المحادثة', today: 'اليوم', yesterday: 'أمس',
     setNicknamePlaceholder: 'كنية تظهر لك فقط بدلاً من الاسم', viewProfile: 'عرض الملف الشخصي',
     viewMedia: 'عرض وسائط المحادثة', readReceiptsToggle: 'إظهار مؤشر قراءة الرسائل',
-    reportUser: 'الإبلاغ عن المستخدم', blockUser: 'حظر المستخدم', deleteConversation: 'حذف المحادثة',
+    reportUser: 'الإبلاغ عن المستخدم', blockUser: 'حظر المستخدم', unblockUser: 'إلغاء حظر المستخدم', deleteConversation: 'حذف المحادثة',
     noMedia: 'لا توجد وسائط', confirmDeleteConversation: 'سيتم حذف كل الرسائل في هذه المحادثة نهائياً. متابعة؟',
-    conversationDeleted: 'تم حذف المحادثة', selectChat: 'اختر محادثة من القائمة', seenAt: 'شوهدت'
+    conversationDeleted: 'تم حذف المحادثة', selectChat: 'اختر محادثة من القائمة', seenAt: 'شوهدت',
+    imageTooLarge: 'الصورة كبيرة جدًا، الرجاء اختيار صورة أصغر من 8MB',
+    reportSubjectPrefix: 'إبلاغ عن مستخدم @{u}', reportSentShort: 'تم إرسال البلاغ', sendFail: 'فشل الإرسال',
+    loadMsgsError: 'خطأ في تحميل الرسائل', cantConnectServer: 'تعذر الاتصال بالخادم',
+    reactSendFail: 'فشل إرسال التفاعل', msgSendFail: 'فشل إرسال الرسالة', longPressToSave: 'اضغط مطولاً على الصورة لحفظها',
+    jpgOnly: 'JPG/JPEG فقط', reasonAbuse: 'إساءة أو تنمر', reasonSpam: 'رسائل مزعجة', reasonFake: 'حساب مزيف أو منتحل', reasonOther: 'سبب آخر',
+    unblocked: 'تم إلغاء الحظر', blocked: 'تم حظر المستخدم'
   },
   en: {
     back: 'Hostaka', title: 'Messages', sidebarTitle: 'Messages',
@@ -576,9 +646,15 @@ const LANG = {
     noMessages: 'Start the conversation', today: 'Today', yesterday: 'Yesterday',
     setNicknamePlaceholder: 'A nickname only you see instead of the name', viewProfile: 'View profile',
     viewMedia: 'View shared media', readReceiptsToggle: 'Show read receipts',
-    reportUser: 'Report user', blockUser: 'Block user', deleteConversation: 'Delete conversation',
+    reportUser: 'Report user', blockUser: 'Block user', unblockUser: 'Unblock user', deleteConversation: 'Delete conversation',
     noMedia: 'No media yet', confirmDeleteConversation: 'All messages in this conversation will be permanently deleted. Continue?',
-    conversationDeleted: 'Conversation deleted', selectChat: 'Select a conversation from the list', seenAt: 'Seen'
+    conversationDeleted: 'Conversation deleted', selectChat: 'Select a conversation from the list', seenAt: 'Seen',
+    imageTooLarge: 'Image is too large, please choose one smaller than 8MB',
+    reportSubjectPrefix: 'Report on user @{u}', reportSentShort: 'Report sent', sendFail: 'Failed to send',
+    loadMsgsError: 'Error loading messages', cantConnectServer: 'Could not connect to the server',
+    reactSendFail: 'Failed to send reaction', msgSendFail: 'Failed to send message', longPressToSave: 'Press and hold the image to save it',
+    jpgOnly: 'JPG/JPEG only', reasonAbuse: 'Abuse or harassment', reasonSpam: 'Spam messages', reasonFake: 'Fake or impersonation account', reasonOther: 'Other reason',
+    unblocked: 'Unblocked', blocked: 'User blocked'
   },
   fr: {
     back: 'Hostaka', title: 'Messages', sidebarTitle: 'Messages',
@@ -722,7 +798,7 @@ function openWallpaperModal(){
 function onWallpaperFile(evt){
   const file = evt.target.files && evt.target.files[0];
   if(!file) return;
-  if(file.size > 8*1024*1024){ alert('الصورة كبيرة جدًا، الرجاء اختيار صورة أصغر من 8MB'); return; }
+  if(file.size > 8*1024*1024){ alert(t('imageTooLarge')); return; }
   const reader = new FileReader();
   reader.onload = () => {
     const img = new Image();
@@ -994,7 +1070,7 @@ function handleSuspended(reason){
   localStorage.removeItem('hostaka_token');
   localStorage.removeItem('hostaka_user');
   localStorage.removeItem('hostaka_role');
-  alert('تم تعليق حسابك من قبل الإدارة' + (reason ? ':\n' + reason : '') + '\nللاستفسار يرجى التواصل مع الدعم عبر صفحة /support');
+  alert(t('suspendedMsg',{reason: reason ? ':\n' + reason : ''}));
   window.location = '/';
 }
 
@@ -1019,11 +1095,11 @@ const SVG = {
 
 // ====== الرياكتشنز ======
 const REACTIONS = [
-  { emoji:'like',  label:'أعجبني',  icon:SVG.like },
-  { emoji:'heart', label:'أحببته',  icon:SVG.heart },
-  { emoji:'haha',  label:'أضحكني',  icon:SVG.haha },
-  { emoji:'sad',   label:'أحزنني',  icon:SVG.sad },
-  { emoji:'angry', label:'أغضبني',  icon:SVG.angry },
+  { emoji:'like',  label:t('reactLike'),  icon:SVG.like },
+  { emoji:'heart', label:t('reactLove'),  icon:SVG.heart },
+  { emoji:'haha',  label:t('reactHaha'),  icon:SVG.haha },
+  { emoji:'sad',   label:t('reactSad'),  icon:SVG.sad },
+  { emoji:'angry', label:t('reactAngry'),  icon:SVG.angry },
 ];
 
 // ============================================================
@@ -1243,7 +1319,7 @@ async function checkPeerBlockStatus(){
   if(!currentPeerUsername) return;
   try{
     const d = await apiFetch('/api/block/status/' + encodeURIComponent(currentPeerUsername));
-    const label = d.blocked ? 'إلغاء حظر المستخدم' : 'حظر المستخدم';
+    const label = d.blocked ? t('unblockUser') : t('blockUser');
     const txt = document.getElementById('peerBlockText');
     if(txt) txt.textContent = label;
     const csTxt = document.getElementById('csBlockText');
@@ -1255,16 +1331,16 @@ async function togglePeerBlock(){
   document.getElementById('peerOptsMenu')?.classList.remove('show');
   if(!currentPeerUsername) return;
   const txt = document.getElementById('peerBlockText') || document.getElementById('csBlockText');
-  const isBlocked = txt && txt.textContent.includes('إلغاء');
+  const isBlocked = txt && txt.textContent === t('unblockUser');
   try{
     const d = isBlocked
       ? await apiFetch('/api/block/' + encodeURIComponent(currentPeerUsername), 'DELETE')
       : await apiFetch('/api/block/' + encodeURIComponent(currentPeerUsername), 'POST');
     if(d.success){
-      showToast(isBlocked ? 'تم إلغاء الحظر' : 'تم حظر المستخدم');
+      showToast(isBlocked ? t('unblocked') : t('blocked'));
       checkPeerBlockStatus();
-    } else { showToast(d.error || 'فشلت العملية', 'error'); }
-  }catch(e){ showToast('تعذر الاتصال', 'error'); }
+    } else { showToast(d.error || t('operationFailed'), 'error'); }
+  }catch(e){ showToast(t('connectionError'), 'error'); }
 }
 
 let reportMode = 'user'; // 'user' | 'message'
@@ -1362,7 +1438,7 @@ async function deleteConversationConfirm(){
 function openReportPeerModal(){
   document.getElementById('peerOptsMenu')?.classList.remove('show');
   reportMode = 'user';
-  document.getElementById('reportPeerModalTitle').textContent = 'الإبلاغ عن المستخدم';
+  document.getElementById('reportPeerModalTitle').textContent = t('reportUser');
   document.getElementById('reportPeerReason').value = 'abuse';
   document.getElementById('reportPeerDetails').value = '';
   document.getElementById('reportPeerModal').classList.add('show');
@@ -1381,18 +1457,18 @@ async function submitPeerReport(){
   if(!currentPeerUsername) return;
   const reasonType = document.getElementById('reportPeerReason').value;
   const details = document.getElementById('reportPeerDetails').value.trim();
-  const labels = { abuse:'إساءة أو تنمر', spam:'رسائل مزعجة', fake:'حساب مزيف أو منتحل', other:'سبب آخر' };
+  const labels = { abuse:t('reasonAbuse'), spam:t('reasonSpam'), fake:t('reasonFake'), other:t('reasonOther') };
   const reason = labels[reasonType] + (details ? ' — ' + details : '');
   const btn = document.getElementById('reportPeerBtn');
   btn.disabled = true;
   try{
     const payload = reportMode === 'message'
       ? { type:'message', target_id: reportMsgTargetId, target_owner_username: currentPeerUsername, subject: t('reportMsgTitle'), reason }
-      : { type:'user', target_owner_username: currentPeerUsername, subject: 'إبلاغ عن مستخدم @' + currentPeerUsername, reason };
+      : { type:'user', target_owner_username: currentPeerUsername, subject: t('reportSubjectPrefix',{u:currentPeerUsername}), reason };
     const d = await apiFetch('/api/reports', 'POST', payload);
-    if(d.success){ showToast(reportMode === 'message' ? t('reportSent') : 'تم إرسال البلاغ'); closeModal('reportPeerModal'); }
-    else { showToast(d.error || 'فشل الإرسال', 'error'); }
-  }catch(e){ showToast('تعذر الاتصال', 'error'); }
+    if(d.success){ showToast(reportMode === 'message' ? t('reportSent') : t('reportSentShort')); closeModal('reportPeerModal'); }
+    else { showToast(d.error || t('sendFail'), 'error'); }
+  }catch(e){ showToast(t('connectionError'), 'error'); }
   btn.disabled = false;
 }
 
@@ -1502,14 +1578,14 @@ async function loadMsgs(username, scroll = true) {
     const msgs = await apiFetch('/api/messages/' + encodeURIComponent(username));
     if (!Array.isArray(msgs)) {
       console.error('Expected array, got:', msgs);
-      if (area) area.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px;font-size:0.85rem;font-weight:600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-left:4px;"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg> خطأ في تحميل الرسائل</div>';
+      if (area) area.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px;font-size:0.85rem;font-weight:600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-left:4px;"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg> ' + t('loadMsgsError') + '</div>';
       return;
     }
     await loadMsgReactions(msgs);
     renderMsgs(msgs, scroll);
   } catch (e) {
     console.error('loadMsgs failed:', e);
-    if (area) area.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px;font-size:0.85rem;font-weight:600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-left:4px;"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg> ' + (e.message || 'تعذر الاتصال بالخادم') + '</div>';
+    if (area) area.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px;font-size:0.85rem;font-weight:600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-left:4px;"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg> ' + (e.message || t('cantConnectServer')) + '</div>';
   }
 }
 async function loadMsgReactions(msgs) {
@@ -1620,7 +1696,7 @@ async function reactMsg(e, mid, emoji) {
     }
   } catch (err) {
     console.error('reactMsg failed:', err);
-    showToast('فشل إرسال التفاعل', 'error');
+    showToast(t('reactSendFail'), 'error');
   }
 }
 
@@ -1630,7 +1706,7 @@ async function reactMsg(e, mid, emoji) {
 function onChatImg(e) {
   const f = e.target.files[0];
   if (!f) return;
-  if (!f.type.match('image/jpeg')) { showToast('JPG/JPEG فقط', 'error'); return; }
+  if (!f.type.match('image/jpeg')) { showToast(t('jpgOnly'), 'error'); return; }
   const r = new FileReader();
   r.onload = ev => {
     chatImgBase64 = ev.target.result;
@@ -1758,7 +1834,7 @@ async function sendMsg() {
     loadSidebar();
   } catch (e) {
     console.error('sendMsg failed:', e);
-    showToast(e.message || 'فشل إرسال الرسالة', 'error');
+    showToast(e.message || t('msgSendFail'), 'error');
   }
   document.getElementById('sendBtn').disabled = false;
 }
@@ -1851,7 +1927,7 @@ async function saveViewerImage(e){
     setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
   }catch(err){
     window.open(url, '_blank');
-    showToast('اضغط مطولاً على الصورة لحفظها', 'info');
+    showToast(t('longPressToSave'), 'info');
   }
 }
 
@@ -1956,7 +2032,9 @@ const LANG = {
     blockUser:'حظر العضو', confirmBlockMember:'سيتم حظر هذا العضو من مراسلتك. متابعة؟',
     viewMedia:'عرض وسائط المحادثة', noMedia:'لا توجد وسائط', reportGroupChat:'الإبلاغ عن الدردشة الجماعية',
     reportGroupTitle:'الإبلاغ عن المجموعة', reportGroupSent:'تم إرسال البلاغ، شكراً لك',
-    readReceiptsToggle:'إظهار مؤشر قراءة الرسائل', seenBy:'شاهدها'
+    readReceiptsToggle:'إظهار مؤشر قراءة الرسائل', seenBy:'شاهدها',
+    reasonAbuse:'إساءة أو تنمر', reasonSpam:'رسائل مزعجة', reasonNudity:'محتوى غير لائق', reasonOther:'سبب آخر',
+    jpgOnly:'JPG/JPEG فقط', reportGroupMsgSubject:'إبلاغ عن رسالة مجموعة'
   },
   en: {
     title:'Group', back:'Messages', members:'Members', add:'Add',
@@ -1978,7 +2056,9 @@ const LANG = {
     blockUser:'Block member', confirmBlockMember:'This member will be blocked from messaging you. Continue?',
     viewMedia:'View shared media', noMedia:'No media yet', reportGroupChat:'Report group chat',
     reportGroupTitle:'Report group', reportGroupSent:'Report sent, thank you',
-    readReceiptsToggle:'Show read receipts', seenBy:'Seen by'
+    readReceiptsToggle:'Show read receipts', seenBy:'Seen by',
+    reasonAbuse:'Abuse or harassment', reasonSpam:'Spam messages', reasonNudity:'Inappropriate content', reasonOther:'Other reason',
+    jpgOnly:'JPG/JPEG only', reportGroupMsgSubject:'Report on a group message'
   },
   fr: {
     title:'Groupe', back:'Messages', members:'Membres', add:'Ajouter',
@@ -2103,7 +2183,7 @@ async function loadLinkPreviews(scope) {
     else slot.remove();
   });
 }
-// الخادم يخزّن التوقيت بصيغة UTC بدون منطقة زمنية؛ نفسّرها كـ UTC ليحوّلها المتصفح تلقائياً لتوقيت جهاز المستخدم
+// The server stores timestamps in UTC without a timezone; we interpret them as UTC so the browser converts them automatically to the user's local time
 function toUTCDate(s){
   if(!s) return new Date(NaN);
   if(s instanceof Date) return s;
@@ -2214,7 +2294,7 @@ function openWallpaperModal(){
 function onWallpaperFile(evt){
   const file = evt.target.files && evt.target.files[0];
   if(!file) return;
-  if(file.size > 8*1024*1024){ alert('الصورة كبيرة جدًا، الرجاء اختيار صورة أصغر من 8MB'); return; }
+  if(file.size > 8*1024*1024){ alert(t('imageTooLarge')); return; }
   const reader = new FileReader();
   reader.onload = () => {
     const img = new Image();
@@ -2398,7 +2478,7 @@ function handleSuspended(reason){
   localStorage.removeItem('hostaka_token');
   localStorage.removeItem('hostaka_user');
   localStorage.removeItem('hostaka_role');
-  alert('تم تعليق حسابك من قبل الإدارة' + (reason ? ':\n' + reason : '') + '\nللاستفسار يرجى التواصل مع الدعم عبر صفحة /support');
+  alert(t('suspendedMsg',{reason: reason ? ':\n' + reason : ''}));
   window.location = '/';
 }
 
@@ -2660,7 +2740,7 @@ function openReportGroupModal(){
 async function submitReportGroup(){
   const reasonType = document.getElementById('reportGroupReason').value;
   const details = document.getElementById('reportGroupDetails').value.trim();
-  const labels = { abuse:'إساءة أو تنمر', spam:'رسائل مزعجة', nudity:'محتوى غير لائق', other:'سبب آخر' };
+  const labels = { abuse:t('reasonAbuse'), spam:t('reasonSpam'), nudity:t('reasonNudity'), other:t('reasonOther') };
   const reason = (labels[reasonType]||reasonType) + (details ? ' — ' + details : '');
   const btn = document.getElementById('reportGroupBtn');
   btn.disabled = true;
@@ -3005,7 +3085,7 @@ async function reactMsg(e, mid, emoji){
 function onChatImg(e){
   const f = e.target.files[0];
   if (!f) return;
-  if (!f.type.match('image/jpeg')){ showToast('JPG/JPEG فقط', 'error'); return; }
+  if (!f.type.match('image/jpeg')){ showToast(t('jpgOnly'), 'error'); return; }
   const r = new FileReader();
   r.onload = ev => {
     chatImgBase64 = ev.target.result;
@@ -3078,7 +3158,7 @@ async function submitReportMsg(){
   if (!reportMsgTargetId) return;
   const reasonType = document.getElementById('reportMsgReason').value;
   const details = document.getElementById('reportMsgDetails').value.trim();
-  const labels = { spam:'محتوى مزعج / سبام', abuse:'إساءة أو تنمر', nudity:'محتوى غير لائق', other:'سبب آخر' };
+  const labels = { spam:t('reasonSpam'), abuse:t('reasonAbuse'), nudity:t('reasonNudity'), other:t('reasonOther') };
   const reason = labels[reasonType] + (details ? ' — ' + details : '');
   const m = _lastMsgs.find(x => x.id === reportMsgTargetId);
   const btn = document.getElementById('reportMsgBtn');
@@ -3086,7 +3166,7 @@ async function submitReportMsg(){
   try {
     const d = await apiFetch('/api/reports', 'POST', {
       type: 'group_message', target_id: reportMsgTargetId, target_owner_username: m?.from_name || '',
-      subject: 'إبلاغ عن رسالة مجموعة', reason
+      subject: t('reportGroupMsgSubject'), reason
     });
     if (d.success) { showToast(t('reportSent')); closeModal('reportMsgModal'); }
     else showToast(d.error || t('error'), 'error');
@@ -3174,7 +3254,7 @@ async function saveViewerImage(e){
     setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
   }catch(err){
     window.open(url, '_blank');
-    showToast('اضغط مطولاً على الصورة لحفظها', 'info');
+    showToast(t('longPressToSave'), 'info');
   }
 }
 
@@ -3288,7 +3368,20 @@ const LANG = {
     createStory: 'إنشاء قصة', storiesTitle: 'القصص', noStories: 'لا توجد قصص حالياً',
     storyCaptionPh: 'اكتب تعليقاً (اختياري)...', storyPublish: 'نشر القصة',
     storyDeleteConfirm: 'حذف هذه القصة؟', storyExpiresNote: 'تختفي القصة تلقائياً بعد 24 ساعة',
-    storyUploadHint: 'اختر صورة أو فيديو للقصة', yourStory: 'قصتك'
+    storyUploadHint: 'اختر صورة أو فيديو للقصة', yourStory: 'قصتك',
+    imageTooLarge: 'الصورة كبيرة جدًا، الرجاء اختيار صورة أصغر من 8MB',
+    reactLike:'أعجبني', reactLove:'أحببته', reactHaha:'أضحكني', reactSad:'أحزنني', reactAngry:'أغضبني',
+    genericFail:'فشل', cantConnect:'تعذر الاتصال', enter2FACode:'أدخل كود المصادقة', wrongCode:'كود غير صحيح',
+    justNow:'الآن', daysAgo:'{n} يوم', defaultUser:'مستخدم',
+    mentionedInPost:'{actor} أشار إليك في منشور', mentionedInComment:'{actor} أشار إليك في تعليق', commentedOnPost:'{actor} علّق على منشورك',
+    supportReplied:'رد فريق الدعم على بلاغك: {content}', noNotifications:'لا توجد إشعارات', deleteWord:'حذف',
+    cantLoadNotifications:'تعذر تحميل الإشعارات', reportPostTitle:'الإبلاغ عن المنشور', reportUserTitle:'الإبلاغ عن مستخدم',
+    reasonSpam:'محتوى مزعج / سبام', reasonAbuse:'إساءة أو تنمر', reasonNudity:'محتوى غير لائق', reasonFake:'حساب مزيف أو منتحل', reasonOther:'سبب آخر',
+    reportPostSubject:'إبلاغ عن منشور', reportUserSubject:'إبلاغ عن مستخدم', reportSentThanks:'تم إرسال البلاغ، شكراً لك', sendFail:'فشل الإرسال',
+    unblockedAt:'تم إلغاء حظر @{u}', blockedAt:'تم حظر @{u}', operationFailed:'فشلت العملية', requestFail:'فشل الطلب',
+    pageWord:'صفحة', optionsWord:'خيارات', blockAtUser:'حظر @{u}', copyLinkPrompt:'انسخ الرابط:', myAccount:'حسابي',
+    uploadFail:'فشل رفع الملف', videoUploadFail:'فشل رفع الفيديو', editFail:'فشل التعديل', postFail:'فشل النشر', cantDeleteStory:'تعذر حذف القصة',
+    unsave:'إلغاء الحفظ', save:'حفظ', reportPostMenu:'الإبلاغ عن المنشور', willPostAsVideo:'سيُنشر في Hostaka Video'
   },
   en: {
     title: 'Hostaka', subtitle: 'An open social platform for everyone',
@@ -3313,7 +3406,20 @@ const LANG = {
     createStory: 'Add Story', storiesTitle: 'Stories', noStories: 'No stories yet',
     storyCaptionPh: 'Write a caption (optional)...', storyPublish: 'Post Story',
     storyDeleteConfirm: 'Delete this story?', storyExpiresNote: 'Stories disappear after 24 hours',
-    storyUploadHint: 'Choose a photo or video for your story', yourStory: 'Your Story'
+    storyUploadHint: 'Choose a photo or video for your story', yourStory: 'Your Story',
+    imageTooLarge: 'Image is too large, please choose one smaller than 8MB',
+    reactLike:'Like', reactLove:'Love', reactHaha:'Haha', reactSad:'Sad', reactAngry:'Angry',
+    genericFail:'Failed', cantConnect:'Could not connect', enter2FACode:'Enter the authentication code', wrongCode:'Incorrect code',
+    justNow:'Just now', daysAgo:'{n}d', defaultUser:'User',
+    mentionedInPost:'{actor} mentioned you in a post', mentionedInComment:'{actor} mentioned you in a comment', commentedOnPost:'{actor} commented on your post',
+    supportReplied:'Support team replied to your report: {content}', noNotifications:'No notifications', deleteWord:'Delete',
+    cantLoadNotifications:'Could not load notifications', reportPostTitle:'Report post', reportUserTitle:'Report user',
+    reasonSpam:'Spam / unwanted content', reasonAbuse:'Abuse or harassment', reasonNudity:'Inappropriate content', reasonFake:'Fake or impersonation account', reasonOther:'Other reason',
+    reportPostSubject:'Report on a post', reportUserSubject:'Report on a user', reportSentThanks:'Report sent, thank you', sendFail:'Failed to send',
+    unblockedAt:'Unblocked @{u}', blockedAt:'Blocked @{u}', operationFailed:'Operation failed', requestFail:'Request failed',
+    pageWord:'Page', optionsWord:'Options', blockAtUser:'Block @{u}', copyLinkPrompt:'Copy the link:', myAccount:'my account',
+    uploadFail:'Failed to upload file', videoUploadFail:'Failed to upload video', editFail:'Edit failed', postFail:'Failed to post', cantDeleteStory:'Could not delete story',
+    unsave:'Unsave', save:'Save', reportPostMenu:'Report post', willPostAsVideo:'Will be posted to Hostaka Video'
   },
   fr: {
     title: 'Hostaka', subtitle: 'Une plateforme sociale ouverte à tous',
@@ -3626,7 +3732,7 @@ function openWallpaperModal(){
 function onWallpaperFile(evt){
   const file = evt.target.files && evt.target.files[0];
   if(!file) return;
-  if(file.size > 8*1024*1024){ alert('الصورة كبيرة جدًا، الرجاء اختيار صورة أصغر من 8MB'); return; }
+  if(file.size > 8*1024*1024){ alert(t('imageTooLarge')); return; }
   const reader = new FileReader();
   reader.onload = () => {
     const img = new Image();
@@ -3896,7 +4002,7 @@ function weightedRandomSort(posts) {
 //  REST OF ORIGINAL SCRIPT (with minor translation adaptations)
 // ============================================================
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-// الخادم يخزّن التوقيت بصيغة UTC بدون منطقة زمنية؛ نفسّرها كـ UTC ليحوّلها المتصفح تلقائياً لتوقيت جهاز المستخدم
+// The server stores timestamps in UTC without a timezone; we interpret them as UTC so the browser converts them automatically to the user's local time
 function toUTCDate(s){
   if(!s) return new Date(NaN);
   if(s instanceof Date) return s;
@@ -3925,7 +4031,7 @@ function handleSuspended(reason){
   localStorage.removeItem('hostaka_user');
   localStorage.removeItem('hostaka_token');
   localStorage.removeItem('hostaka_role');
-  alert('تم تعليق حسابك من قبل الإدارة' + (reason ? ':\n' + reason : '') + '\nللاستفسار يرجى التواصل مع الدعم عبر صفحة /support');
+  alert(t('suspendedMsg',{reason: reason ? ':\n' + reason : ''}));
   window.location = '/';
 }
 
@@ -3953,11 +4059,11 @@ const SVG = {
 };
 
 const REACTIONS = [
-  { emoji:'like',  label:'أعجبني',  icon:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>` },
-  { emoji:'heart', label:'أحببته',  icon:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>` },
-  { emoji:'haha',  label:'أضحكني',  icon:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>` },
-  { emoji:'sad',   label:'أحزنني',  icon:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 16c-1.5-1-2.5-1.5-4-1.5s-2.5.5-4 1.5"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>` },
-  { emoji:'angry', label:'أغضبني',  icon:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 16c-1.5-1-2.5-1.5-4-1.5s-2.5.5-4 1.5"/><path d="M8 8l2 2"/><path d="M16 8l-2 2"/></svg>` },
+  { emoji:'like',  label:t('reactLike'),  icon:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>` },
+  { emoji:'heart', label:t('reactLove'),  icon:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>` },
+  { emoji:'haha',  label:t('reactHaha'),  icon:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>` },
+  { emoji:'sad',   label:t('reactSad'),  icon:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 16c-1.5-1-2.5-1.5-4-1.5s-2.5.5-4 1.5"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>` },
+  { emoji:'angry', label:t('reactAngry'),  icon:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 16c-1.5-1-2.5-1.5-4-1.5s-2.5.5-4 1.5"/><path d="M8 8l2 2"/><path d="M16 8l-2 2"/></svg>` },
 ];
 
 // ----- Auth / UI -----
@@ -4040,7 +4146,7 @@ function renderAccountSwitcher(){
     </div>`;
   }).join('') + `<div class="acc-item acc-add" onclick="location.href='/login'">
       <div class="acc-av">${SVG.plus}</div>
-      <span class="acc-label">${currentLang === 'ar' ? 'إضافة' : 'Add'}</span>
+      <span class="acc-label">${t('add')}</span>
     </div>`;
 }
 
@@ -4119,15 +4225,15 @@ async function doLogin(){
       closeModal('authModal');
       await loadPosts();
       loadUnread();
-    } else { errEl.textContent=d.error||'فشل'; errEl.style.display='block'; }
-  } catch(e){ errEl.textContent='تعذر الاتصال'; errEl.style.display='block'; }
+    } else { errEl.textContent=d.error||t('genericFail'); errEl.style.display='block'; }
+  } catch(e){ errEl.textContent=t('cantConnect'); errEl.style.display='block'; }
   finally { btn.disabled=false; btn.innerHTML=`<span id="loginSubmitText">${t('loginSubmit')}</span>`; }
 }
 
 async function submit2FALogin(){
   const code = document.getElementById('login2faCode').value.trim();
   const errEl = document.getElementById('login2faErr'); errEl.style.display='none';
-  if(!code){ errEl.textContent='أدخل كود المصادقة'; errEl.style.display='block'; return; }
+  if(!code){ errEl.textContent=t('enter2FACode'); errEl.style.display='block'; return; }
   const btn = document.getElementById('login2faBtn'); btn.disabled=true;
   try {
     const d = await apiFetch('/api/login/2fa-verify','POST',{ pendingToken: pending2FAToken, code });
@@ -4141,8 +4247,8 @@ async function submit2FALogin(){
       pending2FAToken = null;
       await loadPosts();
       loadUnread();
-    } else { errEl.textContent=d.error||'كود غير صحيح'; errEl.style.display='block'; }
-  } catch(e){ errEl.textContent='تعذر الاتصال'; errEl.style.display='block'; }
+    } else { errEl.textContent=d.error||t('wrongCode'); errEl.style.display='block'; }
+  } catch(e){ errEl.textContent=t('cantConnect'); errEl.style.display='block'; }
   btn.disabled=false;
 }
 
@@ -4160,8 +4266,8 @@ async function doRegister(){
       setLoggedInUI(u);
       closeModal('authModal');
       await loadPosts();
-    } else { errEl.textContent=d.error||'فشل'; errEl.style.display='block'; }
-  } catch(e){ errEl.textContent='تعذر الاتصال'; errEl.style.display='block'; }
+    } else { errEl.textContent=d.error||t('genericFail'); errEl.style.display='block'; }
+  } catch(e){ errEl.textContent=t('cantConnect'); errEl.style.display='block'; }
   finally { btn.disabled=false; btn.innerHTML=`<span id="registerSubmitText">${t('registerSubmit')}</span>`; }
 }
 
@@ -4187,20 +4293,20 @@ let notifCache = [];
 function timeAgo(dateStr){
   if(!dateStr) return '';
   const diff = (Date.now() - toUTCDate(dateStr).getTime())/1000;
-  if(diff < 60) return 'الآن';
+  if(diff < 60) return t('justNow');
   if(diff < 3600) return Math.floor(diff/60) + ' د';
   if(diff < 86400) return Math.floor(diff/3600) + ' س';
-  if(diff < 2592000) return Math.floor(diff/86400) + ' يوم';
+  if(diff < 2592000) return t('daysAgo',{n:Math.floor(diff/86400)});
   return fmtDate(dateStr);
 }
 
 function notifMessage(n){
-  const actor = `<b>${esc(n.actor_name || 'مستخدم')}</b>`;
+  const actor = `<b>${esc(n.actor_name || t('defaultUser'))}</b>`;
   switch(n.type){
-    case 'mention_post':    return `${actor} أشار إليك في منشور`;
-    case 'mention_comment':  return `${actor} أشار إليك في تعليق`;
-    case 'comment':          return `${actor} علّق على منشورك`;
-    case 'report_reply':     return `رد فريق الدعم على بلاغك: ${esc(n.content||'')}`;
+    case 'mention_post':    return t('mentionedInPost',{actor});
+    case 'mention_comment':  return t('mentionedInComment',{actor});
+    case 'comment':          return t('commentedOnPost',{actor});
+    case 'report_reply':     return t('supportReplied',{content:esc(n.content||'')});
     case 'admin':            return `${actor}: ${esc(n.content||'')}`;
     default:                 return `${actor} ${esc(n.content||'')}`;
   }
@@ -4226,7 +4332,7 @@ async function loadNotifications(){
     const data = await apiFetch('/api/notifications');
     notifCache = Array.isArray(data) ? data : [];
     if(!notifCache.length){
-      list.innerHTML = '<div style="text-align:center;padding:26px 10px;color:var(--muted);font-size:0.82rem;">لا توجد إشعارات</div>';
+      list.innerHTML = `<div style="text-align:center;padding:26px 10px;color:var(--muted);font-size:0.82rem;">${t('noNotifications')}</div>`;
       return;
     }
     list.innerHTML = notifCache.map(n => `
@@ -4236,11 +4342,11 @@ async function loadNotifications(){
           <div class="notif-text">${notifMessage(n)}</div>
           <div class="notif-time">${timeAgo(n.created_at)}</div>
         </div>
-        <button class="notif-del" onclick="event.stopPropagation();delNotif(${n.id})" title="حذف">${SVG.delete}</button>
+        <button class="notif-del" onclick="event.stopPropagation();delNotif(${n.id})" title="${t('deleteWord')}">${SVG.delete}</button>
       </div>
     `).join('');
   } catch(e){
-    list.innerHTML = '<div style="text-align:center;padding:26px 10px;color:var(--muted);font-size:0.82rem;">تعذر تحميل الإشعارات</div>';
+    list.innerHTML = `<div style="text-align:center;padding:26px 10px;color:var(--muted);font-size:0.82rem;">${t('cantLoadNotifications')}</div>`;
   }
 }
 
@@ -4414,7 +4520,7 @@ let reportTarget = { type:'general', id:null, owner:'' };
 function openReportModal(type, id, owner){
   if(!ME){ openAuth(); return; }
   reportTarget = { type, id, owner };
-  document.getElementById('reportModalTitle').textContent = type==='post' ? 'الإبلاغ عن المنشور' : 'الإبلاغ عن مستخدم';
+  document.getElementById('reportModalTitle').textContent = type==='post' ? t('reportPostTitle') : t('reportUserTitle');
   document.getElementById('reportReason').value = 'spam';
   document.getElementById('reportDetails').value = '';
   document.getElementById('reportModal').classList.add('show');
@@ -4422,7 +4528,7 @@ function openReportModal(type, id, owner){
 async function submitReport(){
   const reasonType = document.getElementById('reportReason').value;
   const details = document.getElementById('reportDetails').value.trim();
-  const labels = { spam:'محتوى مزعج / سبام', abuse:'إساءة أو تنمر', nudity:'محتوى غير لائق', fake:'حساب مزيف أو منتحل', other:'سبب آخر' };
+  const labels = { spam:t('reasonSpam'), abuse:t('reasonAbuse'), nudity:t('reasonNudity'), fake:t('reasonFake'), other:t('reasonOther') };
   const reason = labels[reasonType] + (details ? ' — ' + details : '');
   const btn = document.getElementById('reportSubmitBtn');
   btn.disabled = true;
@@ -4430,12 +4536,12 @@ async function submitReport(){
     const d = await apiFetch('/api/reports', 'POST', {
       type: reportTarget.type, target_id: reportTarget.id,
       target_owner_username: reportTarget.owner,
-      subject: reportTarget.type==='post' ? 'إبلاغ عن منشور' : 'إبلاغ عن مستخدم',
+      subject: reportTarget.type==='post' ? t('reportPostSubject') : t('reportUserSubject'),
       reason
     });
-    if(d.success){ showToast('تم إرسال البلاغ، شكراً لك'); closeModal('reportModal'); }
-    else { showToast(d.error||'فشل الإرسال','error'); }
-  } catch(e){ showToast('تعذر الاتصال','error'); }
+    if(d.success){ showToast(t('reportSentThanks')); closeModal('reportModal'); }
+    else { showToast(d.error||t('sendFail'),'error'); }
+  } catch(e){ showToast(t('cantConnect'),'error'); }
   btn.disabled = false;
 }
 
@@ -4447,11 +4553,11 @@ async function toggleBlockUser(username){
       ? await apiFetch('/api/block/'+encodeURIComponent(username), 'DELETE')
       : await apiFetch('/api/block/'+encodeURIComponent(username), 'POST');
     if(d.success){
-      if(isBlocked){ blockedUsernames.delete(username); showToast('تم إلغاء حظر @'+username); }
-      else { blockedUsernames.add(username); showToast('تم حظر @'+username); }
+      if(isBlocked){ blockedUsernames.delete(username); showToast(t('unblockedAt',{u:username})); }
+      else { blockedUsernames.add(username); showToast(t('blockedAt',{u:username})); }
       loadPosts();
-    } else { showToast(d.error||'فشلت العملية','error'); }
-  } catch(e){ showToast('تعذر الاتصال','error'); }
+    } else { showToast(d.error||t('operationFailed'),'error'); }
+  } catch(e){ showToast(t('cantConnect'),'error'); }
 }
 
 async function checkVerifyStatus(){
@@ -4484,9 +4590,9 @@ async function requestVerify(){
       showToast(t('verifyRequest'));
       checkVerifyStatus();
     } else {
-      showToast(d.error||'فشل الطلب', 'error');
+      showToast(d.error||t('requestFail'), 'error');
     }
-  } catch(e){ showToast('تعذر الاتصال','error'); }
+  } catch(e){ showToast(t('cantConnect'),'error'); }
 }
 
 // ----- Posts & Feed -----
@@ -4601,7 +4707,7 @@ function renderPost(p){
           <div class="pub-avatar" onclick="goPublisher('${p.page_username?esc(p.page_username):esc(p.publisher)}', ${p.page_id?'true':'false'})">${avatarHtml}</div>
           <div class="pub-meta">
             <div class="pub-name" onclick="goPublisher('${p.page_username?esc(p.page_username):esc(p.publisher)}', ${p.page_id?'true':'false'})">
-              <span class="role-badge ${badgeCls}">${p.user_role==='Admin' ? t('adminRole') : (p.user_role==='Page' ? 'صفحة' : t('member'))}</span>
+              <span class="role-badge ${badgeCls}">${p.user_role==='Admin' ? t('adminRole') : (p.user_role==='Page' ? t('pageWord') : t('member'))}</span>
               ${esc(name)}
               ${(p.publisher_verified||p.user_verified) ? verifiedBadge() : ''}
             </div>
@@ -4609,23 +4715,23 @@ function renderPost(p){
           </div>
         </div>
         <div class="pub-actions">
-          ${ME ? `<button class="btn-icon save-btn ${p.is_saved?'saved':''}" onclick="toggleSavePost(${p.id})" title="${p.is_saved?t('unsave')||'إلغاء الحفظ':t('save')||'حفظ'}">${p.is_saved?SVG.bookmarkFilled:SVG.bookmark}</button>` : ''}
+          ${ME ? `<button class="btn-icon save-btn ${p.is_saved?'saved':''}" onclick="toggleSavePost(${p.id})" title="${p.is_saved?t('unsave'):t('save')}">${p.is_saved?SVG.bookmarkFilled:SVG.bookmark}</button>` : ''}
           <button class="btn-icon" onclick="sharePost(${p.id})" title="${t('share')}">${SVG.share}</button>
           ${ME && p.user_id && p.user_id!=ME?.id ? `<button class="btn-icon" onclick="location.href='/chat?with=${esc(p.publisher)}'" title="${t('message')}">${SVG.comment}</button>` : ''}
           ${canDel ? `<button class="btn-icon" onclick="delPost(${p.id})" title="${t('delete')}">${SVG.delete}</button>` : ''}
           ${ME && p.user_id && p.user_id!=ME?.id ? `
           <div class="post-opts-wrap">
-            <button class="btn-icon" onclick="togglePostOpts(${p.id})" title="خيارات">
+            <button class="btn-icon" onclick="togglePostOpts(${p.id})" title="${t('optionsWord')}">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
             </button>
             <div class="post-opts-menu" id="postOpts-${p.id}">
               <button onclick="openReportModal('post', ${p.id}, '${esc(p.publisher)}'); closePostOpts(${p.id});">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                الإبلاغ عن المنشور
+                ${t('reportPostMenu')}
               </button>
               <button class="danger" onclick="toggleBlockUser('${esc(p.publisher)}'); closePostOpts(${p.id});">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-                حظر @${esc(p.publisher)}
+                ${t('blockAtUser',{u:esc(p.publisher)})}
               </button>
             </div>
           </div>` : ''}
@@ -4655,7 +4761,7 @@ function goPublisher(username, isPage){
 function sharePost(id){
   const url = window.location.origin + '/post?id=' + id;
   if(navigator.clipboard){ navigator.clipboard.writeText(url).then(()=>showToast(t('copyLink'))); }
-  else { prompt('انسخ الرابط:',url); }
+  else { prompt(t('copyLinkPrompt'),url); }
 }
 
 document.getElementById('searchInput').addEventListener('input', function(){
@@ -4691,7 +4797,7 @@ async function loadPostAsOptions(){
   try {
     if (myPagesCache === null) myPagesCache = await apiFetch('/api/pages/mine');
     if (!Array.isArray(myPagesCache) || !myPagesCache.length) return;
-    sel.innerHTML = `<option value="">${esc(ME.display_name || ME.username)} (${currentLang === 'ar' ? 'حسابي' : 'my account'})</option>` +
+    sel.innerHTML = `<option value="">${esc(ME.display_name || ME.username)} (${t('myAccount')})</option>` +
       myPagesCache.map(pg => `<option value="${pg.id}">${esc(pg.name)}</option>`).join('');
     wrap.style.display = 'block';
   } catch(e) { /* تجاهل */ }
@@ -4727,10 +4833,10 @@ function onPostMedia(e){
     postMediaBase64 = ev.target.result;
     const preview = document.getElementById('postMediaPreview');
     if (isImage) {
-      preview.innerHTML = `<img src="${postMediaBase64}" alt="معاينة الصورة">`;
+      preview.innerHTML = `<img src="${postMediaBase64}" alt="${t('imagePreviewAlt')}">`;
     } else {
       postVideoMeta = await readVideoDimensions(f);
-      const reelTag = postVideoMeta.isReel ? `<div class="reel-detect-badge">${SVG.reel} <span>${t('reelDetected')}</span></div>` : `<div class="reel-detect-badge">${SVG.reel} <span>سيُنشر في Hostaka Video</span></div>`;
+      const reelTag = postVideoMeta.isReel ? `<div class="reel-detect-badge">${SVG.reel} <span>${t('reelDetected')}</span></div>` : `<div class="reel-detect-badge">${SVG.reel} <span>${t('willPostAsVideo')}</span></div>`;
       preview.innerHTML = `<video controls style="max-height:200px;width:100%;"><source src="${postMediaBase64}" type="${f.type}"></video>${reelTag}`;
     }
     document.getElementById('postMediaPreviewWrap').style.display = 'block';
@@ -4776,7 +4882,7 @@ async function submitPost(){
   const editor = document.getElementById('postEditor');
   const content = editor?.innerHTML?.trim();
   const errEl = document.getElementById('postErr'); errEl.style.display='none';
-  if((!content || content==='<br>') && !postMediaBase64){ errEl.textContent='المحتوى أو الملف مطلوب'; errEl.style.display='block'; return; }
+  if((!content || content==='<br>') && !postMediaBase64){ errEl.textContent=t('contentOrFileRequired'); errEl.style.display='block'; return; }
   const btn=document.getElementById('postBtn'); btn.disabled=true; btn.textContent='...';
   try {
     let imageUrl='', videoUrl='';
@@ -4785,7 +4891,7 @@ async function submitPost(){
       if (up.url) {
         imageUrl = up.url;
       } else {
-        errEl.textContent = up.error || 'فشل رفع الملف';
+        errEl.textContent = up.error || t('uploadFail');
         errEl.style.display='block';
         btn.disabled=false; btn.innerHTML=`<span id="publishBtn">${t('publish')}</span>`;
         return;
@@ -4794,7 +4900,7 @@ async function submitPost(){
       try {
         // 1) نجيب توقيع رفع مؤقت (signature) من السيرفر عندنا
         const sig = await apiFetch('/api/upload/video/signature', 'POST', {});
-        if (!sig.signature) throw new Error(sig.error || 'تعذر تجهيز رفع الفيديو');
+        if (!sig.signature) throw new Error(sig.error || t('cantPrepVideoUpload'));
 
         // 2) نرفع الفيديو مباشرة من المتصفح إلى Cloudinary (بدون المرور
         //    عبر سيرفرلس فنكشن عندنا، تفادياً لحد Vercel على حجم الطلب)
@@ -4810,11 +4916,11 @@ async function submitPost(){
         });
         const vData = await vRes.json();
         if (!vRes.ok || !vData.secure_url) {
-          throw new Error(vData.error?.message || 'فشل رفع الفيديو');
+          throw new Error(vData.error?.message || t('videoUploadFail'));
         }
         videoUrl = vData.secure_url;
       } catch (upErr) {
-        errEl.textContent = upErr.message || 'فشل رفع الفيديو';
+        errEl.textContent = upErr.message || t('videoUploadFail');
         errEl.style.display='block';
         btn.disabled=false; btn.innerHTML=`<span id="publishBtn">${t('publish')}</span>`;
         return;
@@ -4829,7 +4935,7 @@ async function submitPost(){
         closeModal('postModal');
         editingPostId = null;
         await loadPosts();
-      } else { errEl.textContent = d.error || 'فشل التعديل'; errEl.style.display = 'block'; }
+      } else { errEl.textContent = d.error || t('editFail'); errEl.style.display = 'block'; }
       btn.disabled = false; btn.innerHTML = `<span id="publishBtn">${t('publish')}</span>`;
       return;
     }
@@ -4843,8 +4949,8 @@ async function submitPost(){
       page_id: document.getElementById('postAsSelect')?.value || null
     });
     if(d.success){ closeModal('postModal'); await loadPosts(); }
-    else { errEl.textContent=d.error||'فشل النشر'; errEl.style.display='block'; }
-  } catch(e){ errEl.textContent='تعذر الاتصال'; errEl.style.display='block'; }
+    else { errEl.textContent=d.error||t('postFail'); errEl.style.display='block'; }
+  } catch(e){ errEl.textContent=t('cantConnect'); errEl.style.display='block'; }
   finally { btn.disabled=false; btn.innerHTML=`<span id="publishBtn">${t('publish')}</span>`; }
 }
 
@@ -4887,9 +4993,9 @@ async function toggleSavePost(id){
   if(btn){
     btn.classList.toggle('saved', d.saved);
     btn.innerHTML = d.saved ? SVG.bookmarkFilled : SVG.bookmark;
-    btn.title = d.saved ? (t('unsave')||'إلغاء الحفظ') : (t('save')||'حفظ');
+    btn.title = d.saved ? t('unsave') : t('save');
   }
-  showToast(d.saved ? 'تم حفظ المنشور' : 'تم إلغاء حفظ المنشور');
+  showToast(d.saved ? t('postSaved') : t('postUnsaved'));
 }
 
 // ============================================================
@@ -5014,11 +5120,11 @@ async function submitStory(){
     let mediaUrl = '';
     if (storyMediaType === 'image') {
       const up = await apiFetch('/api/upload', 'POST', { image: storyMediaBase64 });
-      if (!up.url) throw new Error(up.error || 'فشل رفع الملف');
+      if (!up.url) throw new Error(up.error || t('uploadFail'));
       mediaUrl = up.url;
     } else {
       const sig = await apiFetch('/api/upload/video/signature', 'POST', {});
-      if (!sig.signature) throw new Error(sig.error || 'تعذر تجهيز رفع الفيديو');
+      if (!sig.signature) throw new Error(sig.error || t('cantPrepVideoUpload'));
       const fd = new FormData();
       fd.append('file', storyMediaFileObj);
       fd.append('api_key', sig.apiKey);
@@ -5027,14 +5133,14 @@ async function submitStory(){
       fd.append('signature', sig.signature);
       const vRes = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/video/upload`, { method:'POST', body: fd });
       const vData = await vRes.json();
-      if (!vRes.ok || !vData.secure_url) throw new Error(vData.error?.message || 'فشل رفع الفيديو');
+      if (!vRes.ok || !vData.secure_url) throw new Error(vData.error?.message || t('videoUploadFail'));
       mediaUrl = vData.secure_url;
     }
     const caption = document.getElementById('storyCaptionInput').value.trim();
     const d = await apiFetch('/api/stories', 'POST', { media: mediaUrl, media_type: storyMediaType, caption });
     if (d.success) { closeModal('storyCreateModal'); await loadStories(); showToast(t('storyPublish')); }
-    else { errEl.textContent = d.error || 'فشل النشر'; errEl.style.display = 'block'; }
-  } catch(e) { errEl.textContent = e.message || 'تعذر الاتصال'; errEl.style.display = 'block'; }
+    else { errEl.textContent = d.error || t('postFail'); errEl.style.display = 'block'; }
+  } catch(e) { errEl.textContent = e.message || t('cantConnect'); errEl.style.display = 'block'; }
   finally { btn.disabled = false; }
 }
 
@@ -5124,7 +5230,7 @@ async function deleteCurrentStory(){
   try {
     const d = await apiFetch('/api/stories/' + targetStoryId, 'DELETE');
     if (d && d.error) { showToast(d.error, 'error'); showStorySlide(); return; }
-  } catch(e) { showToast('تعذر حذف القصة', 'error'); showStorySlide(); return; }
+  } catch(e) { showToast(t('cantDeleteStory'), 'error'); showStorySlide(); return; }
 
   // نعيد إيجاد المجموعة/الفهرس بالاعتماد على المعرّفات لا الفهارس (تحسباً لأي تغيير أثناء الانتظار)
   const gIdx = storyViewOrder.findIndex(g => g.user_id === targetUserId);
@@ -5400,7 +5506,35 @@ try { window.delComment = delComment; } catch(e) {}
 
 /* ================= login.html ================= */
 if (document.body.classList.contains('page-login')) {
-// ----- الثيم (متوافق مع باقي المنصة) -----
+
+const LANG = {
+  ar: {
+    login: 'دخول', enter2faCode: 'أدخل كود المصادقة الثنائية من تطبيق المصادقة:',
+    emailPassRequired: 'البريد وكلمة المرور مطلوبان', loginFail: 'فشل تسجيل الدخول', cantConnectServer: 'تعذر الاتصال بالخادم',
+    allFieldsRequired: 'جميع الحقول مطلوبة', passMin6: 'كلمة المرور 6 أحرف على الأقل', sendCode: 'إرسال كود التأكيد',
+    cantSendCode: 'تعذر إرسال كود التأكيد', enter6DigitCode: 'أدخل كود التأكيد المكون من 6 أرقام',
+    wrongCode: 'كود غير صحيح', confirmAndCreate: 'تأكيد وإنشاء الحساب', resendIn: 'إعادة الإرسال بعد {s} ثانية',
+    resendCode: 'إعادة إرسال الكود', newCodeSent: 'تم إرسال كود جديد إلى بريدك الإلكتروني', cantResend: 'تعذر إعادة إرسال الكود',
+    emailRequired: 'البريد الإلكتروني مطلوب', cantResetPass: 'تعذر إعادة تعيين كلمة المرور', setPassword: 'تعيين كلمة المرور'
+  },
+  en: {
+    login: 'Log In', enter2faCode: 'Enter the two-factor code from your authenticator app:',
+    emailPassRequired: 'Email and password are required', loginFail: 'Log in failed', cantConnectServer: 'Could not connect to the server',
+    allFieldsRequired: 'All fields are required', passMin6: 'Password must be at least 6 characters', sendCode: 'Send confirmation code',
+    cantSendCode: 'Could not send confirmation code', enter6DigitCode: 'Enter the 6-digit confirmation code',
+    wrongCode: 'Incorrect code', confirmAndCreate: 'Confirm and create account', resendIn: 'Resend in {s}s',
+    resendCode: 'Resend code', newCodeSent: 'A new code has been sent to your email', cantResend: 'Could not resend the code',
+    emailRequired: 'Email is required', cantResetPass: 'Could not reset password', setPassword: 'Set password'
+  }
+};
+let currentLang = localStorage.getItem('hostaka_lang') || 'en';
+function t(key, vars){
+  var s = (LANG[currentLang] || LANG.en)[key];
+  if (s === undefined) return key;
+  if (vars) Object.keys(vars).forEach(function(k){ s = s.replace('{'+k+'}', vars[k]); });
+  return s;
+}
+// ----- Theme (consistent with the rest of the platform) -----
 (function(){
   const saved = localStorage.getItem('hostaka_theme');
   if (saved === 'dark') document.documentElement.setAttribute('data-theme','dark');
@@ -5409,7 +5543,7 @@ if (document.body.classList.contains('page-login')) {
   }
 })();
 
-// إن كان المستخدم مسجّلاً دخوله بالفعل، أعده للصفحة الرئيسية
+// If the user is already logged in, redirect them to the home page
 if (localStorage.getItem('hostaka_token')) {
   location.href = '/';
 }
@@ -5458,7 +5592,7 @@ function backToStart(){
   document.getElementById('paneRegStart').classList.add('active');
 }
 
-// افتح التبويب المطلوب عبر ?tab=register
+// Open the requested tab via ?tab=register
 (function(){
   const params = new URLSearchParams(location.search);
   if (params.get('tab') === 'register') switchTab('register');
@@ -5477,30 +5611,30 @@ function showErr(id, msg){
 }
 function hideErr(id){ document.getElementById(id).style.display='none'; }
 
-// ----- تسجيل الدخول -----
+// ----- Log in -----
 async function doLogin(){
   const email = document.getElementById('lEmail').value.trim();
   const pass  = document.getElementById('lPass').value;
   hideErr('loginErr');
-  if (!email || !pass) return showErr('loginErr','البريد وكلمة المرور مطلوبان');
+  if (!email || !pass) return showErr('loginErr',t('emailPassRequired'));
   const btn = document.getElementById('loginBtn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
   try {
     let d = await apiFetch('/api/login','POST',{ email, password: pass });
     if (d.requires2FA) {
-      const code = window.prompt('أدخل كود المصادقة الثنائية من تطبيق المصادقة:');
-      if (!code) { btn.disabled = false; btn.textContent = 'دخول'; return; }
+      const code = window.prompt(t('enter2faCode'));
+      if (!code) { btn.disabled = false; btn.textContent = t('login'); return; }
       d = await apiFetch('/api/login/2fa-verify','POST',{ pendingToken: d.pendingToken, code: code.trim() });
     }
     if (d.success) { setLoggedIn(d); location.href = '/'; }
-    else showErr('loginErr', d.error || 'فشل تسجيل الدخول');
-  } catch(e) { showErr('loginErr','تعذر الاتصال بالخادم'); }
-  finally { btn.disabled = false; btn.textContent = 'دخول'; }
+    else showErr('loginErr', d.error || t('loginFail'));
+  } catch(e) { showErr('loginErr',t('cantConnectServer')); }
+  finally { btn.disabled = false; btn.textContent = t('login'); }
 }
 document.getElementById('lPass').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
 document.getElementById('lEmail').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
 
-// ----- إنشاء حساب: الخطوة 1 -----
+// ----- Create account: Step 1 -----
 let regPayload = null;
 
 async function startRegister(){
@@ -5508,8 +5642,8 @@ async function startRegister(){
   const email    = document.getElementById('rEmail').value.trim();
   const password = document.getElementById('rPass').value;
   hideErr('regErr');
-  if (!username || !email || !password) return showErr('regErr','جميع الحقول مطلوبة');
-  if (password.length < 6) return showErr('regErr','كلمة المرور 6 أحرف على الأقل');
+  if (!username || !email || !password) return showErr('regErr',t('allFieldsRequired'));
+  if (password.length < 6) return showErr('regErr',t('passMin6'));
 
   const btn = document.getElementById('regStartBtn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
@@ -5523,18 +5657,18 @@ async function startRegister(){
       hideErr('verifyErr');
       startResendCooldown(45);
     } else {
-      showErr('regErr', d.error || 'تعذر إرسال كود التأكيد');
+      showErr('regErr', d.error || t('cantSendCode'));
     }
-  } catch(e) { showErr('regErr','تعذر الاتصال بالخادم'); }
-  finally { btn.disabled = false; btn.textContent = 'إرسال كود التأكيد'; }
+  } catch(e) { showErr('regErr',t('cantConnectServer')); }
+  finally { btn.disabled = false; btn.textContent = t('sendCode'); }
 }
 
-// ----- إنشاء حساب: الخطوة 2 (تأكيد الكود) -----
+// ----- Create account: Step 2 (confirm code) -----
 async function verifyRegister(){
   if (!regPayload) return backToStart();
   const code = document.getElementById('vCode').value.trim();
   hideErr('verifyErr');
-  if (!/^\d{6}$/.test(code)) return showErr('verifyErr','أدخل كود التأكيد المكون من 6 أرقام');
+  if (!/^\d{6}$/.test(code)) return showErr('verifyErr',t('enter6DigitCode'));
 
   const btn = document.getElementById('verifyBtn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
@@ -5544,31 +5678,31 @@ async function verifyRegister(){
       setLoggedIn(d);
       location.href = '/';
     } else {
-      showErr('verifyErr', d.error || 'كود غير صحيح');
+      showErr('verifyErr', d.error || t('wrongCode'));
       if (d.expired) backToStart();
     }
-  } catch(e) { showErr('verifyErr','تعذر الاتصال بالخادم'); }
-  finally { btn.disabled = false; btn.textContent = 'تأكيد وإنشاء الحساب'; }
+  } catch(e) { showErr('verifyErr',t('cantConnectServer')); }
+  finally { btn.disabled = false; btn.textContent = t('confirmAndCreate'); }
 }
 document.getElementById('vCode').addEventListener('keydown', e => { if (e.key==='Enter') verifyRegister(); });
 
-// ----- إعادة إرسال الكود مع عداد تنازلي -----
+// ----- Resend code with countdown -----
 let resendTimer = null;
 function startResendCooldown(seconds, btnId){
   const btn = document.getElementById(btnId || 'resendBtn');
   btn.disabled = true;
   let left = seconds;
   const timerRef = btnId === 'resendForgotBtn' ? 'forgotResendTimer' : 'resendTimer';
-  btn.textContent = `إعادة الإرسال بعد ${left} ثانية`;
+  btn.textContent = t('resendIn',{s:left});
   clearInterval(window[timerRef]);
   window[timerRef] = setInterval(() => {
     left--;
     if (left <= 0) {
       clearInterval(window[timerRef]);
       btn.disabled = false;
-      btn.textContent = 'إعادة إرسال الكود';
+      btn.textContent = t('resendCode');
     } else {
-      btn.textContent = `إعادة الإرسال بعد ${left} ثانية`;
+      btn.textContent = t('resendIn',{s:left});
     }
   }, 1000);
 }
@@ -5582,24 +5716,24 @@ async function resendCode(){
     const d = await apiFetch('/api/auth/register/resend','POST',{ email: regPayload.email });
     if (d.success) {
       const ok = document.getElementById('verifyOk');
-      ok.textContent = 'تم إرسال كود جديد إلى بريدك الإلكتروني';
+      ok.textContent = t('newCodeSent');
       ok.style.display = 'block';
       setTimeout(() => ok.style.display='none', 4000);
       startResendCooldown(45, 'resendBtn');
     } else {
-      showErr('verifyErr', d.error || 'تعذر إعادة إرسال الكود');
+      showErr('verifyErr', d.error || t('cantResend'));
       startResendCooldown(45, 'resendBtn');
     }
-  } catch(e) { showErr('verifyErr','تعذر الاتصال بالخادم'); btn.disabled=false; }
+  } catch(e) { showErr('verifyErr',t('cantConnectServer')); btn.disabled=false; }
 }
 
-// ----- نسيت كلمة المرور: الخطوة 1 -----
+// ----- Forgot password: Step 1 -----
 let forgotEmail = null;
 
 async function startForgot(){
   const email = document.getElementById('fEmail').value.trim();
   hideErr('forgotErr');
-  if (!email) return showErr('forgotErr','البريد الإلكتروني مطلوب');
+  if (!email) return showErr('forgotErr',t('emailRequired'));
 
   const btn = document.getElementById('forgotStartBtn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
@@ -5613,20 +5747,20 @@ async function startForgot(){
       hideErr('resetErr');
       startResendCooldown(45, 'resendForgotBtn');
     } else {
-      showErr('forgotErr', d.error || 'تعذر إرسال كود التأكيد');
+      showErr('forgotErr', d.error || t('cantSendCode'));
     }
-  } catch(e) { showErr('forgotErr','تعذر الاتصال بالخادم'); }
-  finally { btn.disabled = false; btn.textContent = 'إرسال كود التأكيد'; }
+  } catch(e) { showErr('forgotErr',t('cantConnectServer')); }
+  finally { btn.disabled = false; btn.textContent = t('sendCode'); }
 }
 
-// ----- نسيت كلمة المرور: الخطوة 2 (تأكيد الكود + كلمة مرور جديدة) -----
+// ----- Forgot password: Step 2 (confirm code + new password) -----
 async function doResetPassword(){
   if (!forgotEmail) return backToForgotStart();
   const code = document.getElementById('fCode').value.trim();
   const newPassword = document.getElementById('fNewPass').value;
   hideErr('resetErr');
-  if (!/^\d{6}$/.test(code)) return showErr('resetErr','أدخل كود التأكيد المكون من 6 أرقام');
-  if (newPassword.length < 6) return showErr('resetErr','كلمة المرور 6 أحرف على الأقل');
+  if (!/^\d{6}$/.test(code)) return showErr('resetErr',t('enter6DigitCode'));
+  if (newPassword.length < 6) return showErr('resetErr',t('passMin6'));
 
   const btn = document.getElementById('resetBtn');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
@@ -5636,11 +5770,11 @@ async function doResetPassword(){
       setLoggedIn(d);
       location.href = '/';
     } else {
-      showErr('resetErr', d.error || 'تعذر إعادة تعيين كلمة المرور');
+      showErr('resetErr', d.error || t('cantResetPass'));
       if (d.expired) backToForgotStart();
     }
-  } catch(e) { showErr('resetErr','تعذر الاتصال بالخادم'); }
-  finally { btn.disabled = false; btn.textContent = 'تعيين كلمة المرور'; }
+  } catch(e) { showErr('resetErr',t('cantConnectServer')); }
+  finally { btn.disabled = false; btn.textContent = t('setPassword'); }
 }
 document.getElementById('fNewPass').addEventListener('keydown', e => { if (e.key==='Enter') doResetPassword(); });
 
@@ -5653,15 +5787,15 @@ async function resendForgotCode(){
     const d = await apiFetch('/api/auth/password/resend','POST',{ email: forgotEmail });
     if (d.success) {
       const ok = document.getElementById('resetOk');
-      ok.textContent = 'تم إرسال كود جديد إلى بريدك الإلكتروني';
+      ok.textContent = t('newCodeSent');
       ok.style.display = 'block';
       setTimeout(() => ok.style.display='none', 4000);
       startResendCooldown(45, 'resendForgotBtn');
     } else {
-      showErr('resetErr', d.error || 'تعذر إعادة إرسال الكود');
+      showErr('resetErr', d.error || t('cantResend'));
       startResendCooldown(45, 'resendForgotBtn');
     }
-  } catch(e) { showErr('resetErr','تعذر الاتصال بالخادم'); btn.disabled=false; }
+  } catch(e) { showErr('resetErr',t('cantConnectServer')); btn.disabled=false; }
 }
 
 /* expose top-level functions for inline onclick handlers */
@@ -5685,6 +5819,30 @@ try { window.resendForgotCode = resendForgotCode; } catch(e) {}
 
 /* ================= page.html ================= */
 if (document.body.classList.contains('page-page')) {
+
+const LANG = {
+  ar: {
+    pageNotSpecified: 'لم يتم تحديد الصفحة', cantLoadPage: 'تعذر تحميل الصفحة',
+    editPage: 'تعديل الصفحة', following: 'متابَع', follow: 'متابعة', loginToFollow: 'تسجيل الدخول للمتابعة',
+    noPostsYet: 'لا توجد منشورات بعد', followerWord: 'متابع', postWord: 'منشور', edited: 'معدّلة',
+    coverChosen: 'تم اختيار الغلاف، اضغط حفظ لتطبيقه', pageNameRequired: 'اسم الصفحة مطلوب',
+    saveFail: 'فشل الحفظ', cantConnect: 'تعذر الاتصال'
+  },
+  en: {
+    pageNotSpecified: 'No page specified', cantLoadPage: 'Could not load the page',
+    editPage: 'Edit page', following: 'Following', follow: 'Follow', loginToFollow: 'Log in to follow',
+    noPostsYet: 'No posts yet', followerWord: 'followers', postWord: 'posts', edited: 'edited',
+    coverChosen: 'Cover selected — press Save to apply it', pageNameRequired: 'Page name is required',
+    saveFail: 'Save failed', cantConnect: 'Could not connect'
+  }
+};
+let currentLang = localStorage.getItem('hostaka_lang') || 'en';
+function t(key, vars){
+  var s = (LANG[currentLang] || LANG.en)[key];
+  if (s === undefined) return key;
+  if (vars) Object.keys(vars).forEach(function(k){ s = s.replace('{'+k+'}', vars[k]); });
+  return s;
+}
 if (localStorage.getItem('hostaka_theme') === 'dark') {
   document.documentElement.setAttribute('data-theme', 'dark');
 }
@@ -5713,14 +5871,14 @@ const username = new URLSearchParams(location.search).get('u') || '';
 let pageData = null;
 
 async function loadPage(){
-  if (!username) { showEmpty('لم يتم تحديد الصفحة'); return; }
+  if (!username) { showEmpty(t('pageNotSpecified')); return; }
   try {
     const d = await apiFetch('/api/pages/' + encodeURIComponent(username));
     if (d.error) { showEmpty(d.error); return; }
     pageData = d;
     document.title = 'Hostaka — ' + d.name;
     render();
-  } catch(e) { showEmpty('تعذر تحميل الصفحة'); }
+  } catch(e) { showEmpty(t('cantLoadPage')); }
 }
 
 function showEmpty(msg){
@@ -5734,14 +5892,14 @@ function render(){
     ? (p.isOwner
         ? `<button class="btn btn-ghost" onclick="openEditPage()">
              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-             تعديل الصفحة
+             ${t('editPage')}
            </button>`
-        : `<button class="btn ${p.isFollowing ? 'btn-primary following' : 'btn-primary'}" id="followBtn" onclick="toggleFollow()">${p.isFollowing ? 'متابَع' : 'متابعة'}</button>`)
-    : `<button class="btn btn-primary" onclick="location.href='/login'">تسجيل الدخول للمتابعة</button>`;
+        : `<button class="btn ${p.isFollowing ? 'btn-primary following' : 'btn-primary'}" id="followBtn" onclick="toggleFollow()">${p.isFollowing ? t('following') : t('follow')}</button>`)
+    : `<button class="btn btn-primary" onclick="location.href='/login'">${t('loginToFollow')}</button>`;
 
   const postsHtml = (p.posts && p.posts.length)
     ? p.posts.map(postCardHtml).join('')
-    : `<div class="empty">لا توجد منشورات بعد</div>`;
+    : `<div class="empty">${t('noPostsYet')}</div>`;
 
   document.getElementById('content').innerHTML = `
     <div class="cover">${p.cover ? `<img src="${esc(p.cover)}" alt="">` : ''}</div>
@@ -5751,7 +5909,7 @@ function render(){
         <div class="page-name">${esc(p.name)}${p.verified ? verifiedBadge() : ''}</div>
         <div class="page-handle">@${esc(p.username)}${p.category ? ' · ' + esc(p.category) : ''}</div>
         ${p.bio ? `<div class="page-bio">${esc(p.bio)}</div>` : ''}
-        <div class="page-stats"><span><b id="followerCount">${p.followerCount || 0}</b> متابع</span><span><b>${(p.posts||[]).length}</b> منشور</span></div>
+        <div class="page-stats"><span><b id="followerCount">${p.followerCount || 0}</b> ${t('followerWord')}</span><span><b>${(p.posts||[]).length}</b> ${t('postWord')}</span></div>
         <div class="page-actions">${followBtn}</div>
       </div>
     </div>
@@ -5773,7 +5931,7 @@ function postCardHtml(post){
       <div class="post-av">${avatarHtml}</div>
       <div>
         <div class="post-name">${esc(pageData.name)}</div>
-        <div class="post-date">${fmtDate(post.created_at)}${Number(post.edited)===1 ? ' · معدّلة' : ''}</div>
+        <div class="post-date">${fmtDate(post.created_at)}${Number(post.edited)===1 ? ' · ' + t('edited') : ''}</div>
       </div>
     </div>
     ${post.content ? `<div class="post-content">${esc(post.content)}</div>` : ''}
@@ -5820,13 +5978,13 @@ function onEditCover(e){
   const f = e.target.files[0];
   if (!f) return;
   const reader = new FileReader();
-  reader.onload = ev => { editCoverBase64 = ev.target.result; showToast('تم اختيار الغلاف، اضغط حفظ لتطبيقه'); };
+  reader.onload = ev => { editCoverBase64 = ev.target.result; showToast(t('coverChosen')); };
   reader.readAsDataURL(f);
 }
 async function savePageEdit(){
   const errEl = document.getElementById('editPageErr'); errEl.style.display = 'none';
   const name = document.getElementById('epName').value.trim();
-  if (!name) { errEl.textContent = 'اسم الصفحة مطلوب'; errEl.style.display = 'block'; return; }
+  if (!name) { errEl.textContent = t('pageNameRequired'); errEl.style.display = 'block'; return; }
   const btn = document.getElementById('epSaveBtn'); btn.disabled = true;
   try {
     let avatarUrl = pageData.avatar;
@@ -5844,8 +6002,8 @@ async function savePageEdit(){
       category: document.getElementById('epCategory').value.trim()
     });
     if (d.success) { closeEditPage(); await loadPage(); }
-    else { errEl.textContent = d.error || 'فشل الحفظ'; errEl.style.display = 'block'; }
-  } catch(e) { errEl.textContent = 'تعذر الاتصال'; errEl.style.display = 'block'; }
+    else { errEl.textContent = d.error || t('saveFail'); errEl.style.display = 'block'; }
+  } catch(e) { errEl.textContent = t('cantConnect'); errEl.style.display = 'block'; }
   btn.disabled = false;
 }
 
@@ -5888,7 +6046,40 @@ const LANG = {
     connectionError: 'تعذر الاتصال', coverJpg: 'يُقبل JPG/JPEG فقط للغلاف',
     followers: 'متابعون', following: 'يتابع', follow: 'متابعة', unfollow: 'إلغاء المتابعة',
     followError: 'حدث خطأ أثناء المتابعة', followersList: 'المتابعون', followingList: 'المتابَعين',
-    noFollowers: 'لا يوجد متابعون', noFollowing: 'لا يتابع أحداً'
+    noFollowers: 'لا يوجد متابعون', noFollowing: 'لا يتابع أحداً',
+    privacy: 'الخصوصية', pages: 'الصفحات', newPost: 'منشور جديد',
+    verified: 'حساب موثق', options: 'خيارات', reportUser: 'الإبلاغ عن المستخدم',
+    blockUser: 'حظر المستخدم', unblockUser: 'إلغاء حظر المستخدم', privateBadge: 'خاص',
+    privateAccountBody: 'هذا الحساب خاص. تابعه عشان تقدر تشوف منشوراته',
+    unblockedToast: 'تم إلغاء حظر @{u}', blockedToast: 'تم حظر @{u}',
+    operationFailed: 'فشلت العملية', message: 'مراسلة',
+    suspendedMsg: 'تم تعليق حسابك من قبل الإدارة{reason}\nللاستفسار يرجى التواصل مع الدعم عبر صفحة /support',
+    reactLike: 'أعجبني', reactLove: 'أحببته', reactHaha: 'أضحكني', reactSad: 'أحزنني', reactAngry: 'أغضبني',
+    reportReasonAbuse: 'إساءة أو تنمر', reportReasonFake: 'حساب مزيف أو منتحل', reportReasonSpam: 'محتوى مزعج / سبام', reportReasonOther: 'سبب آخر',
+    reportSubjectPrefix: 'إبلاغ عن مستخدم @{u}', reportSent: 'تم إرسال البلاغ، شكراً لك', sendFail: 'فشل الإرسال',
+    countryLabel: 'الدولة', countryPlaceholder: 'مثال: السعودية', schoolLabel: 'المدرسة/الجامعة', optionalPlaceholder: 'اختياري',
+    songLabel: 'الأغنية المفضلة', certLabel: 'الشهادات', privateAccountTitle: 'حساب خاص',
+    privateAccountHint: 'لو فعّلته، ما يقدر يشوف منشوراتك إلا متابعينك فقط', whoCanMessage: 'مين يقدر يراسلني؟',
+    everyone: 'الجميع', followersOnly: 'المتابعون فقط', noOne: 'لا أحد', closeFriendsLabel: 'الأصدقاء المقربون',
+    closeFriendsHint: 'قائمة خاصة تقدر تنشر لها منشورات "أصدقاء مقربون فقط"', manageListBtn: 'إدارة القائمة ({count})',
+    createPageChannel: 'إنشاء صفحة/قناة جديدة', loading: 'جارٍ التحميل...', accountNowPrivate: 'صار حسابك خاص',
+    accountNowPublic: 'صار حسابك عام', cantSave: 'تعذر الحفظ', msgSettingsUpdated: 'تم تحديث إعدادات المراسلة',
+    usernamePlaceholder: 'اسم المستخدم', add: 'إضافة', close: 'إغلاق', listEmpty: 'قائمتك فاضية حالياً',
+    remove: 'إزالة', cantLoad: 'تعذر التحميل', added: 'تمت الإضافة', cantAdd: 'تعذر الإضافة',
+    removed: 'تمت الإزالة', cantRemove: 'تعذر الإزالة', pinned: 'مثبّت', draft: 'مسودة',
+    closeFriendsOnly: 'أصدقاء مقربون', scheduled: 'مجدول', reelsTag: 'ريلز',
+    reactWord: 'تفاعل', replyWord: 'رد', replyToPlaceholder: 'رد @{u}', commentPlaceholder: 'اكتب تعليقاً...',
+    unsave: 'إلغاء الحفظ', unpin: 'إلغاء التثبيت', pinInProfile: 'تثبيت في الملف الشخصي', share: 'مشاركة',
+    del: 'حذف', commentWord: 'تعليق', confirmDeleteComment: 'حذف هذا التعليق؟', confirmDeletePost: 'حذف هذا المنشور نهائياً؟',
+    cantDelete: 'تعذر الحذف', postSaved: 'تم حفظ المنشور', postUnsaved: 'تم إلغاء حفظ المنشور',
+    cantPin: 'تعذر التثبيت', postPinned: 'تم تثبيت المنشور في ملفك الشخصي', postUnpinned: 'تم إلغاء التثبيت',
+    fileTooBig: 'حجم الملف كبير جداً', fileTypeUnsupported: 'نوع الملف غير مدعوم', imagePreviewAlt: 'معاينة الصورة',
+    willPostAsReel: 'سيُنشر كريلز', willPostAsVideo: 'سيُنشر في Hostaka Video',
+    contentOrFileRequired: 'المحتوى أو الملف مطلوب', uploadFail: 'فشل رفع الملف', cantPrepVideoUpload: 'تعذر تجهيز رفع الفيديو',
+    videoUploadFail: 'فشل رفع الفيديو', postedSuccess: 'تم نشر المنشور بنجاح', postFail: 'فشل النشر',
+    noPagesYet: 'لا تملك أي صفحة بعد', cantLoadPages: 'تعذر تحميل الصفحات',
+    pageNamePrompt: 'اسم الصفحة أو القناة:', pageHandlePrompt: 'معرّف الصفحة (بالإنجليزية بدون مسافات، مثال: my_channel):',
+    pageCreated: 'تم إنشاء الصفحة', createFail: 'فشل الإنشاء', linkLabel: 'الرابط:'
   },
   en: {
     back: 'Back', profile: 'Profile', editProfile: 'Edit Profile',
@@ -5902,7 +6093,40 @@ const LANG = {
     connectionError: 'Connection error', coverJpg: 'JPG/JPEG only for cover',
     followers: 'Followers', following: 'Following', follow: 'Follow', unfollow: 'Unfollow',
     followError: 'Error while following', followersList: 'Followers', followingList: 'Following',
-    noFollowers: 'No followers yet', noFollowing: 'Not following anyone'
+    noFollowers: 'No followers yet', noFollowing: 'Not following anyone',
+    privacy: 'Privacy', pages: 'Pages', newPost: 'New post',
+    verified: 'Verified account', options: 'Options', reportUser: 'Report user',
+    blockUser: 'Block user', unblockUser: 'Unblock user', privateBadge: 'Private',
+    privateAccountBody: 'This account is private. Follow to see their posts',
+    unblockedToast: 'Unblocked @{u}', blockedToast: 'Blocked @{u}',
+    operationFailed: 'Operation failed', message: 'Message',
+    suspendedMsg: 'Your account has been suspended by the administration{reason}\nFor inquiries, please contact support via the /support page',
+    reactLike: 'Like', reactLove: 'Love', reactHaha: 'Haha', reactSad: 'Sad', reactAngry: 'Angry',
+    reportReasonAbuse: 'Abuse or harassment', reportReasonFake: 'Fake or impersonation account', reportReasonSpam: 'Spam / unwanted content', reportReasonOther: 'Other reason',
+    reportSubjectPrefix: 'Report on user @{u}', reportSent: 'Report sent, thank you', sendFail: 'Failed to send',
+    countryLabel: 'Country', countryPlaceholder: 'e.g. Saudi Arabia', schoolLabel: 'School/University', optionalPlaceholder: 'Optional',
+    songLabel: 'Favorite song', certLabel: 'Certificates', privateAccountTitle: 'Private account',
+    privateAccountHint: 'If enabled, only your followers can see your posts', whoCanMessage: 'Who can message me?',
+    everyone: 'Everyone', followersOnly: 'Followers only', noOne: 'No one', closeFriendsLabel: 'Close Friends',
+    closeFriendsHint: 'A private list you can publish "Close friends only" posts to', manageListBtn: 'Manage list ({count})',
+    createPageChannel: 'Create a new page/channel', loading: 'Loading...', accountNowPrivate: 'Your account is now private',
+    accountNowPublic: 'Your account is now public', cantSave: 'Could not save', msgSettingsUpdated: 'Messaging settings updated',
+    usernamePlaceholder: 'Username', add: 'Add', close: 'Close', listEmpty: 'Your list is currently empty',
+    remove: 'Remove', cantLoad: 'Could not load', added: 'Added', cantAdd: 'Could not add',
+    removed: 'Removed', cantRemove: 'Could not remove', pinned: 'Pinned', draft: 'Draft',
+    closeFriendsOnly: 'Close friends', scheduled: 'Scheduled', reelsTag: 'Reels',
+    reactWord: 'React', replyWord: 'Reply', replyToPlaceholder: 'Reply @{u}', commentPlaceholder: 'Write a comment...',
+    unsave: 'Unsave', unpin: 'Unpin', pinInProfile: 'Pin to profile', share: 'Share',
+    del: 'Delete', commentWord: 'comment', confirmDeleteComment: 'Delete this comment?', confirmDeletePost: 'Permanently delete this post?',
+    cantDelete: 'Could not delete', postSaved: 'Post saved', postUnsaved: 'Post unsaved',
+    cantPin: 'Could not pin', postPinned: 'Post pinned to your profile', postUnpinned: 'Post unpinned',
+    fileTooBig: 'File is too large', fileTypeUnsupported: 'Unsupported file type', imagePreviewAlt: 'Image preview',
+    willPostAsReel: 'Will be posted as a reel', willPostAsVideo: 'Will be posted to Hostaka Video',
+    contentOrFileRequired: 'Content or a file is required', uploadFail: 'Failed to upload file', cantPrepVideoUpload: 'Could not prepare video upload',
+    videoUploadFail: 'Failed to upload video', postedSuccess: 'Posted successfully', postFail: 'Failed to post',
+    noPagesYet: 'You don\'t have a page yet', cantLoadPages: 'Could not load pages',
+    pageNamePrompt: 'Page or channel name:', pageHandlePrompt: 'Page handle (English, no spaces, e.g. my_channel):',
+    pageCreated: 'Page created', createFail: 'Failed to create', linkLabel: 'Link:'
   },
   fr: {
     back: 'Retour', profile: 'Profil', editProfile: 'Modifier le profil',
@@ -5916,7 +6140,8 @@ const LANG = {
     connectionError: 'Erreur de connexion', coverJpg: 'JPG/JPEG uniquement',
     followers: 'Abonnés', following: 'Abonnements', follow: 'Suivre', unfollow: 'Ne plus suivre',
     followError: 'Erreur lors du suivi', followersList: 'Abonnés', followingList: 'Abonnements',
-    noFollowers: 'Aucun abonné', noFollowing: 'Aucun abonnement'
+    noFollowers: 'Aucun abonné', noFollowing: 'Aucun abonnement',
+    privacy: 'Confidentialité', pages: 'Pages', newPost: 'Nouvelle publication'
   },
   ru: {
     back: 'Назад', profile: 'Профиль', editProfile: 'Редактировать профиль',
@@ -5930,7 +6155,8 @@ const LANG = {
     connectionError: 'Ошибка соединения', coverJpg: 'Только JPG/JPEG',
     followers: 'Подписчики', following: 'Подписки', follow: 'Подписаться', unfollow: 'Отписаться',
     followError: 'Ошибка при подписке', followersList: 'Подписчики', followingList: 'Подписки',
-    noFollowers: 'Нет подписчиков', noFollowing: 'Нет подписок'
+    noFollowers: 'Нет подписчиков', noFollowing: 'Нет подписок',
+    privacy: 'Конфиденциальность', pages: 'Страницы', newPost: 'Новый пост'
   },
   zh: {
     back: '返回', profile: '个人资料', editProfile: '编辑资料',
@@ -5944,7 +6170,8 @@ const LANG = {
     connectionError: '连接错误', coverJpg: '仅支持 JPG/JPEG',
     followers: '关注者', following: '正在关注', follow: '关注', unfollow: '取消关注',
     followError: '关注出错', followersList: '关注者', followingList: '正在关注',
-    noFollowers: '暂无关注者', noFollowing: '未关注任何人'
+    noFollowers: '暂无关注者', noFollowing: '未关注任何人',
+    privacy: '隐私', pages: '页面', newPost: '新帖子'
   },
   ja: {
     back: '戻る', profile: 'プロフィール', editProfile: 'プロフィール編集',
@@ -5958,7 +6185,8 @@ const LANG = {
     connectionError: '接続エラー', coverJpg: 'JPG/JPEGのみ対応',
     followers: 'フォロワー', following: 'フォロー中', follow: 'フォロー', unfollow: 'フォロー解除',
     followError: 'フォロー中にエラーが発生しました', followersList: 'フォロワー', followingList: 'フォロー中',
-    noFollowers: 'フォロワーはいません', noFollowing: 'フォローしている人はいません'
+    noFollowers: 'フォロワーはいません', noFollowing: 'フォローしている人はいません',
+    privacy: 'プライバシー', pages: 'ページ', newPost: '新規投稿'
   }
 };
 
@@ -6043,11 +6271,11 @@ function setLang(lang) {
 //  VERIFIED BADGE (Adaptive)
 // ============================================================
 function verifiedBadge() {
-  return `<span class="verified-icon" title="${t('verified') || 'حساب موثق'}"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M23 12l-2.44-2.78.34-3.68-3.61-.82-1.89-3.18L12 3 8.6 1.54 6.71 4.72l-3.61.81.34 3.68L1 12l2.44 2.78-.34 3.69 3.61.82 1.89 3.18L12 21l3.4 1.46 1.89-3.18 3.61-.82-.34-3.68L23 12z" fill="var(--badge-verified-fill)" stroke="var(--badge-verified-fill)" stroke-width="0.5"/><path d="M10.6 16.2l-4.1-4.1 1.4-1.4 2.7 2.7 5.5-5.5 1.4 1.4-6.9 6.9z" fill="var(--badge-verified-check)"/></svg></span>`;
+  return `<span class="verified-icon" title="${t('verified')}"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M23 12l-2.44-2.78.34-3.68-3.61-.82-1.89-3.18L12 3 8.6 1.54 6.71 4.72l-3.61.81.34 3.68L1 12l2.44 2.78-.34 3.69 3.61.82 1.89 3.18L12 21l3.4 1.46 1.89-3.18 3.61-.82-.34-3.68L23 12z" fill="var(--badge-verified-fill)" stroke="var(--badge-verified-fill)" stroke-width="0.5"/><path d="M10.6 16.2l-4.1-4.1 1.4-1.4 2.7 2.7 5.5-5.5 1.4 1.4-6.9 6.9z" fill="var(--badge-verified-check)"/></svg></span>`;
 }
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-// الخادم يخزّن التوقيت بصيغة UTC بدون منطقة زمنية؛ نفسّرها كـ UTC ليحوّلها المتصفح تلقائياً لتوقيت جهاز المستخدم
+// The server stores timestamps in UTC without a timezone; we interpret them as UTC so the browser converts them automatically to the user's local time
 function toUTCDate(s){
   if(!s) return new Date(NaN);
   if(s instanceof Date) return s;
@@ -6085,11 +6313,11 @@ const SVG = {
 };
 
 const REACTIONS = [
-  { emoji:'like',  label:'أعجبني',  icon:SVG.like },
-  { emoji:'heart', label:'أحببته',  icon:SVG.heart },
-  { emoji:'haha',  label:'أضحكني',  icon:SVG.haha },
-  { emoji:'sad',   label:'أحزنني',  icon:SVG.sad },
-  { emoji:'angry', label:'أغضبني',  icon:SVG.angry },
+  { emoji:'like',  label:t('reactLike'),  icon:SVG.like },
+  { emoji:'heart', label:t('reactLove'),  icon:SVG.heart },
+  { emoji:'haha',  label:t('reactHaha'),  icon:SVG.haha },
+  { emoji:'sad',   label:t('reactSad'),  icon:SVG.sad },
+  { emoji:'angry', label:t('reactAngry'),  icon:SVG.angry },
 ];
 
 function stripEmojis(text) {
@@ -6164,7 +6392,7 @@ function handleSuspended(reason){
   localStorage.removeItem('hostaka_token');
   localStorage.removeItem('hostaka_user');
   localStorage.removeItem('hostaka_role');
-  alert('تم تعليق حسابك من قبل الإدارة' + (reason ? ':\n' + reason : '') + '\nللاستفسار يرجى التواصل مع الدعم عبر صفحة /support');
+  alert(t('suspendedMsg',{reason: reason ? ':\n' + reason : ''}));
   window.location = '/';
 }
 
@@ -6232,7 +6460,7 @@ async function loadPublicProfile(username) {
     document.getElementById('topbarTitle').textContent = pr.display_name || pr.username;
     renderCover(pr.cover || '', false);
     
-    // استخدام البيانات من pr مباشرة (لأن الخادم يعيد is_following عند تمرير التوكن)
+    // Use the data from pr directly (since the server returns is_following when a token is passed)
     const followStatus = {
       following: pr.is_following || false,
       followers_count: pr.followers_count || 0,
@@ -6307,12 +6535,12 @@ function avatarInner(user) {
   return user.avatar ? `<img src="${esc(user.avatar)}" alt="">` : (esc((user.display_name || user.username || '?').charAt(0).toUpperCase()));
 }
 
-// متغير لحالة المتابعة الحالية للمستخدم المعروض
+// Variable for the current follow state of the displayed user
 let currentFollowStatus = { following: false, followers_count: 0, following_count: 0 };
 
 function renderPublic(user, posts, followStatus) {
   userPosts = posts;
-  currentFollowStatus = followStatus; // حفظ الحالة
+  currentFollowStatus = followStatus; // save the state
   const token = getToken();
   const isOwn = token && ME && ME.username === user.username;
   const isFollowing = followStatus.following || false;
@@ -6322,30 +6550,30 @@ function renderPublic(user, posts, followStatus) {
 
   const canMessage = user.message_privacy === 'none' ? false
     : user.message_privacy === 'followers' ? isFollowing
-    : true; // 'everyone' أو غير محدد
+    : true; // 'everyone' or unspecified
 
   let actionsHtml = '';
   if (isOwn) {
     actionsHtml = `<button class="btn-edit" onclick="switchTab('edit')">${SVG.edit}${t('editProfile')}</button>`;
   } else if (token) {
     actionsHtml = `
-      ${canMessage ? `<a href="/chat?with=${esc(user.username)}" class="btn-msg">${SVG.msg}${t('message') || 'مراسلة'}</a>` : ''}
+      ${canMessage ? `<a href="/chat?with=${esc(user.username)}" class="btn-msg">${SVG.msg}${t('message')}</a>` : ''}
       <button class="btn-follow ${isFollowing ? 'following' : ''}" onclick="toggleFollow('${esc(user.username)}', this)">
         ${isFollowing ? SVG.check : SVG.follow}
         <span>${isFollowing ? t('unfollow') : t('follow')}</span>
       </button>
       <div class="btn-more-wrap">
-        <button class="btn-more" onclick="toggleMoreMenu()" title="خيارات">
+        <button class="btn-more" onclick="toggleMoreMenu()" title="${t('options')}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
         </button>
         <div class="more-menu" id="moreMenu">
           <button onclick="openReportUserModal('${esc(user.username)}')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            الإبلاغ عن المستخدم
+            ${t('reportUser')}
           </button>
           <button class="danger" id="blockToggleBtn" onclick="toggleBlockProfile('${esc(user.username)}')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-            <span id="blockToggleText">حظر المستخدم</span>
+            <span id="blockToggleText">${t('blockUser')}</span>
           </button>
         </div>
       </div>
@@ -6365,7 +6593,7 @@ function renderPublic(user, posts, followStatus) {
       <div class="profile-actions">${actionsHtml}</div>
     </div>
     <div class="profile-meta">
-      <div class="meta-name">${esc(user.display_name || user.username)} ${user.verified ? verifiedBadge() : ''} ${Number(user.is_private)===1 ? '<span class="private-badge">🔒 خاص</span>' : ''}</div>
+      <div class="meta-name">${esc(user.display_name || user.username)} ${user.verified ? verifiedBadge() : ''} ${Number(user.is_private)===1 ? '<span class="private-badge">🔒 ' + t('privateBadge') + '</span>' : ''}</div>
       <div class="meta-un">@${esc(user.username)}</div>
       ${roleBadge(user.role)}
       ${user.bio ? `<div class="meta-bio">${esc(user.bio)}</div>` : ''}
@@ -6385,13 +6613,13 @@ function renderPublic(user, posts, followStatus) {
     <div class="posts-tab" id="postsTab">${isLocked ? `
       <div class="post-empty">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <div>هذا الحساب خاص. تابعه عشان تقدر تشوف منشوراته</div>
+        <div>${t('privateAccountBody')}</div>
       </div>` : renderPosts(posts)}</div>`;
 
   if (!isOwn && token) checkBlockStatus(user.username);
 }
 
-// ----- الحظر والإبلاغ عن مستخدم -----
+// ----- Block and report a user -----
 function toggleMoreMenu(){
   document.getElementById('moreMenu')?.classList.toggle('show');
 }
@@ -6403,23 +6631,23 @@ async function checkBlockStatus(username){
   try{
     const d = await apiFetch('/api/block/status/' + encodeURIComponent(username));
     const txt = document.getElementById('blockToggleText');
-    if(txt) txt.textContent = d.blocked ? 'إلغاء حظر المستخدم' : 'حظر المستخدم';
+    if(txt) txt.textContent = d.blocked ? t('unblockUser') : t('blockUser');
   }catch(e){}
 }
 
 async function toggleBlockProfile(username){
   document.getElementById('moreMenu')?.classList.remove('show');
   const txt = document.getElementById('blockToggleText');
-  const isBlocked = txt && txt.textContent.includes('إلغاء');
+  const isBlocked = txt && txt.textContent === t('unblockUser');
   try{
     const d = isBlocked
       ? await apiFetch('/api/block/' + encodeURIComponent(username), 'DELETE')
       : await apiFetch('/api/block/' + encodeURIComponent(username), 'POST');
     if(d.success){
-      showToast(isBlocked ? 'تم إلغاء حظر @'+username : 'تم حظر @'+username);
+      showToast(isBlocked ? t('unblockedToast',{u:username}) : t('blockedToast',{u:username}));
       checkBlockStatus(username);
-    } else { showToast(d.error || 'فشلت العملية', 'error'); }
-  }catch(e){ showToast('تعذر الاتصال', 'error'); }
+    } else { showToast(d.error || t('operationFailed'), 'error'); }
+  }catch(e){ showToast(t('connectionError'), 'error'); }
 }
 
 function openReportUserModal(username){
@@ -6433,18 +6661,18 @@ async function submitUserReport(){
   const username = document.getElementById('reportUserTarget').value;
   const reasonType = document.getElementById('reportUserReason').value;
   const details = document.getElementById('reportUserDetails').value.trim();
-  const labels = { abuse:'إساءة أو تنمر', fake:'حساب مزيف أو منتحل', spam:'محتوى مزعج / سبام', other:'سبب آخر' };
+  const labels = { abuse:t('reportReasonAbuse'), fake:t('reportReasonFake'), spam:t('reportReasonSpam'), other:t('reportReasonOther') };
   const reason = labels[reasonType] + (details ? ' — ' + details : '');
   const btn = document.getElementById('reportUserSubmitBtn');
   btn.disabled = true;
   try{
     const d = await apiFetch('/api/reports', 'POST', {
       type: 'user', target_owner_username: username,
-      subject: 'إبلاغ عن مستخدم @' + username, reason
+      subject: t('reportSubjectPrefix',{u:username}), reason
     });
-    if(d.success){ showToast('تم إرسال البلاغ، شكراً لك'); document.getElementById('reportUserModal').classList.remove('show'); }
-    else { showToast(d.error || 'فشل الإرسال', 'error'); }
-  }catch(e){ showToast('تعذر الاتصال', 'error'); }
+    if(d.success){ showToast(t('reportSent')); document.getElementById('reportUserModal').classList.remove('show'); }
+    else { showToast(d.error || t('sendFail'), 'error'); }
+  }catch(e){ showToast(t('connectionError'), 'error'); }
   btn.disabled = false;
 }
 
@@ -6481,13 +6709,13 @@ function renderMyProfile(user, posts) {
     <div class="tabs-bar">
       <button class="tab-btn active" id="tabPosts" onclick="switchTab('posts')">${t('posts')}</button>
       <button class="tab-btn" id="tabEdit" onclick="switchTab('edit')">${t('editProfile')}</button>
-      <button class="tab-btn" id="tabPrivacy" onclick="switchTab('privacy')">الخصوصية</button>
-      <button class="tab-btn" id="tabPages" onclick="switchTab('pages')">الصفحات</button>
+      <button class="tab-btn" id="tabPrivacy" onclick="switchTab('privacy')">${t('privacy')}</button>
+      <button class="tab-btn" id="tabPages" onclick="switchTab('pages')">${t('pages')}</button>
     </div>
     <div class="posts-tab" id="postsTab">
       <button class="create-post-cta" onclick="openPostModal()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        منشور جديد
+        ${t('newPost')}
       </button>
       ${renderPosts(posts)}
     </div>
@@ -6498,12 +6726,12 @@ function renderMyProfile(user, posts) {
       </div>
       <div class="fg"><label>${t('bio')}</label><textarea id="fBio" placeholder="${t('bio')}">${esc(user.bio || '')}</textarea></div>
       <div class="fg-row">
-        <div class="fg"><label>الدولة</label><input type="text" id="fCountry" value="${esc(user.country || '')}" placeholder="مثال: السعودية"></div>
-        <div class="fg"><label>المدرسة/الجامعة</label><input type="text" id="fSchool" value="${esc(user.school || '')}" placeholder="اختياري"></div>
+        <div class="fg"><label>${t('countryLabel')}</label><input type="text" id="fCountry" value="${esc(user.country || '')}" placeholder="${t('countryPlaceholder')}"></div>
+        <div class="fg"><label>${t('schoolLabel')}</label><input type="text" id="fSchool" value="${esc(user.school || '')}" placeholder="${t('optionalPlaceholder')}"></div>
       </div>
       <div class="fg-row">
-        <div class="fg"><label>الأغنية المفضلة</label><input type="text" id="fSong" value="${esc(user.favorite_song || '')}" placeholder="اختياري"></div>
-        <div class="fg"><label>الشهادات</label><input type="text" id="fCert" value="${esc(user.certificates || '')}" placeholder="اختياري"></div>
+        <div class="fg"><label>${t('songLabel')}</label><input type="text" id="fSong" value="${esc(user.favorite_song || '')}" placeholder="${t('optionalPlaceholder')}"></div>
+        <div class="fg"><label>${t('certLabel')}</label><input type="text" id="fCert" value="${esc(user.certificates || '')}" placeholder="${t('optionalPlaceholder')}"></div>
       </div>
       <button class="btn-save" id="saveBtn" onclick="save()">${SVG.save}${t('save')}</button>
     </div>
@@ -6512,31 +6740,31 @@ function renderMyProfile(user, posts) {
       <div class="alert alert-ok" id="privOk"></div>
       <div class="privacy-row">
         <div>
-          <div class="privacy-row-title">حساب خاص</div>
-          <div class="privacy-row-hint">لو فعّلته، ما يقدر يشوف منشوراتك إلا متابعينك فقط</div>
+          <div class="privacy-row-title">${t('privateAccountTitle')}</div>
+          <div class="privacy-row-hint">${t('privateAccountHint')}</div>
         </div>
         <label class="switch"><input type="checkbox" id="fPrivate" ${Number(user.is_private)===1?'checked':''} onchange="saveAccountPrivacy()"><span class="slider"></span></label>
       </div>
       <div class="fg" style="margin-top:16px;">
-        <label>مين يقدر يراسلني؟</label>
+        <label>${t('whoCanMessage')}</label>
         <select id="fMsgPrivacy" onchange="saveMessagePrivacy()">
-          <option value="everyone" ${user.message_privacy==='everyone'?'selected':''}>الجميع</option>
-          <option value="followers" ${user.message_privacy==='followers'?'selected':''}>المتابعون فقط</option>
-          <option value="none" ${user.message_privacy==='none'?'selected':''}>لا أحد</option>
+          <option value="everyone" ${user.message_privacy==='everyone'?'selected':''}>${t('everyone')}</option>
+          <option value="followers" ${user.message_privacy==='followers'?'selected':''}>${t('followersOnly')}</option>
+          <option value="none" ${user.message_privacy==='none'?'selected':''}>${t('noOne')}</option>
         </select>
       </div>
       <div class="fg" style="margin-top:20px;">
-        <label>الأصدقاء المقربون</label>
-        <div class="privacy-row-hint" style="margin-bottom:10px;">قائمة خاصة تقدر تنشر لها منشورات "أصدقاء مقربون فقط"</div>
-        <button class="btn-save" style="width:auto;padding:9px 20px;" onclick="openCloseFriendsModal()">إدارة القائمة (${closeFriendsCount})</button>
+        <label>${t('closeFriendsLabel')}</label>
+        <div class="privacy-row-hint" style="margin-bottom:10px;">${t('closeFriendsHint')}</div>
+        <button class="btn-save" style="width:auto;padding:9px 20px;" onclick="openCloseFriendsModal()">${t('manageListBtn',{count:closeFriendsCount})}</button>
       </div>
     </div>
     <div class="edit-section" id="pagesTab" style="display:none;">
       <button class="btn-save" style="margin-bottom:16px;" onclick="openCreatePage()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        إنشاء صفحة/قناة جديدة
+        ${t('createPageChannel')}
       </button>
-      <div id="myPagesList"><div class="post-empty">جارٍ التحميل...</div></div>
+      <div id="myPagesList"><div class="post-empty">${t('loading')}</div></div>
     </div>`;
 }
 
@@ -6548,22 +6776,22 @@ async function loadCloseFriendsCount(){
     const list = await apiFetch('/api/account/close-friends');
     closeFriendsCount = Array.isArray(list) ? list.length : 0;
     const btn = document.querySelector('#privacyTab .btn-save');
-    if(btn) btn.textContent = `إدارة القائمة (${closeFriendsCount})`;
+    if(btn) btn.textContent = t('manageListBtn',{count:closeFriendsCount});
   }catch(e){}
 }
 
 async function saveAccountPrivacy(){
   const checked = document.getElementById('fPrivate').checked;
   const d = await apiFetch('/api/account/privacy', 'PUT', { is_private: checked });
-  if(d.success){ showToast(checked ? 'صار حسابك خاص' : 'صار حسابك عام'); if(ME) ME.is_private = checked?1:0; }
-  else showToast(d.error||'تعذر الحفظ', 'error');
+  if(d.success){ showToast(checked ? t('accountNowPrivate') : t('accountNowPublic')); if(ME) ME.is_private = checked?1:0; }
+  else showToast(d.error||t('cantSave'), 'error');
 }
 
 async function saveMessagePrivacy(){
   const pref = document.getElementById('fMsgPrivacy').value;
   const d = await apiFetch('/api/account/message-privacy', 'PUT', { pref });
-  if(d.success) showToast('تم تحديث إعدادات المراسلة');
-  else showToast(d.error||'تعذر الحفظ', 'error');
+  if(d.success) showToast(t('msgSettingsUpdated'));
+  else showToast(d.error||t('cantSave'), 'error');
 }
 
 async function openCloseFriendsModal(){
@@ -6573,15 +6801,15 @@ async function openCloseFriendsModal(){
     modal.className = 'modal-bd';
     modal.id = 'closeFriendsModal';
     modal.innerHTML = `<div class="modal-box">
-      <div class="modal-t">الأصدقاء المقربون</div>
+      <div class="modal-t">${t('closeFriendsLabel')}</div>
       <div class="fg-row" style="margin-bottom:12px;">
-        <input type="text" id="cfUsernameInput" class="fg" placeholder="اسم المستخدم" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);">
-        <button class="btn-save" style="width:auto;padding:9px 16px;" onclick="addCloseFriendByUsername()">إضافة</button>
+        <input type="text" id="cfUsernameInput" class="fg" placeholder="${t('usernamePlaceholder')}" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);">
+        <button class="btn-save" style="width:auto;padding:9px 16px;" onclick="addCloseFriendByUsername()">${t('add')}</button>
       </div>
       <div class="err" id="cfErr" style="display:none;color:var(--danger);font-size:0.8rem;margin-bottom:8px;"></div>
-      <div id="closeFriendsList"><div class="post-empty">جارٍ التحميل...</div></div>
+      <div id="closeFriendsList"><div class="post-empty">${t('loading')}</div></div>
       <div class="modal-footer" style="margin-top:16px;display:flex;justify-content:flex-end;">
-        <button class="btn-edit" onclick="document.getElementById('closeFriendsModal').classList.remove('show')">إغلاق</button>
+        <button class="btn-edit" onclick="document.getElementById('closeFriendsModal').classList.remove('show')">${t('close')}</button>
       </div>
     </div>`;
     document.body.appendChild(modal);
@@ -6595,15 +6823,15 @@ async function renderCloseFriendsList(){
   try{
     const list = await apiFetch('/api/account/close-friends');
     closeFriendsCount = Array.isArray(list) ? list.length : 0;
-    if(!list.length){ box.innerHTML = '<div class="post-empty" style="padding:20px;">قائمتك فاضية حالياً</div>'; return; }
+    if(!list.length){ box.innerHTML = `<div class="post-empty" style="padding:20px;">${t('listEmpty')}</div>`; return; }
     box.innerHTML = list.map(f => `
       <div class="session-row">
         <div class="session-icon">${f.avatar?`<img src="${esc(f.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`:esc((f.display_name||f.username||'?').charAt(0).toUpperCase())}</div>
         <div class="session-info"><div class="session-name">${esc(f.display_name||f.username)}</div><div class="session-meta">@${esc(f.username)}</div></div>
-        <button class="btn-outline-danger" style="padding:6px 12px;font-size:0.76rem;" onclick="removeCloseFriend('${esc(f.username)}')">إزالة</button>
+        <button class="btn-outline-danger" style="padding:6px 12px;font-size:0.76rem;" onclick="removeCloseFriend('${esc(f.username)}')">${t('remove')}</button>
       </div>
     `).join('');
-  }catch(e){ box.innerHTML = '<div class="post-empty">تعذر التحميل</div>'; }
+  }catch(e){ box.innerHTML = `<div class="post-empty">${t('cantLoad')}</div>`; }
 }
 
 async function addCloseFriendByUsername(){
@@ -6613,23 +6841,23 @@ async function addCloseFriendByUsername(){
   errEl.style.display = 'none';
   if(!username) return;
   const d = await apiFetch('/api/account/close-friends/' + encodeURIComponent(username), 'POST');
-  if(d.success){ input.value = ''; renderCloseFriendsList(); showToast('تمت الإضافة'); }
-  else { errEl.textContent = d.error || 'تعذر الإضافة'; errEl.style.display = 'block'; }
+  if(d.success){ input.value = ''; renderCloseFriendsList(); showToast(t('added')); }
+  else { errEl.textContent = d.error || t('cantAdd'); errEl.style.display = 'block'; }
 }
 
 async function removeCloseFriend(username){
   const d = await apiFetch('/api/account/close-friends/' + encodeURIComponent(username), 'DELETE');
-  if(d.success){ renderCloseFriendsList(); showToast('تمت الإزالة'); }
-  else showToast(d.error||'تعذر الإزالة', 'error');
+  if(d.success){ renderCloseFriendsList(); showToast(t('removed')); }
+  else showToast(d.error||t('cantRemove'), 'error');
 }
 
 function postStatusBadge(p){
   let out = '';
-  if (Number(p.pinned) === 1) out += `<span class="post-status-badge st-pinned">${SVG.pin} مثبّت</span>`;
-  if (p.privacy === 'draft') out += `<span class="post-status-badge st-draft">مسودة</span>`;
-  else if (p.privacy === 'private') out += `<span class="post-status-badge st-private">خاص</span>`;
-  else if (p.privacy === 'close_friends') out += `<span class="post-status-badge st-close-friends">أصدقاء مقربون</span>`;
-  else if (p.scheduled_at && new Date(p.scheduled_at.replace(' ','T')+'Z').getTime() > Date.now()) out += `<span class="post-status-badge st-scheduled">مجدول</span>`;
+  if (Number(p.pinned) === 1) out += `<span class="post-status-badge st-pinned">${SVG.pin} ${t('pinned')}</span>`;
+  if (p.privacy === 'draft') out += `<span class="post-status-badge st-draft">${t('draft')}</span>`;
+  else if (p.privacy === 'private') out += `<span class="post-status-badge st-private">${t('privateBadge')}</span>`;
+  else if (p.privacy === 'close_friends') out += `<span class="post-status-badge st-close-friends">${t('closeFriendsOnly')}</span>`;
+  else if (p.scheduled_at && new Date(p.scheduled_at.replace(' ','T')+'Z').getTime() > Date.now()) out += `<span class="post-status-badge st-scheduled">${t('scheduled')}</span>`;
   return out;
 }
 
@@ -6646,7 +6874,7 @@ function renderOnePost(p){
     mediaHtml = `<div class="reel-card" onclick="location.href='/short?id=${p.id}'">
       <video class="reel-thumb-video" muted playsinline preload="metadata"><source src="${esc(p.video)}#t=0.1" type="video/mp4"></video>
       <div class="reel-play-badge">${SVG.reel}</div>
-      <div class="reel-tag">ريلز</div>
+      <div class="reel-tag">${t('reelsTag')}</div>
     </div>`;
   } else if (p.video) {
     mediaHtml = `<div class="video-card" onclick="location.href='/video?id=${p.id}'">
@@ -6664,7 +6892,7 @@ function renderOnePost(p){
   const reactionHtml = `<div class="react-wrap">
     <button class="react-main-btn ${userR?'reacted':''}" onclick="toggleReactMenu(${p.id})">
       ${activeReact ? activeReact.icon : SVG.like}
-      <span>${totalReactions||'تفاعل'}</span>
+      <span>${totalReactions||t('reactWord')}</span>
     </button>
     <div class="react-menu" id="rmenu-${p.id}">
       ${REACTIONS.map(r=>`<button class="react-emoji-btn ${p.userReaction===r.emoji?'active':''}" onclick="toggleReact(${p.id},'${r.emoji}')" title="${r.label}">${r.icon}</button>`).join('')}
@@ -6684,21 +6912,21 @@ function renderOnePost(p){
       <div class="c-avatar">${ca}</div>
       <div class="c-bubble">
         <div class="c-name">${esc(c.display_name||c.username)}
-          ${ME ? `<button class="reply-btn" onclick="toggleReplyInput(${postId},${c.id})">رد</button>` : ''}
+          ${ME ? `<button class="reply-btn" onclick="toggleReplyInput(${postId},${c.id})">${t('replyWord')}</button>` : ''}
           ${canDelC?`<button class="c-del" onclick="delComment(${c.id},${postId})">${SVG.delete}</button>`:''}
         </div>
         <div class="c-text">${cleanContent}</div>
       </div>
     </div>
     <div class="reply-input-row" id="replyRow-${c.id}" style="display:none;">
-      <input class="comment-input" type="text" placeholder="رد @${esc(c.username||'')}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
+      <input class="comment-input" type="text" placeholder="${t('replyToPlaceholder',{u:esc(c.username||'')})}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
       <button class="btn-send-comment" onclick="sendComment(${postId},${c.id})">${SVG.send}</button>
     </div>
     ${repliesHtml}`;
   }
   const commentsHtml = topComments.map(c => oneCommentHtml(c, p.id)).join('');
   const commentInputHtml = ME ? `<div class="comment-input-row">
-    <input class="comment-input" type="text" placeholder="اكتب تعليقاً..." id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
+    <input class="comment-input" type="text" placeholder="${t('commentPlaceholder')}" id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
     <button class="btn-send-comment" onclick="sendComment(${p.id})">${SVG.send}</button>
   </div>` : '';
 
@@ -6714,10 +6942,10 @@ function renderOnePost(p){
           </div>
         </div>
         <div class="pub-actions">
-          ${ME ? `<button class="btn-icon save-btn ${p.is_saved?'saved':''}" onclick="toggleSavePost(${p.id})" title="${p.is_saved?'إلغاء الحفظ':'حفظ'}">${p.is_saved?SVG.bookmarkFilled:SVG.bookmark}</button>` : ''}
-          ${canDel ? `<button class="btn-icon pin-btn ${Number(p.pinned)===1?'pinned':''}" onclick="togglePinPost(${p.id})" title="${Number(p.pinned)===1?'إلغاء التثبيت':'تثبيت في الملف الشخصي'}">${SVG.pin}</button>` : ''}
-          <button class="btn-icon" onclick="sharePost(${p.id})" title="مشاركة">${SVG.share}</button>
-          ${canDel ? `<button class="btn-icon" onclick="delPost(${p.id})" title="حذف">${SVG.delete}</button>` : ''}
+          ${ME ? `<button class="btn-icon save-btn ${p.is_saved?'saved':''}" onclick="toggleSavePost(${p.id})" title="${p.is_saved?t('unsave'):t('save')}">${p.is_saved?SVG.bookmarkFilled:SVG.bookmark}</button>` : ''}
+          ${canDel ? `<button class="btn-icon pin-btn ${Number(p.pinned)===1?'pinned':''}" onclick="togglePinPost(${p.id})" title="${Number(p.pinned)===1?t('unpin'):t('pinInProfile')}">${SVG.pin}</button>` : ''}
+          <button class="btn-icon" onclick="sharePost(${p.id})" title="${t('share')}">${SVG.share}</button>
+          ${canDel ? `<button class="btn-icon" onclick="delPost(${p.id})" title="${t('del')}">${SVG.delete}</button>` : ''}
         </div>
       </div>
       <div class="pub-date">${fmtDate(p.created_at)}</div>
@@ -6725,7 +6953,7 @@ function renderOnePost(p){
       <div class="reactions-row">
         ${reactionHtml}
         <button class="react-btn" onclick="toggleComments(${p.id})" id="cmtToggle-${p.id}">
-          ${SVG.comment}<span>${allComments.length} تعليق</span>
+          ${SVG.comment}<span>${allComments.length} ${t('commentWord')}</span>
         </button>
       </div>
       <div class="comments-section" id="cmtSec-${p.id}" style="display:none;">
@@ -6801,19 +7029,19 @@ async function sendComment(postId, parentId){
 }
 
 async function delComment(commentId, postId){
-  if(!confirm('حذف هذا التعليق؟')) return;
+  if(!confirm(t('confirmDeleteComment'))) return;
   await apiFetch('/api/comments/'+commentId,'DELETE');
   document.getElementById('cmt-'+commentId)?.remove();
 }
 
 async function delPost(id){
-  if(!confirm('حذف هذا المنشور نهائياً؟')) return;
+  if(!confirm(t('confirmDeletePost'))) return;
   const d = await apiFetch('/api/records/'+id, 'DELETE');
   if(d.success){
     profilePosts = profilePosts.filter(p => p.id !== id);
     document.getElementById('post-'+id)?.remove();
   } else {
-    showToast(d.error || 'تعذر الحذف', 'error');
+    showToast(d.error || t('cantDelete'), 'error');
   }
 }
 
@@ -6827,14 +7055,14 @@ async function toggleSavePost(id){
   if(btn){
     btn.classList.toggle('saved', d.saved);
     btn.innerHTML = d.saved ? SVG.bookmarkFilled : SVG.bookmark;
-    btn.title = d.saved ? 'إلغاء الحفظ' : 'حفظ';
+    btn.title = d.saved ? t('unsave') : t('save');
   }
-  showToast(d.saved ? 'تم حفظ المنشور' : 'تم إلغاء حفظ المنشور');
+  showToast(d.saved ? t('postSaved') : t('postUnsaved'));
 }
 
 async function togglePinPost(id){
   const d = await apiFetch('/api/records/'+id+'/pin', 'POST');
-  if(!d.success){ showToast(d.error||'تعذر التثبيت', 'error'); return; }
+  if(!d.success){ showToast(d.error||t('cantPin'), 'error'); return; }
   profilePosts.forEach(p => { p.pinned = (p.id === id) ? (d.pinned?1:0) : 0; });
   profilePosts.sort((a,b) => (Number(b.pinned)||0) - (Number(a.pinned)||0));
   const tab = document.getElementById('postsTab');
@@ -6842,11 +7070,11 @@ async function togglePinPost(id){
     const cta = tab.querySelector('.create-post-cta');
     tab.innerHTML = (cta ? cta.outerHTML : '') + renderPosts(profilePosts);
   }
-  showToast(d.pinned ? 'تم تثبيت المنشور في ملفك الشخصي' : 'تم إلغاء التثبيت');
+  showToast(d.pinned ? t('postPinned') : t('postUnpinned'));
 }
 
 // ============================================================
-//  إنشاء منشور جديد (الوسائط + التنسيق + الخصوصية + الجدولة)
+//  Create a new post (media + formatting + privacy + scheduling)
 // ============================================================
 let postMediaBase64 = '';
 let postMediaType = '';
@@ -6893,10 +7121,10 @@ function selectPostPrivacy(p){
 function onPostMedia(e){
   const f = e.target.files[0];
   if (!f) return;
-  if (f.size > MAX_FILE_SIZE) { showToast('حجم الملف كبير جداً', 'error'); e.target.value=''; return; }
+  if (f.size > MAX_FILE_SIZE) { showToast(t('fileTooBig'), 'error'); e.target.value=''; return; }
   const isImage = f.type === 'image/jpeg' || f.type === 'image/jpg';
   const isVideo = f.type.startsWith('video/') && (f.type === 'video/mp4' || f.type === 'video/webm');
-  if (!isImage && !isVideo) { showToast('نوع الملف غير مدعوم', 'error'); e.target.value=''; return; }
+  if (!isImage && !isVideo) { showToast(t('fileTypeUnsupported'), 'error'); e.target.value=''; return; }
   postMediaType = isImage ? 'image' : 'video';
   postMediaFileObj = isVideo ? f : null;
   postVideoMeta = { width:0, height:0, isReel:false };
@@ -6905,10 +7133,10 @@ function onPostMedia(e){
     postMediaBase64 = ev.target.result;
     const preview = document.getElementById('postMediaPreview');
     if (isImage) {
-      preview.innerHTML = `<img src="${postMediaBase64}" alt="معاينة الصورة">`;
+      preview.innerHTML = `<img src="${postMediaBase64}" alt="${t('imagePreviewAlt')}">`;
     } else {
       postVideoMeta = await readVideoDimensions(f);
-      const reelTag = postVideoMeta.isReel ? `<div class="reel-detect-badge">${SVG.reel} <span>سيُنشر كريلز</span></div>` : `<div class="reel-detect-badge">${SVG.reel} <span>سيُنشر في Hostaka Video</span></div>`;
+      const reelTag = postVideoMeta.isReel ? `<div class="reel-detect-badge">${SVG.reel} <span>${t('willPostAsReel')}</span></div>` : `<div class="reel-detect-badge">${SVG.reel} <span>${t('willPostAsVideo')}</span></div>`;
       preview.innerHTML = `<video controls style="max-height:200px;width:100%;"><source src="${postMediaBase64}" type="${f.type}"></video>${reelTag}`;
     }
     document.getElementById('postMediaPreviewWrap').style.display = 'block';
@@ -6952,7 +7180,7 @@ async function submitPost(){
   const editor = document.getElementById('postEditor');
   const content = editor?.innerHTML?.trim();
   const errEl = document.getElementById('postErr'); errEl.style.display='none';
-  if((!content || content==='<br>') && !postMediaBase64){ errEl.textContent='المحتوى أو الملف مطلوب'; errEl.style.display='block'; return; }
+  if((!content || content==='<br>') && !postMediaBase64){ errEl.textContent=t('contentOrFileRequired'); errEl.style.display='block'; return; }
   const btn=document.getElementById('postBtn'); btn.disabled=true;
   const scheduleVal = document.getElementById('postScheduleInput')?.value || '';
   try {
@@ -6961,13 +7189,13 @@ async function submitPost(){
       const up = await apiFetch('/api/upload', 'POST', { image: postMediaBase64 });
       if (up.url) { imageUrl = up.url; }
       else {
-        errEl.textContent = up.error || 'فشل رفع الملف'; errEl.style.display='block';
+        errEl.textContent = up.error || t('uploadFail'); errEl.style.display='block';
         btn.disabled=false; return;
       }
     } else if (postMediaType === 'video' && postMediaFileObj) {
       try {
         const sig = await apiFetch('/api/upload/video/signature', 'POST', {});
-        if (!sig.signature) throw new Error(sig.error || 'تعذر تجهيز رفع الفيديو');
+        if (!sig.signature) throw new Error(sig.error || t('cantPrepVideoUpload'));
         const fd = new FormData();
         fd.append('file', postMediaFileObj);
         fd.append('api_key', sig.apiKey);
@@ -6976,10 +7204,10 @@ async function submitPost(){
         fd.append('signature', sig.signature);
         const vRes = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/video/upload`, { method:'POST', body:fd });
         const vData = await vRes.json();
-        if (!vRes.ok || !vData.secure_url) throw new Error(vData.error?.message || 'فشل رفع الفيديو');
+        if (!vRes.ok || !vData.secure_url) throw new Error(vData.error?.message || t('videoUploadFail'));
         videoUrl = vData.secure_url;
       } catch (upErr) {
-        errEl.textContent = upErr.message || 'فشل رفع الفيديو'; errEl.style.display='block';
+        errEl.textContent = upErr.message || t('videoUploadFail'); errEl.style.display='block';
         btn.disabled=false; return;
       }
     }
@@ -6995,10 +7223,10 @@ async function submitPost(){
     });
     if(d.success){
       closeModal('postModal');
-      showToast('تم نشر المنشور بنجاح');
+      showToast(t('postedSuccess'));
       await loadMyProfile();
-    } else { errEl.textContent=d.error||'فشل النشر'; errEl.style.display='block'; }
-  } catch(e){ errEl.textContent='تعذر الاتصال بالخادم'; errEl.style.display='block'; }
+    } else { errEl.textContent=d.error||t('postFail'); errEl.style.display='block'; }
+  } catch(e){ errEl.textContent=t('cantConnectServer'); errEl.style.display='block'; }
   finally { btn.disabled=false; }
 }
 
@@ -7026,14 +7254,14 @@ function switchTab(tab) {
 }
 
 // ============================================================
-//  الصفحات/القنوات التابعة للحساب
+//  Pages/channels belonging to the account
 // ============================================================
 async function loadMyPages(){
   const list = document.getElementById('myPagesList');
   try {
     const pages = await apiFetch('/api/pages/mine');
     if (!Array.isArray(pages) || !pages.length) {
-      list.innerHTML = `<div class="post-empty">لا تملك أي صفحة بعد</div>`;
+      list.innerHTML = `<div class="post-empty">${t('noPagesYet')}</div>`;
       return;
     }
     list.innerHTML = pages.map(pg => `
@@ -7047,13 +7275,13 @@ async function loadMyPages(){
         </div>
       </div>
     `).join('');
-  } catch(e) { list.innerHTML = `<div class="post-empty">تعذر تحميل الصفحات</div>`; }
+  } catch(e) { list.innerHTML = `<div class="post-empty">${t('cantLoadPages')}</div>`; }
 }
 
 function openCreatePage(){
-  const name = prompt('اسم الصفحة أو القناة:');
+  const name = prompt(t('pageNamePrompt'));
   if (!name || !name.trim()) return;
-  const handle = prompt('معرّف الصفحة (بالإنجليزية بدون مسافات، مثال: my_channel):', name.trim().toLowerCase().replace(/\s+/g,'_'));
+  const handle = prompt(t('pageHandlePrompt'), name.trim().toLowerCase().replace(/\s+/g,'_'));
   if (!handle || !handle.trim()) return;
   createPage(name.trim(), handle.trim());
 }
@@ -7061,15 +7289,15 @@ function openCreatePage(){
 async function createPage(name, username){
   try {
     const d = await apiFetch('/api/pages', 'POST', { name, username });
-    if (d.success) { showToast('تم إنشاء الصفحة'); loadMyPages(); }
-    else showToast(d.error || 'فشل الإنشاء', 'error');
-  } catch(e) { showToast('تعذر الاتصال', 'error'); }
+    if (d.success) { showToast(t('pageCreated')); loadMyPages(); }
+    else showToast(d.error || t('createFail'), 'error');
+  } catch(e) { showToast(t('connectionError'), 'error'); }
 }
 
 function sharePost(id) {
   const url = window.location.origin + '/post?id=' + id;
   if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => showToast(t('linkCopied')));
-  else prompt('الرابط:', url);
+  else prompt(t('linkLabel'), url);
 }
 
 // ============================================================
@@ -7089,20 +7317,20 @@ async function toggleFollow(username, btnEl) {
       result = await followUser(username);
     }
     if (result.success) {
-      // تحديث الزر والمظهر
+      // Update the button and appearance
       btnEl.classList.toggle('following', result.following);
       const span = btnEl.querySelector('span');
       if (span) span.textContent = result.following ? t('unfollow') : t('follow');
-      // تحديث الأيقونة باستبدال العنصر بالكامل
+      // Update the icon by fully replacing the element
       const icon = btnEl.querySelector('svg');
       if (icon) {
         const newIcon = document.createElement('span');
         newIcon.innerHTML = result.following ? SVG.check : SVG.follow;
         icon.parentNode.replaceChild(newIcon.firstChild, icon);
       }
-      // تحديث الحالة المخزنة
+      // Update the stored state
       currentFollowStatus.following = result.following;
-      // تحديث الإحصائيات من الخادم
+      // Update stats from the server
       const freshStatus = await getFollowStatus(username);
       if (freshStatus) {
         currentFollowStatus.followers_count = freshStatus.followers_count || 0;
@@ -7335,42 +7563,42 @@ const LANG = {
     welcomeTitle:'أهلاً، أنا شيزي', welcomeText:'مساعدتك الذكية في منصة Hostaka. اسأليني أي شيء وبقدر أساعدك فيه!',
     s1:'ما هي منصة Hostaka؟', s2:'اقترح علي فكرة منشور', s3:'ساعدني في كتابة وصف بروفايل', s4:'أخبرني نكتة لطيفة',
     loginRequired:'يجب تسجيل الدخول', loginText:'سجّلي الدخول لبدء الدردشة مع شيزي', home:'الرئيسية',
-    clearedMsg:'بدأنا محادثة جديدة', errorMsg:'حدث خطأ، حاولي مرة أخرى', notConfigured:'لم يتم إعداد Shizi AI بعد'
+    clearedMsg:'بدأنا محادثة جديدة', errorMsg:'حدث خطأ، حاولي مرة أخرى', notConfigured:'لم يتم إعداد Shizi AI بعد', imageTooLarge:'الصورة كبيرة جدًا، الرجاء اختيار صورة أصغر من 8MB'
   },
   en: {
     back:'Hostaka', status:'Online now', placeholder:'Type a message to Shizi...', remainingLabel:'Online now · {n} messages left today',
     welcomeTitle:"Hi, I'm Shizi", welcomeText:'Your smart assistant on Hostaka. Ask me anything!',
     s1:'What is Hostaka?', s2:'Suggest a post idea', s3:'Help me write a bio', s4:'Tell me a fun fact',
     loginRequired:'Login required', loginText:'Please login to chat with Shizi', home:'Home',
-    clearedMsg:'Started a new chat', errorMsg:'Something went wrong, try again', notConfigured:'Shizi AI is not configured yet'
+    clearedMsg:'Started a new chat', errorMsg:'Something went wrong, try again', notConfigured:'Shizi AI is not configured yet', imageTooLarge:'Image is too large, please choose one smaller than 8MB'
   },
   fr: {
     back:'Hostaka', status:'En ligne', placeholder:'Écrivez à Shizi...', remainingLabel:'En ligne · {n} messages restants aujourd\'hui',
     welcomeTitle:'Salut, je suis Shizi', welcomeText:'Votre assistante intelligente sur Hostaka. Demandez-moi tout !',
     s1:"Qu'est-ce que Hostaka ?", s2:'Suggère une idée de post', s3:'Aide-moi à écrire ma bio', s4:'Raconte-moi une anecdote',
     loginRequired:'Connexion requise', loginText:'Connectez-vous pour discuter avec Shizi', home:'Accueil',
-    clearedMsg:'Nouvelle discussion', errorMsg:'Une erreur est survenue', notConfigured:"Shizi AI n'est pas encore configurée"
+    clearedMsg:'Nouvelle discussion', errorMsg:'Une erreur est survenue', notConfigured:"Shizi AI n'est pas encore configurée", imageTooLarge:'Image trop volumineuse, choisissez une image de moins de 8 Mo'
   },
   ru: {
     back:'Hostaka', status:'В сети', placeholder:'Напишите Shizi...', remainingLabel:'В сети · осталось {n} сообщений сегодня',
     welcomeTitle:'Привет, я Shizi', welcomeText:'Ваш умный помощник на Hostaka. Спросите меня о чём угодно!',
     s1:'Что такое Hostaka?', s2:'Предложи идею для поста', s3:'Помоги написать био', s4:'Расскажи интересный факт',
     loginRequired:'Требуется вход', loginText:'Войдите, чтобы общаться с Shizi', home:'Главная',
-    clearedMsg:'Новый чат', errorMsg:'Произошла ошибка', notConfigured:'Shizi AI ещё не настроена'
+    clearedMsg:'Новый чат', errorMsg:'Произошла ошибка', notConfigured:'Shizi AI ещё не настроена', imageTooLarge:'Изображение слишком большое, выберите менее 8МБ'
   },
   zh: {
     back:'Hostaka', status:'在线', placeholder:'给 Shizi 发消息...', remainingLabel:'在线 · 今日剩余 {n} 条消息',
     welcomeTitle:'嗨，我是 Shizi', welcomeText:'Hostaka 平台的智能助手。问我任何问题！',
     s1:'Hostaka 是什么？', s2:'给我一个发帖灵感', s3:'帮我写个人简介', s4:'讲个有趣的事实',
     loginRequired:'需要登录', loginText:'请登录以与 Shizi 聊天', home:'首页',
-    clearedMsg:'开始新对话', errorMsg:'出错了，请重试', notConfigured:'Shizi AI 尚未配置'
+    clearedMsg:'开始新对话', errorMsg:'出错了，请重试', notConfigured:'Shizi AI 尚未配置', imageTooLarge:'图片太大，请选择小于8MB的图片'
   },
   ja: {
     back:'Hostaka', status:'オンライン', placeholder:'Shiziにメッセージを送る...', remainingLabel:'オンライン · 本日の残り {n} 件',
     welcomeTitle:'こんにちは、Shiziです', welcomeText:'Hostakaのスマートアシスタントです。何でも聞いてください！',
     s1:'Hostakaとは？', s2:'投稿アイデアを提案して', s3:'プロフィール文を手伝って', s4:'面白い豆知識を教えて',
     loginRequired:'ログインが必要です', loginText:'Shiziとチャットするにはログインしてください', home:'ホーム',
-    clearedMsg:'新しいチャットを開始しました', errorMsg:'エラーが発生しました', notConfigured:'Shizi AIはまだ設定されていません'
+    clearedMsg:'新しいチャットを開始しました', errorMsg:'エラーが発生しました', notConfigured:'Shizi AIはまだ設定されていません', imageTooLarge:'画像が大きすぎます。8MB未満の画像を選んでください'
   }
 };
 
@@ -7449,7 +7677,7 @@ function openWallpaperModal(){
 function onWallpaperFile(evt){
   const file = evt.target.files && evt.target.files[0];
   if(!file) return;
-  if(file.size > 8*1024*1024){ alert('الصورة كبيرة جدًا، الرجاء اختيار صورة أصغر من 8MB'); return; }
+  if(file.size > 8*1024*1024){ alert(t('imageTooLarge')); return; }
   const reader = new FileReader();
   reader.onload = () => {
     const img = new Image();
@@ -7738,7 +7966,7 @@ async function sendMsg(){
     renderMsgs();
   } catch(e){
     sending = false;
-    messages.pop(); // نتراجع عن الرسالة المضافة محلياً لأنها لم تُحفظ فعلياً
+    messages.pop(); // revert the locally-added message since it wasn't actually saved
     renderMsgs();
     console.error('sendMsg failed:', e);
     if (e.status === 429) {
@@ -7826,6 +8054,26 @@ try { window.init = init; } catch(e) {}
 
 /* ================= short.html ================= */
 if (document.body.classList.contains('page-short')) {
+
+const LANG = {
+  ar: {
+    noReelsYet: 'لا توجد فيديوهات ريلز بعد', loadMoreReels: 'المزيد من الريلز', loading: 'جارٍ التحميل...',
+    noCommentsYet: 'لا توجد تعليقات بعد، كن أول من يعلّق', commentsCountLabel: '{n} تعليق', commentsWord: 'التعليقات',
+    replyWord: 'رد', replyToPlaceholder: 'الرد على @{u}', addCommentPlaceholder: 'أضف تعليقاً...', reelLinkCopied: 'تم نسخ رابط الريلز'
+  },
+  en: {
+    noReelsYet: 'No reels yet', loadMoreReels: 'More reels', loading: 'Loading...',
+    noCommentsYet: 'No comments yet, be the first to comment', commentsCountLabel: '{n} comments', commentsWord: 'Comments',
+    replyWord: 'Reply', replyToPlaceholder: 'Reply to @{u}', addCommentPlaceholder: 'Add a comment...', reelLinkCopied: 'Reel link copied'
+  }
+};
+let currentLang = localStorage.getItem('hostaka_lang') || 'en';
+function t(key, vars){
+  var s = (LANG[currentLang] || LANG.en)[key];
+  if (s === undefined) return key;
+  if (vars) Object.keys(vars).forEach(function(k){ s = s.replace('{'+k+'}', vars[k]); });
+  return s;
+}
 const TOKEN = localStorage.getItem('hostaka_token') || '';
 let ME = null;
 try { const stored = localStorage.getItem('hostaka_user'); if (stored) ME = JSON.parse(stored); } catch(e) {}
@@ -7855,7 +8103,7 @@ const REELS_PAGE_SIZE = 10;
 let soundOn = false;
 let activeCommentReelId = null;
 
-// نفس منطق الترجيح 60% لصالح المتابَعين المستخدم في الصفحة الرئيسية
+// Same 60% weighting logic favoring followed authors used on the home page
 function weightedRandomSortReels(list) {
   const followed = [], others = [];
   list.forEach(p => (p.is_followed_author ? followed : others).push(p));
@@ -7944,7 +8192,7 @@ function renderReelsFeed(){
   if (!reelsOrder.length) {
     feed.innerHTML = `<div class="empty-state">
       <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="6" y="2" width="12" height="20" rx="2.5"/><polygon points="10.5 9.5 15 12 10.5 14.5"/></svg>
-      <div>لا توجد فيديوهات ريلز بعد</div>
+      <div>${t('noReelsYet')}</div>
     </div>`;
     return;
   }
@@ -7952,7 +8200,7 @@ function renderReelsFeed(){
   let html = visible.map(reelSlideHtml).join('');
   if (reelsOrder.length > visible.length) {
     html += `<div class="reel-slide reel-load-more-slide">
-      <button class="load-more-btn" onclick="loadMoreReels()">المزيد من الريلز</button>
+      <button class="load-more-btn" onclick="loadMoreReels()">${t('loadMoreReels')}</button>
     </div>`;
   }
   feed.innerHTML = html;
@@ -8024,12 +8272,12 @@ let replyingToCommentId = null;
 
 async function renderComments(){
   const list = document.getElementById('commentsList');
-  list.innerHTML = '<div class="comment-empty">جارٍ التحميل...</div>';
+  list.innerHTML = `<div class="comment-empty">${t('loading')}</div>`;
   const comments = await apiFetch('/api/records/' + activeCommentReelId + '/comments');
   const reel = reels.find(r => r.id === activeCommentReelId);
   if (reel) { reel.comments = comments; const cEl = document.getElementById('cmtCount-' + activeCommentReelId); if (cEl) cEl.textContent = comments.length || ''; }
-  document.getElementById('commentsCount').textContent = comments.length ? (comments.length + ' تعليق') : 'التعليقات';
-  if (!comments.length) { list.innerHTML = '<div class="comment-empty">لا توجد تعليقات بعد، كن أول من يعلّق</div>'; return; }
+  document.getElementById('commentsCount').textContent = comments.length ? t('commentsCountLabel',{n:comments.length}) : t('commentsWord');
+  if (!comments.length) { list.innerHTML = `<div class="comment-empty">${t('noCommentsYet')}</div>`; return; }
   const top = comments.filter(c => !c.parent_id);
   const repliesOf = (cid) => comments.filter(c => Number(c.parent_id) === Number(cid));
   function row(c){
@@ -8038,7 +8286,7 @@ async function renderComments(){
       <div class="comment-avatar">${c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : esc((c.display_name||c.username||'?').charAt(0).toUpperCase())}</div>
       <div style="flex:1;">
         <div class="comment-name">${esc(c.display_name || c.username)}
-          ${ME ? `<button class="reply-btn" onclick="startReplyTo(${c.id}, '${esc(c.username||'')}')">رد</button>` : ''}
+          ${ME ? `<button class="reply-btn" onclick="startReplyTo(${c.id}, '${esc(c.username||'')}')">${t('replyWord')}</button>` : ''}
         </div>
         <div class="comment-text">${esc(c.content)}</div>
         ${replies.length ? `<div class="replies-list">${replies.map(row).join('')}</div>` : ''}
@@ -8052,7 +8300,7 @@ function startReplyTo(commentId, username){
   replyingToCommentId = commentId;
   const input = document.getElementById('commentInput');
   input.value = '';
-  input.placeholder = 'الرد على @' + username;
+  input.placeholder = t('replyToPlaceholder',{u:username});
   input.focus();
 }
 
@@ -8062,7 +8310,7 @@ async function sendReelComment(){
   const content = input.value.trim();
   if (!content || !activeCommentReelId) return;
   input.value = '';
-  input.placeholder = 'أضف تعليقاً...';
+  input.placeholder = t('addCommentPlaceholder');
   const parentId = replyingToCommentId;
   replyingToCommentId = null;
   const d = await apiFetch('/api/records/' + activeCommentReelId + '/comments', 'POST', { content, parent_id: parentId||null });
@@ -8076,7 +8324,7 @@ function shareReel(id){
 }
 function showShareToast(){
   let el = document.createElement('div');
-  el.textContent = 'تم نسخ رابط الريلز';
+  el.textContent = t('reelLinkCopied');
   el.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.95);color:#000;padding:10px 20px;border-radius:24px;font-size:0.85rem;font-weight:700;z-index:200;';
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 2000);
@@ -8122,6 +8370,44 @@ try { window.showShareToast = showShareToast; } catch(e) {}
 
 /* ================= support.html ================= */
 if (document.body.classList.contains('page-support')) {
+
+const LANG = {
+  ar: {
+    suspendedMsg: 'تم تعليق حسابك من قبل الإدارة{reason}',
+    typeGeneral: 'استفسار / شكوى عامة', typeBug: 'مشكلة تقنية', typeAbuse: 'إساءة استخدام', typeAccount: 'مشكلة في الحساب', typeSuggestion: 'اقتراح',
+    statusPending: 'قيد المراجعة', statusResolved: 'تم الحل', statusDismissed: 'مرفوض',
+    requestType: 'نوع الطلب', subject: 'الموضوع', subjectPlaceholder: 'عنوان مختصر لطلبك',
+    detailsLabel: 'التفاصيل *', detailsPlaceholder: 'اشرح مشكلتك أو استفسارك بالتفصيل...', sendRequest: 'إرسال الطلب',
+    detailsRequired: 'الرجاء كتابة التفاصيل', sending: 'جارٍ الإرسال...', ticketSent: 'تم إرسال طلبك، سنقوم بالرد قريباً',
+    sendFail: 'فشل الإرسال', cantConnectServer: 'تعذر الاتصال بالخادم', adminReply: 'رد الإدارة',
+    loading: 'جارٍ التحميل...', noPreviousRequests: 'لا توجد طلبات سابقة', cantLoadRequests: 'تعذر تحميل الطلبات',
+    membersOnly: 'الدعم متاح للأعضاء المسجلين فقط', loginToSend: 'سجّل الدخول لإرسال شكوى أو بلاغ ومتابعة ردود الإدارة',
+    loginBtn: 'تسجيل الدخول', cantVerifyAccount: 'تعذر التحقق من الحساب', backHome: 'العودة للرئيسية',
+    supportCenter: 'مركز الدعم', supportSub: 'أرسل شكوى، بلاغاً، أو استفساراً وسيتم الرد عليك من قبل فريق الإدارة',
+    newRequest: 'طلب جديد', myRequests: 'طلباتي'
+  },
+  en: {
+    suspendedMsg: 'Your account has been suspended by the administration{reason}',
+    typeGeneral: 'General inquiry / complaint', typeBug: 'Technical issue', typeAbuse: 'Abuse', typeAccount: 'Account issue', typeSuggestion: 'Suggestion',
+    statusPending: 'Pending', statusResolved: 'Resolved', statusDismissed: 'Dismissed',
+    requestType: 'Request type', subject: 'Subject', subjectPlaceholder: 'A short title for your request',
+    detailsLabel: 'Details *', detailsPlaceholder: 'Describe your issue or inquiry in detail...', sendRequest: 'Send request',
+    detailsRequired: 'Please write the details', sending: 'Sending...', ticketSent: 'Your request has been sent, we will reply soon',
+    sendFail: 'Failed to send', cantConnectServer: 'Could not connect to the server', adminReply: 'Admin reply',
+    loading: 'Loading...', noPreviousRequests: 'No previous requests', cantLoadRequests: 'Could not load requests',
+    membersOnly: 'Support is available for registered members only', loginToSend: 'Log in to send a complaint or report and track admin replies',
+    loginBtn: 'Log In', cantVerifyAccount: 'Could not verify the account', backHome: 'Back to home',
+    supportCenter: 'Support Center', supportSub: 'Send a complaint, report, or inquiry and the admin team will respond to you',
+    newRequest: 'New request', myRequests: 'My requests'
+  }
+};
+let currentLang = localStorage.getItem('hostaka_lang') || 'en';
+function t(key, vars){
+  var s = (LANG[currentLang] || LANG.en)[key];
+  if (s === undefined) return key;
+  if (vars) Object.keys(vars).forEach(function(k){ s = s.replace('{'+k+'}', vars[k]); });
+  return s;
+}
 // ===== Theme =====
 let currentTheme = localStorage.getItem('hostaka_theme') || 'light';
 function setTheme(theme){
@@ -8154,20 +8440,20 @@ async function apiFetch(url, method='GET', body=null){
   const data = await r.json();
   if(r.status===403 && data?.suspended){
     localStorage.removeItem('hostaka_token'); localStorage.removeItem('hostaka_user'); localStorage.removeItem('hostaka_role');
-    alert('تم تعليق حسابك من قبل الإدارة' + (data.reason?':\n'+data.reason:''));
+    alert(t('suspendedMsg',{reason: data.reason?':\n'+data.reason:''}));
     window.location = '/';
   }
   return data;
 }
 
-const TYPE_LABELS = {
-  general: 'استفسار / شكوى عامة',
-  bug: 'مشكلة تقنية',
-  abuse: 'إساءة استخدام',
-  account: 'مشكلة في الحساب',
-  suggestion: 'اقتراح'
-};
-const STATUS_LABELS = { pending:'قيد المراجعة', resolved:'تم الحل', dismissed:'مرفوض' };
+function TYPE_LABELS_FN(){ return {
+  general: t('typeGeneral'),
+  bug: t('typeBug'),
+  abuse: t('typeAbuse'),
+  account: t('typeAccount'),
+  suggestion: t('typeSuggestion')
+}; }
+function STATUS_LABELS_FN(){ return { pending:t('statusPending'), resolved:t('statusResolved'), dismissed:t('statusDismissed') }; }
 
 let ME = null;
 
@@ -8182,15 +8468,15 @@ function fmtDate(s){
 function renderForm(){
   return `
   <div class="card">
-    <label class="f-label">نوع الطلب</label>
+    <label class="f-label">${t('requestType')}</label>
     <select class="f-input" id="spType">
-      ${Object.entries(TYPE_LABELS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}
+      ${Object.entries(TYPE_LABELS_FN()).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}
     </select>
-    <label class="f-label">الموضوع</label>
-    <input class="f-input" type="text" id="spSubject" placeholder="عنوان مختصر لطلبك" maxlength="120">
-    <label class="f-label">التفاصيل *</label>
-    <textarea class="f-input" id="spReason" placeholder="اشرح مشكلتك أو استفسارك بالتفصيل..."></textarea>
-    <button class="btn-submit" id="spBtn" onclick="submitTicket()">إرسال الطلب</button>
+    <label class="f-label">${t('subject')}</label>
+    <input class="f-input" type="text" id="spSubject" placeholder="${t('subjectPlaceholder')}" maxlength="120">
+    <label class="f-label">${t('detailsLabel')}</label>
+    <textarea class="f-input" id="spReason" placeholder="${t('detailsPlaceholder')}"></textarea>
+    <button class="btn-submit" id="spBtn" onclick="submitTicket()">${t('sendRequest')}</button>
   </div>`;
 }
 
@@ -8198,50 +8484,50 @@ async function submitTicket(){
   const type = document.getElementById('spType').value;
   const subject = document.getElementById('spSubject').value.trim();
   const reason = document.getElementById('spReason').value.trim();
-  if(!reason){ showToast('الرجاء كتابة التفاصيل', 'error'); return; }
+  if(!reason){ showToast(t('detailsRequired'), 'error'); return; }
   const btn = document.getElementById('spBtn');
-  btn.disabled = true; btn.textContent = 'جارٍ الإرسال...';
+  btn.disabled = true; btn.textContent = t('sending');
   try{
     const d = await apiFetch('/api/reports', 'POST', { type, subject, reason });
     if(d.success){
-      showToast('تم إرسال طلبك، سنقوم بالرد قريباً');
+      showToast(t('ticketSent'));
       document.getElementById('spSubject').value = '';
       document.getElementById('spReason').value = '';
       switchTab('mine');
     } else {
-      showToast(d.error || 'فشل الإرسال', 'error');
+      showToast(d.error || t('sendFail'), 'error');
     }
-  }catch(e){ showToast('تعذر الاتصال بالخادم', 'error'); }
-  btn.disabled = false; btn.textContent = 'إرسال الطلب';
+  }catch(e){ showToast(t('cantConnectServer'), 'error'); }
+  btn.disabled = false; btn.textContent = t('sendRequest');
 }
 
 function ticketCard(r){
   const statusCls = r.status==='resolved' ? 'st-resolved' : (r.status==='dismissed' ? 'st-dismissed' : 'st-pending');
   return `<div class="ticket">
     <div class="ticket-top">
-      <span class="ticket-type">${esc(TYPE_LABELS[r.type] || r.type)}</span>
-      <span class="ticket-status ${statusCls}">${esc(STATUS_LABELS[r.status] || r.status)}</span>
+      <span class="ticket-type">${esc(TYPE_LABELS_FN()[r.type] || r.type)}</span>
+      <span class="ticket-status ${statusCls}">${esc(STATUS_LABELS_FN()[r.status] || r.status)}</span>
     </div>
     ${r.subject ? `<div class="ticket-subject">${esc(r.subject)}</div>` : ''}
     <div class="ticket-reason">${esc(r.reason)}</div>
-    ${r.admin_reply ? `<div class="ticket-reply"><b>رد الإدارة</b>${esc(r.admin_reply)}</div>` : ''}
+    ${r.admin_reply ? `<div class="ticket-reply"><b>${t('adminReply')}</b>${esc(r.admin_reply)}</div>` : ''}
     <div class="ticket-date">${fmtDate(r.created_at)}</div>
   </div>`;
 }
 
 async function loadMine(){
   const wrap = document.getElementById('tabContent');
-  wrap.innerHTML = '<div class="empty-state">جارٍ التحميل...</div>';
+  wrap.innerHTML = `<div class="empty-state">${t('loading')}</div>`;
   try{
     const data = await apiFetch('/api/reports/mine');
     const list = Array.isArray(data) ? data : [];
     if(!list.length){
-      wrap.innerHTML = '<div class="empty-state">لا توجد طلبات سابقة</div>';
+      wrap.innerHTML = `<div class="empty-state">${t('noPreviousRequests')}</div>`;
       return;
     }
     wrap.innerHTML = list.map(ticketCard).join('');
   }catch(e){
-    wrap.innerHTML = '<div class="empty-state">تعذر تحميل الطلبات</div>';
+    wrap.innerHTML = `<div class="empty-state">${t('cantLoadRequests')}</div>`;
   }
 }
 
@@ -8259,9 +8545,9 @@ async function loadMe(){
   if(!token){
     document.getElementById('wrap').innerHTML = `
       <div class="login-gate">
-        <div style="font-size:1.05rem;font-weight:800;margin-bottom:6px;">الدعم متاح للأعضاء المسجلين فقط</div>
-        <div style="color:var(--muted);font-size:0.85rem;">سجّل الدخول لإرسال شكوى أو بلاغ ومتابعة ردود الإدارة</div>
-        <a href="/">تسجيل الدخول</a>
+        <div style="font-size:1.05rem;font-weight:800;margin-bottom:6px;">${t('membersOnly')}</div>
+        <div style="color:var(--muted);font-size:0.85rem;">${t('loginToSend')}</div>
+        <a href="/">${t('loginBtn')}</a>
       </div>`;
     return;
   }
@@ -8269,15 +8555,15 @@ async function loadMe(){
     ME = await apiFetch('/api/me');
     if(!ME || ME.error){ throw new Error('unauth'); }
   }catch(e){
-    document.getElementById('wrap').innerHTML = `<div class="login-gate"><div style="font-weight:800;">تعذر التحقق من الحساب</div><a href="/">العودة للرئيسية</a></div>`;
+    document.getElementById('wrap').innerHTML = `<div class="login-gate"><div style="font-weight:800;">${t('cantVerifyAccount')}</div><a href="/">${t('backHome')}</a></div>`;
     return;
   }
   document.getElementById('wrap').innerHTML = `
-    <div class="page-title">مركز الدعم</div>
-    <div class="page-sub">أرسل شكوى، بلاغاً، أو استفساراً وسيتم الرد عليك من قبل فريق الإدارة</div>
+    <div class="page-title">${t('supportCenter')}</div>
+    <div class="page-sub">${t('supportSub')}</div>
     <div class="tabs">
-      <button class="tab-btn active" data-tab="new" onclick="switchTab('new')">طلب جديد</button>
-      <button class="tab-btn" data-tab="mine" onclick="switchTab('mine')">طلباتي</button>
+      <button class="tab-btn active" data-tab="new" onclick="switchTab('new')">${t('newRequest')}</button>
+      <button class="tab-btn" data-tab="mine" onclick="switchTab('mine')">${t('myRequests')}</button>
     </div>
     <div id="tabContent"></div>
   `;
@@ -8303,10 +8589,103 @@ try { window.loadMe = loadMe; } catch(e) {}
 }
 
 // ============================================================
-//  صفحة إدارة الحساب — /manager
+//  Account settings page — /manager
 // ============================================================
 if (document.body.classList.contains('page-manager')) {
 
+const LANG = {
+  ar: {
+    suspendedMsg: 'تم تعليق حسابك من قبل الإدارة{reason}', cantVerifyAccount: 'تعذر التحقق من الحساب', backHome: 'العودة للرئيسية',
+    confirmUsernameTitle: 'تأكيد تغيير اسم المستخدم', confirmUsernameDesc: 'أرسلنا كود تأكيد إلى بريدك الحالي ({email}). أدخله لإتمام تغيير اسم المستخدم.',
+    confirmEmailTitle: 'تأكيد البريد الإلكتروني الجديد', confirmEmailDesc: 'أرسلنا كود تأكيد إلى بريدك الجديد ({email}) للتحقق من ملكيته.',
+    confirmPasswordTitle: 'تأكيد تغيير كلمة المرور', confirmPasswordDesc: 'أرسلنا كود تأكيد إلى بريدك ({email}) لإتمام تغيير كلمة المرور.',
+    confirmDeleteTitle: 'تأكيد حذف الحساب', confirmDeleteDesc: 'أرسلنا كود تأكيد إلى بريدك ({email}). إدخاله سيحذف حسابك نهائياً ولا يمكن التراجع عن ذلك.',
+    confirmDeleteBtn: 'تأكيد الحذف', confirm: 'تأكيد', resendIn: 'يمكنك إعادة الإرسال خلال {s} ثانية',
+    newCodeSent: 'تم إرسال كود جديد', cantResend: 'تعذر إعادة الإرسال', cantConnectServer: 'تعذر الاتصال بالخادم',
+    enter6DigitCode: 'أدخل كود التأكيد المكوّن من 6 أرقام', accountDeletedFinal: 'تم حذف حسابك نهائياً', changeApplied: 'تم تنفيذ التعديل بنجاح', wrongCode: 'كود غير صحيح',
+    enterNewUsername: 'أدخل اسم المستخدم الجديد', codeSent: 'تم إرسال كود التأكيد', requestFail: 'تعذر تنفيذ الطلب',
+    enterNewEmail: 'أدخل البريد الإلكتروني الجديد', allFieldsRequired: 'جميع الحقول مطلوبة',
+    newPassMin6: 'كلمة المرور الجديدة 6 أحرف على الأقل', passwordsMismatch: 'كلمة المرور الجديدة وتأكيدها غير متطابقين',
+    birthdateSaved: 'تم حفظ تاريخ الميلاد', cantSave: 'تعذر الحفظ', verifyRequestSent: 'تم إرسال طلب التوثيق، سيتم مراجعته من الإدارة', cantSendRequest: 'تعذر إرسال الطلب',
+    mobile: 'جوال', tablet: 'تابلت', computer: 'حاسوب', noActiveSessions: 'لا توجد جلسات نشطة',
+    thisDevice: 'هذا الجهاز', ipUnknown: 'IP غير معروف', endSession: 'إنهاء', cantLoadSessions: 'تعذر تحميل الجلسات',
+    confirmEndSession: 'إنهاء هذه الجلسة؟ سيتم تسجيل الخروج منها فوراً.', sessionEnded: 'تم إنهاء الجلسة', cantEndSession: 'تعذر إنهاء الجلسة',
+    confirmLogoutAllOther: 'تسجيل الخروج من كل الأجهزة الأخرى؟ ستبقى فقط هذه الجلسة الحالية مفعّلة.', loggedOutAllOther: 'تم تسجيل الخروج من كل الأجهزة الأخرى',
+    noSecurityEventsYet: 'لا توجد أحداث أمنية مسجّلة بعد', cantLoadLog: 'تعذر تحميل السجل',
+    cantCreateBackup: 'تعذر إنشاء النسخة الاحتياطية', downloadingBackup: 'جارٍ تنزيل نسخة بياناتك',
+    driveFeatureDisabled: 'هذه الميزة غير مفعّلة على الخادم حالياً', driveFeatureUnavailable: 'ميزة Google Drive غير مفعّلة حالياً',
+    cantStartSetup: 'تعذر بدء الإعداد', enable2FATitle: 'تفعيل المصادقة الثنائية', saveBackupCodesTitle: 'احفظ أكواد الاسترجاع',
+    enter6DigitAppCode: 'أدخل كود التطبيق المكوّن من 6 أرقام', tfaEnabledSuccess: 'تم تفعيل المصادقة الثنائية بنجاح',
+    tfaDisabled: 'تم إلغاء تفعيل المصادقة الثنائية', cantDisable: 'تعذر إلغاء التفعيل', enterCurrentPassword: 'أدخل كلمة المرور الحالية',
+    accountManagement: 'إدارة الحساب', accountManagementSub: 'تحكّم في بيانات حسابك، أمانه، وخصوصيتك في هوستاكا',
+    memberSince: 'عضو منذ {date}', usernameLabel: 'اسم المستخدم', usernameChangeHint: 'يتطلب تغيير اسم المستخدم تأكيد كود يُرسل إلى بريدك الإلكتروني الحالي.',
+    currentUsernameIs: 'اسم المستخدم الحالي: {u}', newUsernamePlaceholder: 'اسم المستخدم الجديد', sendConfirmCode: 'إرسال كود التأكيد',
+    emailLabel: 'البريد الإلكتروني', emailChangeHint: 'سيتم إرسال كود تأكيد إلى بريدك الجديد للتحقق من ملكيته قبل ربطه بحسابك.',
+    currentEmailIs: 'البريد الحالي: {e}', passwordLabel: 'كلمة المرور', passwordChangeHint: 'يتطلب تغيير كلمة المرور إدخال كلمة المرور الحالية وتأكيد كود يُرسل إلى بريدك.',
+    currentPassword: 'كلمة المرور الحالية', newPassword: 'كلمة المرور الجديدة', confirmNewPassword: 'تأكيد كلمة المرور الجديدة', passwordMinPlaceholder: '6 أحرف على الأقل',
+    birthdate: 'تاريخ الميلاد', birthdateHint: 'يساعدنا في تخصيص تجربتك على المنصة. يمكن تعديله متى شئت دون الحاجة لتأكيد بريد.', save: 'حفظ',
+    accountVerification: 'توثيق الحساب', verificationHint: 'احصل على علامة التوثيق الزرقاء بعد مراجعة طلبك من فريق الإدارة.', requestVerification: 'طلب التوثيق',
+    verifiedAccount: 'حساب موثّق ✓', requestPending: 'طلبك قيد المراجعة', notVerified: 'غير موثّق',
+    twoFactorAuth: 'المصادقة الثنائية (2FA)', twoFactorHint: 'طبقة حماية إضافية: بعد التفعيل، سيُطلب منك عند تسجيل الدخول إدخال كود يتولّد في تطبيق مصادقة (مثل Google Authenticator) بجانب كلمة المرور.',
+    enabled: 'مفعّلة ✓', notEnabled: 'غير مفعّلة', disable: 'إلغاء التفعيل', enable2FA: 'تفعيل المصادقة الثنائية',
+    devicesSessions: 'الأجهزة وجلسات الدخول', devicesSessionsHint: 'كل الأجهزة والأماكن اللي سجّلت منها دخولك. لو فيه جلسة ما تعرفها، أنهِها فوراً.',
+    loading: 'جارٍ التحميل...', logoutAllOther: 'تسجيل الخروج من كل الأجهزة الأخرى',
+    securityAlerts: 'تنبيهات الأمان', securityAlertsHint: 'سجل بكل الأحداث الأمنية المهمة بحسابك: تسجيل دخول جديد، تغيير كلمة المرور أو البريد، وغيرها.',
+    backupTitle: 'النسخ الاحتياطي وتنزيل البيانات', backupHint: 'نزّل نسخة من بياناتك (منشوراتك، ملفك الشخصي، محفوظاتك) بصيغة JSON، أو ارفعها مباشرة إلى Google Drive.',
+    downloadMyData: 'تنزيل نسخة من بياناتي', uploadToDrive: 'رفع نسخة إلى Google Drive',
+    dangerZone: 'منطقة الخطر', dangerZoneHint: 'حذف حسابك سيؤدي لإزالة جميع بياناتك ومنشوراتك ورسائلك نهائياً من هوستاكا، ولا يمكن التراجع عن هذا الإجراء.', deleteAccountPermanently: 'حذف الحساب نهائياً',
+    managerMembersOnly: 'إدارة الحساب متاحة للأعضاء المسجلين فقط', managerLoginHint: 'سجّل الدخول للتحكم في اسم المستخدم، البريد، كلمة المرور، وباقي إعدادات حسابك', loginBtn: 'تسجيل الدخول'
+  },
+  en: {
+    suspendedMsg: 'Your account has been suspended by the administration{reason}', cantVerifyAccount: 'Could not verify the account', backHome: 'Back to home',
+    confirmUsernameTitle: 'Confirm username change', confirmUsernameDesc: 'We sent a confirmation code to your current email ({email}). Enter it to complete the username change.',
+    confirmEmailTitle: 'Confirm new email', confirmEmailDesc: 'We sent a confirmation code to your new email ({email}) to verify ownership.',
+    confirmPasswordTitle: 'Confirm password change', confirmPasswordDesc: 'We sent a confirmation code to your email ({email}) to complete the password change.',
+    confirmDeleteTitle: 'Confirm account deletion', confirmDeleteDesc: 'We sent a confirmation code to your email ({email}). Entering it will permanently delete your account and this cannot be undone.',
+    confirmDeleteBtn: 'Confirm deletion', confirm: 'Confirm', resendIn: 'You can resend in {s}s',
+    newCodeSent: 'A new code has been sent', cantResend: 'Could not resend', cantConnectServer: 'Could not connect to the server',
+    enter6DigitCode: 'Enter the 6-digit confirmation code', accountDeletedFinal: 'Your account has been permanently deleted', changeApplied: 'Change applied successfully', wrongCode: 'Incorrect code',
+    enterNewUsername: 'Enter the new username', codeSent: 'Confirmation code sent', requestFail: 'Could not complete the request',
+    enterNewEmail: 'Enter the new email', allFieldsRequired: 'All fields are required',
+    newPassMin6: 'New password must be at least 6 characters', passwordsMismatch: "New password and confirmation don't match",
+    birthdateSaved: 'Birthdate saved', cantSave: 'Could not save', verifyRequestSent: 'Verification request sent, it will be reviewed by admins', cantSendRequest: 'Could not send the request',
+    mobile: 'Mobile', tablet: 'Tablet', computer: 'Computer', noActiveSessions: 'No active sessions',
+    thisDevice: 'This device', ipUnknown: 'Unknown IP', endSession: 'End', cantLoadSessions: 'Could not load sessions',
+    confirmEndSession: 'End this session? It will be logged out immediately.', sessionEnded: 'Session ended', cantEndSession: 'Could not end the session',
+    confirmLogoutAllOther: 'Log out of all other devices? Only this current session will remain active.', loggedOutAllOther: 'Logged out of all other devices',
+    noSecurityEventsYet: 'No security events recorded yet', cantLoadLog: 'Could not load the log',
+    cantCreateBackup: 'Could not create the backup', downloadingBackup: 'Downloading your data backup',
+    driveFeatureDisabled: 'This feature is not enabled on the server right now', driveFeatureUnavailable: 'Google Drive feature is not enabled right now',
+    cantStartSetup: 'Could not start setup', enable2FATitle: 'Enable Two-Factor Authentication', saveBackupCodesTitle: 'Save your recovery codes',
+    enter6DigitAppCode: 'Enter the 6-digit code from the app', tfaEnabledSuccess: 'Two-factor authentication enabled successfully',
+    tfaDisabled: 'Two-factor authentication disabled', cantDisable: 'Could not disable', enterCurrentPassword: 'Enter your current password',
+    accountManagement: 'Account Settings', accountManagementSub: 'Control your account data, security, and privacy on Hostaka',
+    memberSince: 'Member since {date}', usernameLabel: 'Username', usernameChangeHint: 'Changing your username requires confirming a code sent to your current email.',
+    currentUsernameIs: 'Current username: {u}', newUsernamePlaceholder: 'New username', sendConfirmCode: 'Send confirmation code',
+    emailLabel: 'Email', emailChangeHint: 'A confirmation code will be sent to your new email to verify ownership before linking it to your account.',
+    currentEmailIs: 'Current email: {e}', passwordLabel: 'Password', passwordChangeHint: 'Changing your password requires your current password and confirming a code sent to your email.',
+    currentPassword: 'Current password', newPassword: 'New password', confirmNewPassword: 'Confirm new password', passwordMinPlaceholder: 'At least 6 characters',
+    birthdate: 'Birthdate', birthdateHint: 'Helps us personalize your experience on the platform. You can change it anytime without email confirmation.', save: 'Save',
+    accountVerification: 'Account Verification', verificationHint: 'Get the blue verification badge after your request is reviewed by the admin team.', requestVerification: 'Request verification',
+    verifiedAccount: 'Verified account ✓', requestPending: 'Your request is under review', notVerified: 'Not verified',
+    twoFactorAuth: 'Two-Factor Authentication (2FA)', twoFactorHint: 'An extra layer of protection: once enabled, you will be asked to enter a code generated by an authenticator app (like Google Authenticator) in addition to your password when logging in.',
+    enabled: 'Enabled ✓', notEnabled: 'Not enabled', disable: 'Disable', enable2FA: 'Enable Two-Factor Authentication',
+    devicesSessions: 'Devices & login sessions', devicesSessionsHint: 'All the devices and places you have logged in from. If you see a session you don\'t recognize, end it immediately.',
+    loading: 'Loading...', logoutAllOther: 'Log out of all other devices',
+    securityAlerts: 'Security alerts', securityAlertsHint: 'A log of all important security events on your account: new logins, password or email changes, and more.',
+    backupTitle: 'Backup & data export', backupHint: 'Download a copy of your data (posts, profile, saved items) as JSON, or upload it directly to Google Drive.',
+    downloadMyData: 'Download a copy of my data', uploadToDrive: 'Upload a copy to Google Drive',
+    dangerZone: 'Danger zone', dangerZoneHint: 'Deleting your account will permanently remove all your data, posts, and messages from Hostaka, and this action cannot be undone.', deleteAccountPermanently: 'Permanently delete account',
+    managerMembersOnly: 'Account settings are available for registered members only', managerLoginHint: 'Log in to manage your username, email, password, and other account settings', loginBtn: 'Log In'
+  }
+};
+let currentLang = localStorage.getItem('hostaka_lang') || 'en';
+function t(key, vars){
+  var s = (LANG[currentLang] || LANG.en)[key];
+  if (s === undefined) return key;
+  if (vars) Object.keys(vars).forEach(function(k){ s = s.replace('{'+k+'}', vars[k]); });
+  return s;
+}
 // ----- Theme -----
 let currentTheme = localStorage.getItem('hostaka_theme') || 'light';
 function setTheme(theme){
@@ -8339,7 +8718,7 @@ async function apiFetch(url, method='GET', body=null){
   const data = await r.json().catch(()=>({}));
   if(r.status===403 && data?.suspended){
     localStorage.removeItem('hostaka_token'); localStorage.removeItem('hostaka_user'); localStorage.removeItem('hostaka_role');
-    alert('تم تعليق حسابك من قبل الإدارة' + (data.reason?':\n'+data.reason:''));
+    alert(t('suspendedMsg',{reason: data.reason?':\n'+data.reason:''}));
     window.location = '/';
   }
   return data;
@@ -8365,21 +8744,21 @@ function initials(name){
   return s ? s[0].toUpperCase() : 'H';
 }
 
-const OTP_LABELS = {
-  username: { title:'تأكيد تغيير اسم المستخدم', desc:(email)=>`أرسلنا كود تأكيد إلى بريدك الحالي (${esc(email)}). أدخله لإتمام تغيير اسم المستخدم.` },
-  email:    { title:'تأكيد البريد الإلكتروني الجديد', desc:(email)=>`أرسلنا كود تأكيد إلى بريدك الجديد (${esc(email)}) للتحقق من ملكيته.` },
-  password: { title:'تأكيد تغيير كلمة المرور', desc:(email)=>`أرسلنا كود تأكيد إلى بريدك (${esc(email)}) لإتمام تغيير كلمة المرور.` },
-  delete:   { title:'تأكيد حذف الحساب', desc:(email)=>`أرسلنا كود تأكيد إلى بريدك (${esc(email)}). إدخاله سيحذف حسابك نهائياً ولا يمكن التراجع عن ذلك.` },
-};
+function OTP_LABELS_FN(){ return {
+  username: { title:t('confirmUsernameTitle'), desc:(email)=>t('confirmUsernameDesc',{email:esc(email)}) },
+  email:    { title:t('confirmEmailTitle'), desc:(email)=>t('confirmEmailDesc',{email:esc(email)}) },
+  password: { title:t('confirmPasswordTitle'), desc:(email)=>t('confirmPasswordDesc',{email:esc(email)}) },
+  delete:   { title:t('confirmDeleteTitle'), desc:(email)=>t('confirmDeleteDesc',{email:esc(email)}) },
+}; }
 
 function openOtpModal(purpose, maskedEmail){
   otpState.purpose = purpose;
-  const label = OTP_LABELS[purpose];
+  const label = OTP_LABELS_FN()[purpose];
   document.getElementById('otpTitle').textContent = label.title;
   document.getElementById('otpDesc').textContent = label.desc(maskedEmail||'');
   document.getElementById('otpErr').classList.remove('show');
   document.getElementById('otpCode').value = '';
-  document.getElementById('otpConfirmBtn').textContent = purpose === 'delete' ? 'تأكيد الحذف' : 'تأكيد';
+  document.getElementById('otpConfirmBtn').textContent = purpose === 'delete' ? t('confirmDeleteBtn') : t('confirm');
   startOtpCooldown();
   openModal('otpModal');
   setTimeout(()=>document.getElementById('otpCode').focus(), 150);
@@ -8403,7 +8782,7 @@ function startOtpCooldown(){
       btn.disabled = false;
       cd.textContent = '';
     } else {
-      cd.textContent = `يمكنك إعادة الإرسال خلال ${secs} ثانية`;
+      cd.textContent = t('resendIn',{s:secs});
     }
   }, 1000);
 }
@@ -8412,9 +8791,9 @@ async function resendOtp(){
   if(!otpState.purpose) return;
   try{
     const d = await apiFetch('/api/account/change/resend', 'POST', { purpose: otpState.purpose });
-    if(d.success){ showToast('تم إرسال كود جديد'); startOtpCooldown(); }
-    else { const e = document.getElementById('otpErr'); e.textContent = d.error||'تعذر إعادة الإرسال'; e.classList.add('show'); }
-  }catch(e){ showToast('تعذر الاتصال بالخادم', 'error'); }
+    if(d.success){ showToast(t('newCodeSent')); startOtpCooldown(); }
+    else { const e = document.getElementById('otpErr'); e.textContent = d.error||t('cantResend'); e.classList.add('show'); }
+  }catch(e){ showToast(t('cantConnectServer'), 'error'); }
 }
 
 async function confirmOtp(){
@@ -8423,7 +8802,7 @@ async function confirmOtp(){
   const code = document.getElementById('otpCode').value.trim();
   const errEl = document.getElementById('otpErr');
   errEl.classList.remove('show');
-  if(!/^\d{6}$/.test(code)){ errEl.textContent='أدخل كود التأكيد المكوّن من 6 أرقام'; errEl.classList.add('show'); return; }
+  if(!/^\d{6}$/.test(code)){ errEl.textContent=t('enter6DigitCode'); errEl.classList.add('show'); return; }
   const btn = document.getElementById('otpConfirmBtn');
   btn.disabled = true;
   try{
@@ -8433,7 +8812,7 @@ async function confirmOtp(){
         localStorage.removeItem('hostaka_token');
         localStorage.removeItem('hostaka_user');
         localStorage.removeItem('hostaka_role');
-        showToast('تم حذف حسابك نهائياً');
+        showToast(t('accountDeletedFinal'));
         closeOtpModal();
         setTimeout(()=>{ window.location = '/'; }, 1200);
         return;
@@ -8441,140 +8820,141 @@ async function confirmOtp(){
       if(d.token) localStorage.setItem('hostaka_token', d.token);
       const u = { username:d.username, role:d.role, avatar:d.avatar||'' };
       localStorage.setItem('hostaka_user', JSON.stringify(u));
-      showToast('تم تنفيذ التعديل بنجاح');
+      showToast(t('changeApplied'));
       closeOtpModal();
       await loadMe();
     } else {
-      errEl.textContent = d.error || 'كود غير صحيح';
+      errEl.textContent = d.error || t('wrongCode');
       errEl.classList.add('show');
     }
-  }catch(e){ errEl.textContent='تعذر الاتصال بالخادم'; errEl.classList.add('show'); }
+  }catch(e){ errEl.textContent=t('cantConnectServer'); errEl.classList.add('show'); }
   btn.disabled = false;
 }
 
-// ----- تغيير اسم المستخدم -----
+// ----- Change username -----
 async function requestUsernameChange(){
   const val = document.getElementById('newUsernameInput').value.trim();
   const errEl = document.getElementById('usernameErr');
   errEl.classList.remove('show');
-  if(!val){ errEl.textContent='أدخل اسم المستخدم الجديد'; errEl.classList.add('show'); return; }
+  if(!val){ errEl.textContent=t('enterNewUsername'); errEl.classList.add('show'); return; }
   const btn = document.getElementById('usernameBtn');
   btn.disabled = true;
   try{
     const d = await apiFetch('/api/account/change/request', 'POST', { purpose:'username', newUsername: val });
-    if(d.success){ showToast(d.message||'تم إرسال كود التأكيد'); openOtpModal('username', d.maskedEmail); }
-    else { errEl.textContent = d.error||'تعذر تنفيذ الطلب'; errEl.classList.add('show'); }
-  }catch(e){ errEl.textContent='تعذر الاتصال بالخادم'; errEl.classList.add('show'); }
+    if(d.success){ showToast(d.message||t('codeSent')); openOtpModal('username', d.maskedEmail); }
+    else { errEl.textContent = d.error||t('requestFail'); errEl.classList.add('show'); }
+  }catch(e){ errEl.textContent=t('cantConnectServer'); errEl.classList.add('show'); }
   btn.disabled = false;
 }
 
-// ----- تغيير البريد الإلكتروني -----
+// ----- Change email -----
 async function requestEmailChange(){
   const val = document.getElementById('newEmailInput').value.trim();
   const errEl = document.getElementById('emailErr');
   errEl.classList.remove('show');
-  if(!val){ errEl.textContent='أدخل البريد الإلكتروني الجديد'; errEl.classList.add('show'); return; }
+  if(!val){ errEl.textContent=t('enterNewEmail'); errEl.classList.add('show'); return; }
   const btn = document.getElementById('emailBtn');
   btn.disabled = true;
   try{
     const d = await apiFetch('/api/account/change/request', 'POST', { purpose:'email', newEmail: val });
-    if(d.success){ showToast(d.message||'تم إرسال كود التأكيد'); openOtpModal('email', d.maskedEmail); }
-    else { errEl.textContent = d.error||'تعذر تنفيذ الطلب'; errEl.classList.add('show'); }
-  }catch(e){ errEl.textContent='تعذر الاتصال بالخادم'; errEl.classList.add('show'); }
+    if(d.success){ showToast(d.message||t('codeSent')); openOtpModal('email', d.maskedEmail); }
+    else { errEl.textContent = d.error||t('requestFail'); errEl.classList.add('show'); }
+  }catch(e){ errEl.textContent=t('cantConnectServer'); errEl.classList.add('show'); }
   btn.disabled = false;
 }
 
-// ----- تغيير كلمة المرور -----
+// ----- Change password -----
 async function requestPasswordChange(){
   const cur = document.getElementById('curPasswordInput').value;
   const nw = document.getElementById('newPasswordInput').value;
   const cf = document.getElementById('confirmPasswordInput').value;
   const errEl = document.getElementById('passwordErr');
   errEl.classList.remove('show');
-  if(!cur || !nw || !cf){ errEl.textContent='جميع الحقول مطلوبة'; errEl.classList.add('show'); return; }
-  if(nw.length < 6){ errEl.textContent='كلمة المرور الجديدة 6 أحرف على الأقل'; errEl.classList.add('show'); return; }
-  if(nw !== cf){ errEl.textContent='كلمة المرور الجديدة وتأكيدها غير متطابقين'; errEl.classList.add('show'); return; }
+  if(!cur || !nw || !cf){ errEl.textContent=t('allFieldsRequired'); errEl.classList.add('show'); return; }
+  if(nw.length < 6){ errEl.textContent=t('newPassMin6'); errEl.classList.add('show'); return; }
+  if(nw !== cf){ errEl.textContent=t('passwordsMismatch'); errEl.classList.add('show'); return; }
   const btn = document.getElementById('passwordBtn');
   btn.disabled = true;
   try{
     const d = await apiFetch('/api/account/change/request', 'POST', { purpose:'password', currentPassword: cur, newPassword: nw });
     if(d.success){
-      showToast(d.message||'تم إرسال كود التأكيد');
+      showToast(d.message||t('codeSent'));
       document.getElementById('curPasswordInput').value = '';
       document.getElementById('newPasswordInput').value = '';
       document.getElementById('confirmPasswordInput').value = '';
       openOtpModal('password', d.maskedEmail);
-    } else { errEl.textContent = d.error||'تعذر تنفيذ الطلب'; errEl.classList.add('show'); }
-  }catch(e){ errEl.textContent='تعذر الاتصال بالخادم'; errEl.classList.add('show'); }
+    } else { errEl.textContent = d.error||t('requestFail'); errEl.classList.add('show'); }
+  }catch(e){ errEl.textContent=t('cantConnectServer'); errEl.classList.add('show'); }
   btn.disabled = false;
 }
 
-// ----- تاريخ الميلاد -----
+// ----- Birthdate -----
 async function saveBirthdate(){
   const val = document.getElementById('birthdateInput').value;
   const btn = document.getElementById('birthdateBtn');
   btn.disabled = true;
   try{
     const d = await apiFetch('/api/account/birthdate', 'PUT', { birth_date: val });
-    if(d.success){ showToast('تم حفظ تاريخ الميلاد'); ME.birth_date = val; }
-    else { showToast(d.error||'تعذر الحفظ', 'error'); }
-  }catch(e){ showToast('تعذر الاتصال بالخادم', 'error'); }
+    if(d.success){ showToast(t('birthdateSaved')); ME.birth_date = val; }
+    else { showToast(d.error||t('cantSave'), 'error'); }
+  }catch(e){ showToast(t('cantConnectServer'), 'error'); }
   btn.disabled = false;
 }
 
-// ----- طلب التوثيق -----
+// ----- Request verification -----
 async function requestVerifyBadge(){
   try{
     const d = await apiFetch('/api/verify/request', 'POST');
-    if(d.success){ showToast('تم إرسال طلب التوثيق، سيتم مراجعته من الإدارة'); await refreshVerifyStatus(); render(); }
-    else { showToast(d.error||'تعذر إرسال الطلب', 'error'); }
-  }catch(e){ showToast('تعذر الاتصال بالخادم', 'error'); }
+    if(d.success){ showToast(t('verifyRequestSent')); await refreshVerifyStatus(); render(); }
+    else { showToast(d.error||t('cantSendRequest'), 'error'); }
+  }catch(e){ showToast(t('cantConnectServer'), 'error'); }
 }
 async function refreshVerifyStatus(){
   try{ VERIFY_STATUS = await apiFetch('/api/verify/status'); }catch(e){ VERIFY_STATUS = null; }
 }
 
-// ----- الأجهزة وجلسات الدخول -----
+// ----- Devices and login sessions -----
 const DEVICE_ICONS = {
   'جوال': `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg>`,
   'تابلت': `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg>`,
   'حاسوب': `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
 };
+// Note: DEVICE_ICONS keys stay in Arabic since the backend returns device type strings in Arabic ('جوال'/'تابلت'/'حاسوب'); UI label is localized separately via t().
 
 async function loadSessions(){
   const box = document.getElementById('sessionsList');
   if(!box) return;
   try{
     const sessions = await apiFetch('/api/account/sessions');
-    if(!Array.isArray(sessions) || !sessions.length){ box.innerHTML = '<div class="section-hint">لا توجد جلسات نشطة</div>'; return; }
+    if(!Array.isArray(sessions) || !sessions.length){ box.innerHTML = `<div class="section-hint">${t('noActiveSessions')}</div>`; return; }
     box.innerHTML = sessions.map(s => `
       <div class="session-row">
         <div class="session-icon">${DEVICE_ICONS[s.device] || DEVICE_ICONS['حاسوب']}</div>
         <div class="session-info">
-          <div class="session-name">${esc(s.browser)} · ${esc(s.os)} ${s.is_current ? '<span class="status-pill st-verified" style="margin-inline-start:6px;">هذا الجهاز</span>' : ''}</div>
-          <div class="session-meta">${esc(s.ip || 'IP غير معروف')} · ${esc(s.last_active_text)}</div>
+          <div class="session-name">${esc(s.browser)} · ${esc(s.os)} ${s.is_current ? '<span class="status-pill st-verified" style="margin-inline-start:6px;">'+t('thisDevice')+'</span>' : ''}</div>
+          <div class="session-meta">${esc(s.ip || t('ipUnknown'))} · ${esc(s.last_active_text)}</div>
         </div>
-        ${!s.is_current ? `<button class="btn-outline-danger" style="padding:6px 12px;font-size:0.76rem;" onclick="revokeSession(${s.id})">إنهاء</button>` : ''}
+        ${!s.is_current ? `<button class="btn-outline-danger" style="padding:6px 12px;font-size:0.76rem;" onclick="revokeSession(${s.id})">${t('endSession')}</button>` : ''}
       </div>
     `).join('');
-  }catch(e){ box.innerHTML = '<div class="section-hint">تعذر تحميل الجلسات</div>'; }
+  }catch(e){ box.innerHTML = `<div class="section-hint">${t('cantLoadSessions')}</div>`; }
 }
 
 async function revokeSession(id){
-  if(!confirm('إنهاء هذه الجلسة؟ سيتم تسجيل الخروج منها فوراً.')) return;
+  if(!confirm(t('confirmEndSession'))) return;
   const d = await apiFetch('/api/account/sessions/'+id+'/revoke', 'POST');
-  if(d.success){ showToast('تم إنهاء الجلسة'); loadSessions(); }
-  else showToast(d.error||'تعذر إنهاء الجلسة', 'error');
+  if(d.success){ showToast(t('sessionEnded')); loadSessions(); }
+  else showToast(d.error||t('cantEndSession'), 'error');
 }
 
 async function revokeAllSessions(){
-  if(!confirm('تسجيل الخروج من كل الأجهزة الأخرى؟ ستبقى فقط هذه الجلسة الحالية مفعّلة.')) return;
+  if(!confirm(t('confirmLogoutAllOther'))) return;
   const d = await apiFetch('/api/account/sessions/revoke-all', 'POST');
-  if(d.success){ showToast('تم تسجيل الخروج من كل الأجهزة الأخرى'); loadSessions(); }
-  else showToast(d.error||'تعذر تنفيذ الطلب', 'error');
+  if(d.success){ showToast(t('loggedOutAllOther')); loadSessions(); }
+  else showToast(d.error||t('requestFail'), 'error');
 }
 
-// ----- تنبيهات الأمان -----
+// ----- Security alerts -----
 const SECURITY_ICONS = {
   login:  `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>`,
   edit:   `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
@@ -8590,7 +8970,7 @@ async function loadSecurityEvents(){
   if(!box) return;
   try{
     const events = await apiFetch('/api/account/security-events');
-    if(!Array.isArray(events) || !events.length){ box.innerHTML = '<div class="section-hint">لا توجد أحداث أمنية مسجّلة بعد</div>'; return; }
+    if(!Array.isArray(events) || !events.length){ box.innerHTML = `<div class="section-hint">${t('noSecurityEventsYet')}</div>`; return; }
     box.innerHTML = events.map(ev => `
       <div class="session-row">
         <div class="session-icon">${SECURITY_ICONS[ev.icon] || SECURITY_ICONS.bell}</div>
@@ -8600,23 +8980,23 @@ async function loadSecurityEvents(){
         </div>
       </div>
     `).join('');
-  }catch(e){ box.innerHTML = '<div class="section-hint">تعذر تحميل السجل</div>'; }
+  }catch(e){ box.innerHTML = `<div class="section-hint">${t('cantLoadLog')}</div>`; }
 }
 
-// ----- النسخ الاحتياطي وGoogle Drive -----
+// ----- Backup and Google Drive -----
 async function downloadBackup(e){
   e.preventDefault();
   try{
     const r = await fetch('/api/account/backup', { headers:{ 'Authorization':'Bearer '+getToken() } });
-    if(!r.ok){ showToast('تعذر إنشاء النسخة الاحتياطية', 'error'); return false; }
+    if(!r.ok){ showToast(t('cantCreateBackup'), 'error'); return false; }
     const blob = await r.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = 'hostaka-backup.json';
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
-    showToast('جارٍ تنزيل نسخة بياناتك');
-  }catch(err){ showToast('تعذر الاتصال بالخادم', 'error'); }
+    showToast(t('downloadingBackup'));
+  }catch(err){ showToast(t('cantConnectServer'), 'error'); }
   return false;
 }
 
@@ -8625,7 +9005,7 @@ async function checkDriveConfigured(){
   if(!btn) return;
   try{
     const d = await apiFetch('/api/account/backup/drive/status');
-    if(!d.configured){ btn.disabled = true; btn.title = 'هذه الميزة غير مفعّلة على الخادم حالياً'; }
+    if(!d.configured){ btn.disabled = true; btn.title = t('driveFeatureDisabled'); }
   }catch(e){}
 }
 
@@ -8633,29 +9013,29 @@ async function connectGoogleDrive(){
   try{
     const d = await apiFetch('/api/account/backup/drive/connect');
     if(d.url) window.location.href = d.url;
-    else showToast(d.error||'ميزة Google Drive غير مفعّلة حالياً', 'error');
-  }catch(e){ showToast('تعذر الاتصال بالخادم', 'error'); }
+    else showToast(d.error||t('driveFeatureUnavailable'), 'error');
+  }catch(e){ showToast(t('cantConnectServer'), 'error'); }
 }
 
-// ----- المصادقة الثنائية (2FA) -----
+// ----- Two-factor authentication (2FA) -----
 let tfaSetupInFlight = false;
 async function start2FASetup(){
-  if(tfaSetupInFlight) return; // يمنع الضغط المتكرر السريع من إنشاء أكثر من سر بنفس الوقت (كان يسبب عدم تطابق الكود مع QR المعروض)
+  if(tfaSetupInFlight) return; // prevents rapid repeated clicks from creating more than one secret at a time (used to cause the code to mismatch the displayed QR)
   tfaSetupInFlight = true;
   const triggerBtns = document.querySelectorAll('[onclick="start2FASetup()"]');
   triggerBtns.forEach(b => b.disabled = true);
   try{
     const d = await apiFetch('/api/account/2fa/setup', 'POST');
-    if(!d.success){ showToast(d.error||'تعذر بدء الإعداد', 'error'); return; }
+    if(!d.success){ showToast(d.error||t('cantStartSetup'), 'error'); return; }
     document.getElementById('tfaErr').classList.remove('show');
     document.getElementById('tfaQrImg').src = d.qrCode;
     document.getElementById('tfaSecretText').textContent = d.secret;
     document.getElementById('tfaEnableCode').value = '';
     document.getElementById('tfaStepQr').style.display = 'block';
     document.getElementById('tfaStepBackup').style.display = 'none';
-    document.getElementById('tfaStepTitle').textContent = 'تفعيل المصادقة الثنائية';
+    document.getElementById('tfaStepTitle').textContent = t('enable2FATitle');
     openModal('tfaSetupModal');
-  }catch(e){ showToast('تعذر الاتصال بالخادم', 'error'); }
+  }catch(e){ showToast(t('cantConnectServer'), 'error'); }
   finally{
     tfaSetupInFlight = false;
     triggerBtns.forEach(b => b.disabled = false);
@@ -8666,24 +9046,24 @@ async function confirm2FAEnable(){
   const code = document.getElementById('tfaEnableCode').value.trim();
   const errEl = document.getElementById('tfaErr');
   errEl.classList.remove('show');
-  if(!/^\d{6}$/.test(code)){ errEl.textContent='أدخل كود التطبيق المكوّن من 6 أرقام'; errEl.classList.add('show'); return; }
+  if(!/^\d{6}$/.test(code)){ errEl.textContent=t('enter6DigitAppCode'); errEl.classList.add('show'); return; }
   const btn = document.getElementById('tfaEnableBtn'); btn.disabled = true;
   try{
     const d = await apiFetch('/api/account/2fa/enable', 'POST', { code });
     if(d.success){
       ME.totp_enabled = true;
-      document.getElementById('tfaStepTitle').textContent = 'احفظ أكواد الاسترجاع';
+      document.getElementById('tfaStepTitle').textContent = t('saveBackupCodesTitle');
       document.getElementById('tfaStepQr').style.display = 'none';
       document.getElementById('tfaBackupCodesList').innerHTML = d.backupCodes.map(c=>`<div>${esc(c)}</div>`).join('');
       document.getElementById('tfaStepBackup').style.display = 'block';
-    } else { errEl.textContent = d.error||'كود غير صحيح'; errEl.classList.add('show'); }
-  }catch(e){ errEl.textContent='تعذر الاتصال بالخادم'; errEl.classList.add('show'); }
+    } else { errEl.textContent = d.error||t('wrongCode'); errEl.classList.add('show'); }
+  }catch(e){ errEl.textContent=t('cantConnectServer'); errEl.classList.add('show'); }
   btn.disabled = false;
 }
 
 function finish2FASetup(){
   closeModal('tfaSetupModal');
-  showToast('تم تفعيل المصادقة الثنائية بنجاح');
+  showToast(t('tfaEnabledSuccess'));
   render();
 }
 
@@ -8699,21 +9079,21 @@ async function submit2FADisable(){
   const code = document.getElementById('tfaDisableCode').value.trim();
   const errEl = document.getElementById('tfaDisableErr');
   errEl.classList.remove('show');
-  if(!password || !code){ errEl.textContent='جميع الحقول مطلوبة'; errEl.classList.add('show'); return; }
+  if(!password || !code){ errEl.textContent=t('allFieldsRequired'); errEl.classList.add('show'); return; }
   const btn = document.getElementById('tfaDisableBtn'); btn.disabled = true;
   try{
     const d = await apiFetch('/api/account/2fa/disable', 'POST', { password, code });
     if(d.success){
       ME.totp_enabled = false;
       closeModal('tfaDisableModal');
-      showToast('تم إلغاء تفعيل المصادقة الثنائية');
+      showToast(t('tfaDisabled'));
       render();
-    } else { errEl.textContent = d.error||'تعذر إلغاء التفعيل'; errEl.classList.add('show'); }
-  }catch(e){ errEl.textContent='تعذر الاتصال بالخادم'; errEl.classList.add('show'); }
+    } else { errEl.textContent = d.error||t('cantDisable'); errEl.classList.add('show'); }
+  }catch(e){ errEl.textContent=t('cantConnectServer'); errEl.classList.add('show'); }
   btn.disabled = false;
 }
 
-// ----- حذف الحساب -----
+// ----- Delete account -----
 function openDeleteModal(){
   document.getElementById('deleteErr').classList.remove('show');
   document.getElementById('deletePassword').value = '';
@@ -8723,153 +9103,153 @@ async function requestDeleteAccount(){
   const pass = document.getElementById('deletePassword').value;
   const errEl = document.getElementById('deleteErr');
   errEl.classList.remove('show');
-  if(!pass){ errEl.textContent='أدخل كلمة المرور الحالية'; errEl.classList.add('show'); return; }
+  if(!pass){ errEl.textContent=t('enterCurrentPassword'); errEl.classList.add('show'); return; }
   const btn = document.getElementById('deleteConfirmBtn');
   btn.disabled = true;
   try{
     const d = await apiFetch('/api/account/change/request', 'POST', { purpose:'delete', currentPassword: pass });
     if(d.success){
       closeModal('deleteModal');
-      showToast(d.message||'تم إرسال كود التأكيد');
+      showToast(d.message||t('codeSent'));
       openOtpModal('delete', d.maskedEmail);
-    } else { errEl.textContent = d.error||'تعذر تنفيذ الطلب'; errEl.classList.add('show'); }
-  }catch(e){ errEl.textContent='تعذر الاتصال بالخادم'; errEl.classList.add('show'); }
+    } else { errEl.textContent = d.error||t('requestFail'); errEl.classList.add('show'); }
+  }catch(e){ errEl.textContent=t('cantConnectServer'); errEl.classList.add('show'); }
   btn.disabled = false;
 }
 
-// ----- عرض الصفحة -----
+// ----- Render the page -----
 function verifyStatusPill(){
-  if(ME?.verified) return `<span class="status-pill st-verified">حساب موثّق ✓</span>`;
-  if(VERIFY_STATUS?.status === 'pending') return `<span class="status-pill st-pending">طلبك قيد المراجعة</span>`;
-  return `<span class="status-pill st-none">غير موثّق</span>`;
+  if(ME?.verified) return `<span class="status-pill st-verified">${t('verifiedAccount')}</span>`;
+  if(VERIFY_STATUS?.status === 'pending') return `<span class="status-pill st-pending">${t('requestPending')}</span>`;
+  return `<span class="status-pill st-none">${t('notVerified')}</span>`;
 }
 
 function render(){
   const wrap = document.getElementById('wrap');
   const avatarHtml = ME.avatar ? `<img src="${esc(ME.avatar)}" alt="">` : initials(ME.display_name||ME.username);
   wrap.innerHTML = `
-    <div class="page-title">إدارة الحساب</div>
-    <div class="page-sub">تحكّم في بيانات حسابك، أمانه، وخصوصيتك في هوستاكا</div>
+    <div class="page-title">${t('accountManagement')}</div>
+    <div class="page-sub">${t('accountManagementSub')}</div>
 
     <div class="acc-summary">
       <div class="acc-avatar">${avatarHtml}</div>
       <div>
         <div class="acc-name">${esc(ME.display_name||ME.username)} ${ME.verified ? `<span class="badge-verified"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></span>` : ''}</div>
-        <div class="acc-meta">عضو منذ ${fmtDate(ME.created_at)}</div>
+        <div class="acc-meta">${t('memberSince',{date:fmtDate(ME.created_at)})}</div>
       </div>
     </div>
 
     <div class="section">
       <div class="section-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        اسم المستخدم
+        ${t('usernameLabel')}
       </div>
-      <div class="section-hint">يتطلب تغيير اسم المستخدم تأكيد كود يُرسل إلى بريدك الإلكتروني الحالي.</div>
-      <div class="f-current">اسم المستخدم الحالي: <b>@${esc(ME.username)}</b></div>
+      <div class="section-hint">${t('usernameChangeHint')}</div>
+      <div class="f-current">${t('currentUsernameIs',{u:'<b>@'+esc(ME.username)+'</b>'})}</div>
       <div class="err" id="usernameErr"></div>
-      <div class="fg"><input type="text" id="newUsernameInput" class="f-input" placeholder="اسم المستخدم الجديد" dir="ltr"></div>
-      <button class="btn-submit" id="usernameBtn" onclick="requestUsernameChange()">إرسال كود التأكيد</button>
+      <div class="fg"><input type="text" id="newUsernameInput" class="f-input" placeholder="${t('newUsernamePlaceholder')}" dir="ltr"></div>
+      <button class="btn-submit" id="usernameBtn" onclick="requestUsernameChange()">${t('sendConfirmCode')}</button>
     </div>
 
     <div class="section">
       <div class="section-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M22 6l-10 7L2 6"/></svg>
-        البريد الإلكتروني
+        ${t('emailLabel')}
       </div>
-      <div class="section-hint">سيتم إرسال كود تأكيد إلى بريدك الجديد للتحقق من ملكيته قبل ربطه بحسابك.</div>
-      <div class="f-current">البريد الحالي: <b>${esc(ME.email||'')}</b></div>
+      <div class="section-hint">${t('emailChangeHint')}</div>
+      <div class="f-current">${t('currentEmailIs',{e:'<b>'+esc(ME.email||'')+'</b>'})}</div>
       <div class="err" id="emailErr"></div>
       <div class="fg"><input type="email" id="newEmailInput" class="f-input" placeholder="example@mail.com" dir="ltr"></div>
-      <button class="btn-submit" id="emailBtn" onclick="requestEmailChange()">إرسال كود التأكيد</button>
+      <button class="btn-submit" id="emailBtn" onclick="requestEmailChange()">${t('sendConfirmCode')}</button>
     </div>
 
     <div class="section">
       <div class="section-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        كلمة المرور
+        ${t('passwordLabel')}
       </div>
-      <div class="section-hint">يتطلب تغيير كلمة المرور إدخال كلمة المرور الحالية وتأكيد كود يُرسل إلى بريدك.</div>
+      <div class="section-hint">${t('passwordChangeHint')}</div>
       <div class="err" id="passwordErr"></div>
-      <div class="fg"><label class="f-label">كلمة المرور الحالية</label><input type="password" id="curPasswordInput" class="f-input" placeholder="••••••••" autocomplete="current-password"></div>
-      <div class="fg"><label class="f-label">كلمة المرور الجديدة</label><input type="password" id="newPasswordInput" class="f-input" placeholder="6 أحرف على الأقل" autocomplete="new-password"></div>
-      <div class="fg"><label class="f-label">تأكيد كلمة المرور الجديدة</label><input type="password" id="confirmPasswordInput" class="f-input" placeholder="••••••••" autocomplete="new-password"></div>
-      <button class="btn-submit" id="passwordBtn" onclick="requestPasswordChange()">إرسال كود التأكيد</button>
+      <div class="fg"><label class="f-label">${t('currentPassword')}</label><input type="password" id="curPasswordInput" class="f-input" placeholder="••••••••" autocomplete="current-password"></div>
+      <div class="fg"><label class="f-label">${t('newPassword')}</label><input type="password" id="newPasswordInput" class="f-input" placeholder="${t('passwordMinPlaceholder')}" autocomplete="new-password"></div>
+      <div class="fg"><label class="f-label">${t('confirmNewPassword')}</label><input type="password" id="confirmPasswordInput" class="f-input" placeholder="••••••••" autocomplete="new-password"></div>
+      <button class="btn-submit" id="passwordBtn" onclick="requestPasswordChange()">${t('sendConfirmCode')}</button>
     </div>
 
     <div class="section">
       <div class="section-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        تاريخ الميلاد
+        ${t('birthdate')}
       </div>
-      <div class="section-hint">يساعدنا في تخصيص تجربتك على المنصة. يمكن تعديله متى شئت دون الحاجة لتأكيد بريد.</div>
+      <div class="section-hint">${t('birthdateHint')}</div>
       <div class="fg"><input type="date" id="birthdateInput" class="f-input" value="${esc(ME.birth_date||'')}"></div>
-      <button class="btn-submit" id="birthdateBtn" onclick="saveBirthdate()">حفظ</button>
+      <button class="btn-submit" id="birthdateBtn" onclick="saveBirthdate()">${t('save')}</button>
     </div>
 
     <div class="section">
       <div class="section-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-        توثيق الحساب
+        ${t('accountVerification')}
       </div>
-      <div class="section-hint">احصل على علامة التوثيق الزرقاء بعد مراجعة طلبك من فريق الإدارة.</div>
+      <div class="section-hint">${t('verificationHint')}</div>
       <div class="verify-status">
         ${verifyStatusPill()}
-        ${(!ME.verified && VERIFY_STATUS?.status !== 'pending') ? `<button class="btn-submit" onclick="requestVerifyBadge()">طلب التوثيق</button>` : ''}
+        ${(!ME.verified && VERIFY_STATUS?.status !== 'pending') ? `<button class="btn-submit" onclick="requestVerifyBadge()">${t('requestVerification')}</button>` : ''}
       </div>
     </div>
 
     <div class="section">
       <div class="section-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        المصادقة الثنائية (2FA)
+        ${t('twoFactorAuth')}
       </div>
-      <div class="section-hint">طبقة حماية إضافية: بعد التفعيل، سيُطلب منك عند تسجيل الدخول إدخال كود يتولّد في تطبيق مصادقة (مثل Google Authenticator) بجانب كلمة المرور.</div>
+      <div class="section-hint">${t('twoFactorHint')}</div>
       <div class="verify-status">
-        ${ME.totp_enabled ? `<span class="status-pill st-verified">مفعّلة ✓</span>` : `<span class="status-pill st-none">غير مفعّلة</span>`}
+        ${ME.totp_enabled ? `<span class="status-pill st-verified">${t('enabled')}</span>` : `<span class="status-pill st-none">${t('notEnabled')}</span>`}
         ${ME.totp_enabled
-          ? `<button class="btn-outline-danger" onclick="open2FADisableModal()">إلغاء التفعيل</button>`
-          : `<button class="btn-submit" onclick="start2FASetup()">تفعيل المصادقة الثنائية</button>`}
+          ? `<button class="btn-outline-danger" onclick="open2FADisableModal()">${t('disable')}</button>`
+          : `<button class="btn-submit" onclick="start2FASetup()">${t('enable2FA')}</button>`}
       </div>
     </div>
 
     <div class="section">
       <div class="section-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-        الأجهزة وجلسات الدخول
+        ${t('devicesSessions')}
       </div>
-      <div class="section-hint">كل الأجهزة والأماكن اللي سجّلت منها دخولك. لو فيه جلسة ما تعرفها، أنهِها فوراً.</div>
-      <div id="sessionsList"><div class="section-hint">جارٍ التحميل...</div></div>
-      <button class="btn-outline-danger" style="margin-top:10px;" onclick="revokeAllSessions()">تسجيل الخروج من كل الأجهزة الأخرى</button>
+      <div class="section-hint">${t('devicesSessionsHint')}</div>
+      <div id="sessionsList"><div class="section-hint">${t('loading')}</div></div>
+      <button class="btn-outline-danger" style="margin-top:10px;" onclick="revokeAllSessions()">${t('logoutAllOther')}</button>
     </div>
 
     <div class="section">
       <div class="section-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        تنبيهات الأمان
+        ${t('securityAlerts')}
       </div>
-      <div class="section-hint">سجل بكل الأحداث الأمنية المهمة بحسابك: تسجيل دخول جديد، تغيير كلمة المرور أو البريد، وغيرها.</div>
-      <div id="securityEventsList"><div class="section-hint">جارٍ التحميل...</div></div>
+      <div class="section-hint">${t('securityAlertsHint')}</div>
+      <div id="securityEventsList"><div class="section-hint">${t('loading')}</div></div>
     </div>
 
     <div class="section">
       <div class="section-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        النسخ الاحتياطي وتنزيل البيانات
+        ${t('backupTitle')}
       </div>
-      <div class="section-hint">نزّل نسخة من بياناتك (منشوراتك، ملفك الشخصي، محفوظاتك) بصيغة JSON، أو ارفعها مباشرة إلى Google Drive.</div>
+      <div class="section-hint">${t('backupHint')}</div>
       <div class="verify-status">
-        <a class="btn-submit" style="text-decoration:none;display:inline-flex;align-items:center;" href="/api/account/backup" onclick="return downloadBackup(event)">تنزيل نسخة من بياناتي</a>
-        <button class="btn-ghost" id="driveBackupBtn" onclick="connectGoogleDrive()">رفع نسخة إلى Google Drive</button>
+        <a class="btn-submit" style="text-decoration:none;display:inline-flex;align-items:center;" href="/api/account/backup" onclick="return downloadBackup(event)">${t('downloadMyData')}</a>
+        <button class="btn-ghost" id="driveBackupBtn" onclick="connectGoogleDrive()">${t('uploadToDrive')}</button>
       </div>
     </div>
 
     <div class="section danger-zone">
       <div class="section-title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-        منطقة الخطر
+        ${t('dangerZone')}
       </div>
-      <div class="section-hint">حذف حسابك سيؤدي لإزالة جميع بياناتك ومنشوراتك ورسائلك نهائياً من هوستاكا، ولا يمكن التراجع عن هذا الإجراء.</div>
-      <button class="btn-outline-danger" onclick="openDeleteModal()">حذف الحساب نهائياً</button>
+      <div class="section-hint">${t('dangerZoneHint')}</div>
+      <button class="btn-outline-danger" onclick="openDeleteModal()">${t('deleteAccountPermanently')}</button>
     </div>
   `;
   loadSessions();
@@ -8882,9 +9262,9 @@ async function loadMe(){
   if(!token){
     document.getElementById('wrap').innerHTML = `
       <div class="login-gate">
-        <div style="font-size:1.05rem;font-weight:800;margin-bottom:6px;">إدارة الحساب متاحة للأعضاء المسجلين فقط</div>
-        <div style="color:var(--muted);font-size:0.85rem;">سجّل الدخول للتحكم في اسم المستخدم، البريد، كلمة المرور، وباقي إعدادات حسابك</div>
-        <a href="/">تسجيل الدخول</a>
+        <div style="font-size:1.05rem;font-weight:800;margin-bottom:6px;">${t('managerMembersOnly')}</div>
+        <div style="color:var(--muted);font-size:0.85rem;">${t('managerLoginHint')}</div>
+        <a href="/">${t('loginBtn')}</a>
       </div>`;
     return;
   }
@@ -8892,7 +9272,7 @@ async function loadMe(){
     ME = await apiFetch('/api/me');
     if(!ME || ME.error) throw new Error('unauth');
   }catch(e){
-    document.getElementById('wrap').innerHTML = `<div class="login-gate"><div style="font-weight:800;">تعذر التحقق من الحساب</div><a href="/">العودة للرئيسية</a></div>`;
+    document.getElementById('wrap').innerHTML = `<div class="login-gate"><div style="font-weight:800;">${t('cantVerifyAccount')}</div><a href="/">${t('backHome')}</a></div>`;
     return;
   }
   await refreshVerifyStatus();
@@ -8935,10 +9315,47 @@ try { window.loadMe = loadMe; } catch(e) {}
 }
 
 // ============================================================
-//  صفحة المحفوظات — /save
+//  Saved page — /save
 // ============================================================
 if (document.body.classList.contains('page-save')) {
 
+const LANG = {
+  ar: {
+    reactLike:'أعجبني', reactLove:'أحببته', reactHaha:'أضحكني', reactSad:'أحزنني', reactAngry:'أغضبني',
+    reelsTag:'ريلز', replyWord:'رد', replyToPlaceholder:'رد @{u}', commentPlaceholder:'اكتب تعليقاً...',
+    commentWord:'تعليق', reactWord:'تفاعل', confirmDeleteComment:'حذف هذا التعليق؟', unsave:'إلغاء الحفظ', share:'مشاركة',
+    linkCopied:'تم نسخ رابط المنشور', cantCopy:'تعذر النسخ', postUnsaved:'تم إلغاء حفظ المنشور',
+    allCollections:'الكل', newCollection:'مجموعة جديدة', newCollectionPrompt:'اسم مجموعة الحفظ الجديدة (مثلاً: ماينكرافت، ذكاء اصطناعي...)',
+    cantCreateCollection:'تعذر إنشاء المجموعة', collectionCreated:'تم إنشاء مجموعة "{name}"',
+    confirmDeleteCollection:'حذف مجموعة "{name}"؟ المنشورات المحفوظة بداخلها ستبقى محفوظة بدون تصنيف.',
+    cantDelete:'تعذر الحذف', collectionDeleted:'تم حذف المجموعة', noCollection:'بدون مجموعة', moveToCollectionLabel:'نقل إلى مجموعة',
+    cantMove:'تعذر النقل', movedSuccess:'تم النقل بنجاح', savedTitle:'المحفوظات', savedSub:'كل المنشورات والريلز اللي حفظتها بمكان واحد',
+    nothingSavedYet:'لا يوجد أي شيء محفوظ{scope} بعد', inThisCollection:' في هذه المجموعة',
+    savedMembersOnly:'المحفوظات متاحة للأعضاء المسجلين فقط', savedLoginHint:'سجّل الدخول لرؤية المنشورات والريلز اللي حفظتها', loginBtn:'تسجيل الدخول',
+    draft:'مسودة', privateBadge:'خاص'
+  },
+  en: {
+    reactLike:'Like', reactLove:'Love', reactHaha:'Haha', reactSad:'Sad', reactAngry:'Angry',
+    reelsTag:'Reels', replyWord:'Reply', replyToPlaceholder:'Reply @{u}', commentPlaceholder:'Write a comment...',
+    commentWord:'comment', reactWord:'React', confirmDeleteComment:'Delete this comment?', unsave:'Unsave', share:'Share',
+    linkCopied:'Post link copied', cantCopy:'Could not copy', postUnsaved:'Post unsaved',
+    allCollections:'All', newCollection:'New collection', newCollectionPrompt:'Name of the new save collection (e.g. Minecraft, AI...)',
+    cantCreateCollection:'Could not create the collection', collectionCreated:'Collection "{name}" created',
+    confirmDeleteCollection:'Delete collection "{name}"? Posts saved in it will remain saved without a category.',
+    cantDelete:'Could not delete', collectionDeleted:'Collection deleted', noCollection:'No collection', moveToCollectionLabel:'Move to collection',
+    cantMove:'Could not move', movedSuccess:'Moved successfully', savedTitle:'Saved', savedSub:'All the posts and reels you saved in one place',
+    nothingSavedYet:'Nothing saved{scope} yet', inThisCollection:' in this collection',
+    savedMembersOnly:'Saved items are available for registered members only', savedLoginHint:'Log in to see the posts and reels you saved', loginBtn:'Log In',
+    draft:'Draft', privateBadge:'Private'
+  }
+};
+let currentLang = localStorage.getItem('hostaka_lang') || 'en';
+function t(key, vars){
+  var s = (LANG[currentLang] || LANG.en)[key];
+  if (s === undefined) return key;
+  if (vars) Object.keys(vars).forEach(function(k){ s = s.replace('{'+k+'}', vars[k]); });
+  return s;
+}
 let currentTheme = localStorage.getItem('hostaka_theme') || 'light';
 function setTheme(theme){
   const html = document.documentElement;
@@ -8997,11 +9414,11 @@ const SVG = {
   check:   `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`,
 };
 const REACTIONS = [
-  { emoji:'like',  label:'أعجبني',  icon:SVG.like },
-  { emoji:'heart', label:'أحببته',  icon:SVG.heart },
-  { emoji:'haha',  label:'أضحكني',  icon:SVG.haha },
-  { emoji:'sad',   label:'أحزنني',  icon:SVG.sad },
-  { emoji:'angry', label:'أغضبني',  icon:SVG.angry },
+  { emoji:'like',  label:t('reactLike'),  icon:SVG.like },
+  { emoji:'heart', label:t('reactLove'),  icon:SVG.heart },
+  { emoji:'haha',  label:t('reactHaha'),  icon:SVG.haha },
+  { emoji:'sad',   label:t('reactSad'),  icon:SVG.sad },
+  { emoji:'angry', label:t('reactAngry'),  icon:SVG.angry },
 ];
 
 function verifiedBadge(){ return `<span class="badge-verified">${SVG.check}</span>`; }
@@ -9057,15 +9474,15 @@ function goPublisher(username){ window.location = '/profile?u=' + encodeURICompo
 function sharePost(id){
   const url = location.origin + '/post?id=' + id;
   if (navigator.share) { navigator.share({ url }).catch(()=>{}); return; }
-  navigator.clipboard?.writeText(url).then(()=>showToast('تم نسخ رابط المنشور')).catch(()=>showToast('تعذر النسخ','error'));
+  navigator.clipboard?.writeText(url).then(()=>showToast(t('linkCopied'))).catch(()=>showToast(t('cantCopy'),'error'));
 }
 
 let ME = null;
 let savedItems = [];
 
 function postStatusBadge(p){
-  if (p.privacy === 'draft') return `<span class="post-status-badge st-draft">مسودة</span>`;
-  if (p.privacy === 'private') return `<span class="post-status-badge st-private">خاص</span>`;
+  if (p.privacy === 'draft') return `<span class="post-status-badge st-draft">${t('draft')}</span>`;
+  if (p.privacy === 'private') return `<span class="post-status-badge st-private">${t('privateBadge')}</span>`;
   return '';
 }
 
@@ -9087,7 +9504,7 @@ function renderSavedCard(p){
     mediaHtml = `<div class="reel-card" onclick="location.href='/short?id=${p.id}'">
       <video class="reel-thumb-video" muted playsinline preload="metadata"><source src="${esc(p.video)}#t=0.1" type="video/mp4"></video>
       <div class="reel-play-badge">${SVG.reel}</div>
-      <div class="reel-tag">ريلز</div>
+      <div class="reel-tag">${t('reelsTag')}</div>
     </div>`;
   } else if (p.video) {
     mediaHtml = `<div class="video-card" onclick="location.href='/video?id=${p.id}'">
@@ -9105,7 +9522,7 @@ function renderSavedCard(p){
   const reactionHtml = `<div class="react-wrap">
     <button class="react-main-btn ${userR?'reacted':''}" onclick="toggleReactMenu(${p.id})">
       ${activeReact ? activeReact.icon : SVG.like}
-      <span>${totalReactions||'تفاعل'}</span>
+      <span>${totalReactions||t('reactWord')}</span>
     </button>
     <div class="react-menu" id="rmenu-${p.id}">
       ${REACTIONS.map(r=>`<button class="react-emoji-btn ${p.userReaction===r.emoji?'active':''}" onclick="toggleReact(${p.id},'${r.emoji}')" title="${r.label}">${r.icon}</button>`).join('')}
@@ -9125,21 +9542,21 @@ function renderSavedCard(p){
       <div class="c-avatar">${ca}</div>
       <div class="c-bubble">
         <div class="c-name">${esc(c.display_name||c.username)}
-          ${ME ? `<button class="reply-btn" onclick="toggleReplyInput(${postId},${c.id})">رد</button>` : ''}
+          ${ME ? `<button class="reply-btn" onclick="toggleReplyInput(${postId},${c.id})">${t('replyWord')}</button>` : ''}
           ${canDelC?`<button class="c-del" onclick="delComment(${c.id},${postId})">${SVG.delete}</button>`:''}
         </div>
         <div class="c-text">${cleanContent}</div>
       </div>
     </div>
     <div class="reply-input-row" id="replyRow-${c.id}" style="display:none;">
-      <input class="comment-input" type="text" placeholder="رد @${esc(c.username||'')}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
+      <input class="comment-input" type="text" placeholder="${t('replyToPlaceholder',{u:esc(c.username||'')})}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
       <button class="btn-send-comment" onclick="sendComment(${postId},${c.id})">${SVG.send}</button>
     </div>
     ${repliesHtml}`;
   }
   const commentsHtml = topComments.map(c => oneCommentHtml(c, p.id)).join('');
   const commentInputHtml = ME ? `<div class="comment-input-row">
-    <input class="comment-input" type="text" placeholder="اكتب تعليقاً..." id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
+    <input class="comment-input" type="text" placeholder="${t('commentPlaceholder')}" id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
     <button class="btn-send-comment" onclick="sendComment(${p.id})">${SVG.send}</button>
   </div>` : '';
 
@@ -9156,8 +9573,8 @@ function renderSavedCard(p){
         </div>
         <div class="pub-actions">
           ${saveItemMenuHtml(p)}
-          <button class="btn-icon save-btn saved" onclick="unsaveItem(${p.id})" title="إلغاء الحفظ">${SVG.bookmarkFilled}</button>
-          <button class="btn-icon" onclick="sharePost(${p.id})" title="مشاركة">${SVG.share}</button>
+          <button class="btn-icon save-btn saved" onclick="unsaveItem(${p.id})" title="${t('unsave')}">${SVG.bookmarkFilled}</button>
+          <button class="btn-icon" onclick="sharePost(${p.id})" title="${t('share')}">${SVG.share}</button>
         </div>
       </div>
       <div class="pub-date">${fmtDate(p.created_at)}</div>
@@ -9165,7 +9582,7 @@ function renderSavedCard(p){
       <div class="reactions-row">
         ${reactionHtml}
         <button class="react-btn" onclick="toggleComments(${p.id})" id="cmtToggle-${p.id}">
-          ${SVG.comment}<span>${allComments.length} تعليق</span>
+          ${SVG.comment}<span>${allComments.length} ${t('commentWord')}</span>
         </button>
       </div>
       <div class="comments-section" id="cmtSec-${p.id}" style="display:none;">
@@ -9227,7 +9644,7 @@ async function sendComment(postId, parentId){
   document.getElementById('cmtToggle-'+postId)?.classList.add('expanded');
 }
 async function delComment(commentId, postId){
-  if(!confirm('حذف هذا التعليق؟')) return;
+  if(!confirm(t('confirmDeleteComment'))) return;
   await apiFetch('/api/comments/'+commentId,'DELETE');
   document.getElementById('cmt-'+commentId)?.remove();
 }
@@ -9238,14 +9655,14 @@ async function unsaveItem(id){
   savedItems = savedItems.filter(p => p.id !== id);
   const card = document.getElementById('post-'+id);
   if(card) card.remove();
-  showToast('تم إلغاء حفظ المنشور');
+  showToast(t('postUnsaved'));
   refreshCollectionCounts();
   if(!savedItems.length) renderEmpty();
 }
 
-// ── مجموعات الحفظ الخاصة (Save Collections) ──
+// ── Private save collections ──
 let collections = [];
-let activeCollectionId = null; // null = الكل, 'uncategorized' = بدون مجموعة
+let activeCollectionId = null; // null = all, 'uncategorized' = no collection
 
 async function loadCollections(){
   try{
@@ -9261,7 +9678,7 @@ function refreshCollectionCounts(){
 
 function collectionsBarHtml(){
   const chips = [
-    `<button class="collection-chip ${activeCollectionId===null?'active':''}" onclick="selectCollection(null)">الكل</button>`,
+    `<button class="collection-chip ${activeCollectionId===null?'active':''}" onclick="selectCollection(null)">${t('allCollections')}</button>`,
     ...collections.map(c => `<button class="collection-chip ${String(activeCollectionId)===String(c.id)?'active':''}" onclick="selectCollection(${c.id})">
         ${esc(c.name)} <span class="cc-count">${c.items_count||0}</span>
         <span class="collection-chip-del" onclick="event.stopPropagation();deleteCollection(${c.id},'${esc(c.name).replace(/'/g,"")}')">
@@ -9270,30 +9687,30 @@ function collectionsBarHtml(){
       </button>`),
     `<button class="collection-chip collection-chip-add" onclick="createCollection()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      مجموعة جديدة
+      ${t('newCollection')}
     </button>`
   ];
   return `<div class="collections-bar" id="collectionsBar">${chips.join('')}</div>`;
 }
 
 async function createCollection(){
-  const name = (prompt('اسم مجموعة الحفظ الجديدة (مثلاً: ماينكرافت، ذكاء اصطناعي...)')||'').trim();
+  const name = (prompt(t('newCollectionPrompt'))||'').trim();
   if(!name) return;
   const d = await apiFetch('/api/save-collections','POST',{name});
-  if(!d.success){ showToast(d.error||'تعذر إنشاء المجموعة','error'); return; }
+  if(!d.success){ showToast(d.error||t('cantCreateCollection'),'error'); return; }
   await loadCollections();
   refreshCollectionCounts();
-  showToast('تم إنشاء مجموعة "'+name+'"');
+  showToast(t('collectionCreated',{name}));
 }
 
 async function deleteCollection(id, name){
-  if(!confirm('حذف مجموعة "'+name+'"؟ المنشورات المحفوظة بداخلها ستبقى محفوظة بدون تصنيف.')) return;
+  if(!confirm(t('confirmDeleteCollection',{name}))) return;
   const d = await apiFetch('/api/save-collections/'+id,'DELETE');
-  if(!d.success){ showToast(d.error||'تعذر الحذف','error'); return; }
+  if(!d.success){ showToast(d.error||t('cantDelete'),'error'); return; }
   if(String(activeCollectionId)===String(id)) activeCollectionId = null;
   await loadCollections();
   await loadSavedList();
-  showToast('تم حذف المجموعة');
+  showToast(t('collectionDeleted'));
 }
 
 async function selectCollection(id){
@@ -9319,15 +9736,15 @@ function toggleSaveItemMenu(id){
 
 function saveItemMenuHtml(p){
   const options = [
-    `<button class="${!p.collection_id?'active':''}" onclick="event.stopPropagation();moveToCollection(${p.id},null)">بدون مجموعة ${!p.collection_id?'✓':''}</button>`,
+    `<button class="${!p.collection_id?'active':''}" onclick="event.stopPropagation();moveToCollection(${p.id},null)">${t('noCollection')} ${!p.collection_id?'✓':''}</button>`,
     ...collections.map(c => `<button class="${String(p.collection_id)===String(c.id)?'active':''}" onclick="event.stopPropagation();moveToCollection(${p.id},${c.id})">${esc(c.name)} ${String(p.collection_id)===String(c.id)?'✓':''}</button>`)
   ];
   return `<div class="save-item-menu-wrap">
-    <button class="save-item-menu-btn" onclick="event.stopPropagation();toggleSaveItemMenu(${p.id})" title="نقل إلى مجموعة">
+    <button class="save-item-menu-btn" onclick="event.stopPropagation();toggleSaveItemMenu(${p.id})" title="${t('moveToCollectionLabel')}">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
     </button>
     <div class="save-item-menu" id="saveMenu-${p.id}">
-      <div class="save-item-menu-label">نقل إلى مجموعة</div>
+      <div class="save-item-menu-label">${t('moveToCollectionLabel')}</div>
       ${options.join('')}
     </div>
   </div>`;
@@ -9335,22 +9752,22 @@ function saveItemMenuHtml(p){
 
 async function moveToCollection(id, collectionId){
   const d = await apiFetch('/api/saved/'+id+'/collection','PUT',{collection_id: collectionId});
-  if(!d.success){ showToast(d.error||'تعذر النقل','error'); return; }
+  if(!d.success){ showToast(d.error||t('cantMove'),'error'); return; }
   const item = findSavedItem(id);
   if(item) item.collection_id = collectionId;
   closeAllSaveMenus();
   await loadCollections();
   refreshCollectionCounts();
   if(activeCollectionId !== null) await loadSavedList();
-  showToast('تم النقل بنجاح');
+  showToast(t('movedSuccess'));
 }
 
 function renderEmpty(){
   document.getElementById('wrap').innerHTML = `
-    <div class="page-title">المحفوظات</div>
-    <div class="page-sub">كل المنشورات والريلز اللي حفظتها بمكان واحد</div>
+    <div class="page-title">${t('savedTitle')}</div>
+    <div class="page-sub">${t('savedSub')}</div>
     ${collectionsBarHtml()}
-    <div class="post-empty">${SVG.share}<div>لا يوجد أي شيء محفوظ ${activeCollectionId?'في هذه المجموعة':''} بعد</div></div>
+    <div class="post-empty">${SVG.share}<div>${t('nothingSavedYet',{scope: activeCollectionId?t('inThisCollection'):''})}</div></div>
   `;
 }
 
@@ -9364,8 +9781,8 @@ async function loadSavedList(){
   if(!savedItems.length){ renderEmpty(); return; }
 
   document.getElementById('wrap').innerHTML = `
-    <div class="page-title">المحفوظات</div>
-    <div class="page-sub">كل المنشورات والريلز اللي حفظتها بمكان واحد</div>
+    <div class="page-title">${t('savedTitle')}</div>
+    <div class="page-sub">${t('savedSub')}</div>
     ${collectionsBarHtml()}
     <div id="savedList">${savedItems.map(p=>renderSavedCard(p)).join('')}</div>
   `;
@@ -9376,9 +9793,9 @@ async function loadSaved(){
   if(!token){
     document.getElementById('wrap').innerHTML = `
       <div class="login-gate">
-        <div style="font-size:1.05rem;font-weight:800;margin-bottom:6px;">المحفوظات متاحة للأعضاء المسجلين فقط</div>
-        <div style="color:var(--muted);font-size:0.85rem;">سجّل الدخول لرؤية المنشورات والريلز اللي حفظتها</div>
-        <a href="/">تسجيل الدخول</a>
+        <div style="font-size:1.05rem;font-weight:800;margin-bottom:6px;">${t('savedMembersOnly')}</div>
+        <div style="color:var(--muted);font-size:0.85rem;">${t('savedLoginHint')}</div>
+        <a href="/">${t('loginBtn')}</a>
       </div>`;
     return;
   }
@@ -9408,10 +9825,35 @@ try { window.moveToCollection = moveToCollection; } catch(e) {}
 }
 
 // ============================================================
-//  صفحة منشور واحد — /post
+//  Single post page — /post
 // ============================================================
 if (document.body.classList.contains('page-post')) {
 
+const LANG = {
+  ar: {
+    reactLike:'أعجبني', reactLove:'أحببته', reactHaha:'أضحكني', reactSad:'أحزنني', reactAngry:'أغضبني',
+    reelsTag:'ريلز', replyWord:'رد', replyToPlaceholder:'رد @{u}', commentPlaceholder:'اكتب تعليقاً...',
+    commentWord:'تعليق', reactWord:'تفاعل', confirmDeleteComment:'حذف هذا التعليق؟', unsave:'إلغاء الحفظ', save:'حفظ', share:'مشاركة',
+    linkCopied:'تم نسخ رابط المنشور', cantCopy:'تعذر النسخ', postSaved:'تم حفظ المنشور', postUnsaved:'تم إلغاء حفظ المنشور',
+    draft:'مسودة', privateBadge:'خاص', del:'حذف', confirmDeletePost:'حذف هذا المنشور نهائياً؟',
+    deleted:'تم الحذف', cantDelete:'تعذر الحذف', postUnavailable:'هذا المنشور غير متاح', noPostSpecified:'لم يتم تحديد منشور', postTitle:'منشور'
+  },
+  en: {
+    reactLike:'Like', reactLove:'Love', reactHaha:'Haha', reactSad:'Sad', reactAngry:'Angry',
+    reelsTag:'Reels', replyWord:'Reply', replyToPlaceholder:'Reply @{u}', commentPlaceholder:'Write a comment...',
+    commentWord:'comment', reactWord:'React', confirmDeleteComment:'Delete this comment?', unsave:'Unsave', save:'Save', share:'Share',
+    linkCopied:'Post link copied', cantCopy:'Could not copy', postSaved:'Post saved', postUnsaved:'Post unsaved',
+    draft:'Draft', privateBadge:'Private', del:'Delete', confirmDeletePost:'Permanently delete this post?',
+    deleted:'Deleted', cantDelete:'Could not delete', postUnavailable:'This post is not available', noPostSpecified:'No post specified', postTitle:'Post'
+  }
+};
+let currentLang = localStorage.getItem('hostaka_lang') || 'en';
+function t(key, vars){
+  var s = (LANG[currentLang] || LANG.en)[key];
+  if (s === undefined) return key;
+  if (vars) Object.keys(vars).forEach(function(k){ s = s.replace('{'+k+'}', vars[k]); });
+  return s;
+}
 let currentTheme = localStorage.getItem('hostaka_theme') || 'light';
 function setTheme(theme){
   const html = document.documentElement;
@@ -9470,11 +9912,11 @@ const SVG = {
   check:   `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`,
 };
 const REACTIONS = [
-  { emoji:'like',  label:'أعجبني',  icon:SVG.like },
-  { emoji:'heart', label:'أحببته',  icon:SVG.heart },
-  { emoji:'haha',  label:'أضحكني',  icon:SVG.haha },
-  { emoji:'sad',   label:'أحزنني',  icon:SVG.sad },
-  { emoji:'angry', label:'أغضبني',  icon:SVG.angry },
+  { emoji:'like',  label:t('reactLike'),  icon:SVG.like },
+  { emoji:'heart', label:t('reactLove'),  icon:SVG.heart },
+  { emoji:'haha',  label:t('reactHaha'),  icon:SVG.haha },
+  { emoji:'sad',   label:t('reactSad'),  icon:SVG.sad },
+  { emoji:'angry', label:t('reactAngry'),  icon:SVG.angry },
 ];
 
 function verifiedBadge(){ return `<span class="badge-verified">${SVG.check}</span>`; }
@@ -9530,15 +9972,15 @@ function goPublisher(username){ window.location = '/profile?u=' + encodeURICompo
 function sharePost(id){
   const url = location.origin + '/post?id=' + id;
   if (navigator.share) { navigator.share({ url }).catch(()=>{}); return; }
-  navigator.clipboard?.writeText(url).then(()=>showToast('تم نسخ رابط المنشور')).catch(()=>showToast('تعذر النسخ','error'));
+  navigator.clipboard?.writeText(url).then(()=>showToast(t('linkCopied'))).catch(()=>showToast(t('cantCopy'),'error'));
 }
 
 let ME = null;
 let postList = [];
 
 function postStatusBadge(p){
-  if (p.privacy === 'draft') return `<span class="post-status-badge st-draft">مسودة</span>`;
-  if (p.privacy === 'private') return `<span class="post-status-badge st-private">خاص</span>`;
+  if (p.privacy === 'draft') return `<span class="post-status-badge st-draft">${t('draft')}</span>`;
+  if (p.privacy === 'private') return `<span class="post-status-badge st-private">${t('privateBadge')}</span>`;
   return '';
 }
 
@@ -9560,7 +10002,7 @@ function renderPostCard(p){
     mediaHtml = `<div class="reel-card" onclick="location.href='/short?id=${p.id}'">
       <video class="reel-thumb-video" muted playsinline preload="metadata"><source src="${esc(p.video)}#t=0.1" type="video/mp4"></video>
       <div class="reel-play-badge">${SVG.reel}</div>
-      <div class="reel-tag">ريلز</div>
+      <div class="reel-tag">${t('reelsTag')}</div>
     </div>`;
   } else if (p.video) {
     mediaHtml = `<div class="video-card" onclick="location.href='/video?id=${p.id}'">
@@ -9578,7 +10020,7 @@ function renderPostCard(p){
   const reactionHtml = `<div class="react-wrap">
     <button class="react-main-btn ${userR?'reacted':''}" onclick="toggleReactMenu(${p.id})">
       ${activeReact ? activeReact.icon : SVG.like}
-      <span>${totalReactions||'تفاعل'}</span>
+      <span>${totalReactions||t('reactWord')}</span>
     </button>
     <div class="react-menu" id="rmenu-${p.id}">
       ${REACTIONS.map(r=>`<button class="react-emoji-btn ${p.userReaction===r.emoji?'active':''}" onclick="toggleReact(${p.id},'${r.emoji}')" title="${r.label}">${r.icon}</button>`).join('')}
@@ -9598,21 +10040,21 @@ function renderPostCard(p){
       <div class="c-avatar">${ca}</div>
       <div class="c-bubble">
         <div class="c-name">${esc(c.display_name||c.username)}
-          ${ME ? `<button class="reply-btn" onclick="toggleReplyInput(${postId},${c.id})">رد</button>` : ''}
+          ${ME ? `<button class="reply-btn" onclick="toggleReplyInput(${postId},${c.id})">${t('replyWord')}</button>` : ''}
           ${canDelC?`<button class="c-del" onclick="delComment(${c.id},${postId})">${SVG.delete}</button>`:''}
         </div>
         <div class="c-text">${cleanContent}</div>
       </div>
     </div>
     <div class="reply-input-row" id="replyRow-${c.id}" style="display:none;">
-      <input class="comment-input" type="text" placeholder="رد @${esc(c.username||'')}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
+      <input class="comment-input" type="text" placeholder="${t('replyToPlaceholder',{u:esc(c.username||'')})}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
       <button class="btn-send-comment" onclick="sendComment(${postId},${c.id})">${SVG.send}</button>
     </div>
     ${repliesHtml}`;
   }
   const commentsHtml = topComments.map(c => oneCommentHtml(c, p.id)).join('');
   const commentInputHtml = ME ? `<div class="comment-input-row">
-    <input class="comment-input" type="text" placeholder="اكتب تعليقاً..." id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
+    <input class="comment-input" type="text" placeholder="${t('commentPlaceholder')}" id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
     <button class="btn-send-comment" onclick="sendComment(${p.id})">${SVG.send}</button>
   </div>` : '';
 
@@ -9628,9 +10070,9 @@ function renderPostCard(p){
           </div>
         </div>
         <div class="pub-actions">
-          <button class="btn-icon save-btn ${p.is_saved?'saved':''}" onclick="toggleSaveItem(${p.id})" title="${p.is_saved?'إلغاء الحفظ':'حفظ'}">${p.is_saved?SVG.bookmarkFilled:SVG.bookmark}</button>
-          <button class="btn-icon" onclick="sharePost(${p.id})" title="مشاركة">${SVG.share}</button>
-          ${canDel ? `<button class="btn-icon" onclick="deletePostItem(${p.id})" title="حذف">${SVG.delete}</button>` : ''}
+          <button class="btn-icon save-btn ${p.is_saved?'saved':''}" onclick="toggleSaveItem(${p.id})" title="${p.is_saved?t('unsave'):t('save')}">${p.is_saved?SVG.bookmarkFilled:SVG.bookmark}</button>
+          <button class="btn-icon" onclick="sharePost(${p.id})" title="${t('share')}">${SVG.share}</button>
+          ${canDel ? `<button class="btn-icon" onclick="deletePostItem(${p.id})" title="${t('del')}">${SVG.delete}</button>` : ''}
         </div>
       </div>
       <div class="pub-date">${fmtDate(p.created_at)}</div>
@@ -9638,7 +10080,7 @@ function renderPostCard(p){
       <div class="reactions-row">
         ${reactionHtml}
         <button class="react-btn" onclick="toggleComments(${p.id})" id="cmtToggle-${p.id}">
-          ${SVG.comment}<span>${allComments.length} تعليق</span>
+          ${SVG.comment}<span>${allComments.length} ${t('commentWord')}</span>
         </button>
       </div>
       <div class="comments-section" id="cmtSec-${p.id}" style="display:none;">
@@ -9700,7 +10142,7 @@ async function sendComment(postId, parentId){
   document.getElementById('cmtToggle-'+postId)?.classList.add('expanded');
 }
 async function delComment(commentId, postId){
-  if(!confirm('حذف هذا التعليق؟')) return;
+  if(!confirm(t('confirmDeleteComment'))) return;
   await apiFetch('/api/comments/'+commentId,'DELETE');
   document.getElementById('cmt-'+commentId)?.remove();
 }
@@ -9712,32 +10154,32 @@ async function toggleSaveItem(id){
   const post = findPostItem(id);
   if(post) post.is_saved = d.saved;
   rerenderPostItem(id);
-  showToast(d.saved ? 'تم حفظ المنشور' : 'تم إلغاء حفظ المنشور');
+  showToast(d.saved ? t('postSaved') : t('postUnsaved'));
 }
 
 async function deletePostItem(id){
-  if(!confirm('حذف هذا المنشور نهائياً؟')) return;
+  if(!confirm(t('confirmDeletePost'))) return;
   const d = await apiFetch('/api/records/'+id, 'DELETE');
-  if(d.success){ showToast('تم الحذف'); setTimeout(()=>{ location.href='/'; }, 800); }
-  else showToast(d.error||'تعذر الحذف', 'error');
+  if(d.success){ showToast(t('deleted')); setTimeout(()=>{ location.href='/'; }, 800); }
+  else showToast(d.error||t('cantDelete'), 'error');
 }
 
 function renderEmpty(msg){
   document.getElementById('wrap').innerHTML = `
-    <div class="post-empty" style="margin-top:60px;">${SVG.share}<div>${msg || 'هذا المنشور غير متاح'}</div></div>
+    <div class="post-empty" style="margin-top:60px;">${SVG.share}<div>${msg || t('postUnavailable')}</div></div>
   `;
 }
 
 async function loadSinglePost(){
   const id = new URLSearchParams(location.search).get('id');
-  if(!id){ renderEmpty('لم يتم تحديد منشور'); return; }
+  if(!id){ renderEmpty(t('noPostSpecified')); return; }
   try{ ME = await apiFetch('/api/me'); }catch(e){ ME = null; }
   try{
     const post = await apiFetch('/api/records/'+id+'/single');
     if(post.error){ renderEmpty(post.error); return; }
     postList = [post];
     document.getElementById('wrap').innerHTML = `
-      <div class="page-title">منشور</div>
+      <div class="page-title">${t('postTitle')}</div>
       <div id="postSingle">${renderPostCard(post)}</div>
     `;
   }catch(e){ renderEmpty(); }
@@ -9759,10 +10201,33 @@ try { window.toggleSaveItem = toggleSaveItem; } catch(e) {}
 try { window.deletePostItem = deletePostItem; } catch(e) {}
 }
 // ============================================================
-// Hostaka Video — /video (تصفح ومشاهدة بطريقة يوتيوب)
+// Hostaka Video — /video (browse and watch YouTube-style)
 // ============================================================
 if (document.body.classList.contains('page-video')) {
 
+const LANG = {
+  ar: {
+    untitled:'بدون عنوان', likeWord:'إعجاب', commentWord:'تعليق', shareWord:'مشاركة', savedWord:'محفوظ', saveWord:'حفظ',
+    otherVideos:'فيديوهات أخرى', noOtherVideosYet:'لا يوجد فيديوهات أخرى بعد', addCommentPlaceholder:'أضف تعليقاً...',
+    deleteWord:'حذف', noCommentsYetFirst:'لا توجد تعليقات بعد — كن أول من يعلّق', cantFindVideo:'تعذر العثور على الفيديو',
+    videoSaved:'تم حفظ الفيديو', videoUnsaved:'تم إلغاء حفظ الفيديو', videoLinkCopied:'تم نسخ رابط الفيديو',
+    cantCopy:'تعذر النسخ', confirmDeleteComment:'حذف هذا التعليق؟', noVideosYet:'لا توجد فيديوهات بعد'
+  },
+  en: {
+    untitled:'Untitled', likeWord:'Like', commentWord:'comment', shareWord:'Share', savedWord:'Saved', saveWord:'Save',
+    otherVideos:'Other videos', noOtherVideosYet:'No other videos yet', addCommentPlaceholder:'Add a comment...',
+    deleteWord:'Delete', noCommentsYetFirst:'No comments yet — be the first to comment', cantFindVideo:'Could not find the video',
+    videoSaved:'Video saved', videoUnsaved:'Video unsaved', videoLinkCopied:'Video link copied',
+    cantCopy:'Could not copy', confirmDeleteComment:'Delete this comment?', noVideosYet:'No videos yet'
+  }
+};
+let currentLang = localStorage.getItem('hostaka_lang') || 'en';
+function t(key, vars){
+  var s = (LANG[currentLang] || LANG.en)[key];
+  if (s === undefined) return key;
+  if (vars) Object.keys(vars).forEach(function(k){ s = s.replace('{'+k+'}', vars[k]); });
+  return s;
+}
 let currentTheme = localStorage.getItem('hostaka_theme') || 'light';
 function setTheme(theme){
   const html = document.documentElement;
@@ -9836,7 +10301,7 @@ function vgCardHtml(v){
     <div class="vg-meta">
       <div class="vg-avatar" onclick="event.stopPropagation();goPublisher('${esc(v.publisher)}')">${v.user_avatar?`<img src="${esc(v.user_avatar)}" alt="">`:esc((v.publisher_name||v.publisher||'?').charAt(0).toUpperCase())}</div>
       <div class="vg-info">
-        <div class="vg-title">${esc(stripHtmlV(v.content)) || 'بدون عنوان'}</div>
+        <div class="vg-title">${esc(stripHtmlV(v.content)) || t('untitled')}</div>
         <div class="vg-sub">${esc(v.publisher_name||v.publisher)}${v.publisher_verified?verifiedBadge():''}<span class="dot"></span>${fmtDate(v.created_at)}</div>
       </div>
     </div>
@@ -9853,7 +10318,7 @@ function vunCardHtml(v){
       <video class="vun-thumb" muted playsinline preload="metadata"><source src="${esc(v.video)}#t=0.1" type="video/mp4"></video>
     </div>
     <div class="vun-info">
-      <div class="vun-title">${esc(stripHtmlV(v.content)) || 'بدون عنوان'}</div>
+      <div class="vun-title">${esc(stripHtmlV(v.content)) || t('untitled')}</div>
       <div class="vun-sub">${esc(v.publisher_name||v.publisher)} · ${fmtDate(v.created_at)}</div>
     </div>
   </div>`;
@@ -9875,7 +10340,7 @@ function renderWatch(v){
         <div class="video-player-wrap">
           <video class="video-player" controls autoplay playsinline><source src="${esc(v.video)}" type="video/mp4"></video>
         </div>
-        <div class="video-watch-title">${esc(stripHtmlV(v.content)) || 'بدون عنوان'}</div>
+        <div class="video-watch-title">${esc(stripHtmlV(v.content)) || t('untitled')}</div>
         <div class="video-watch-pubrow">
           <div class="video-watch-pub">
             <div class="video-watch-avatar" onclick="goPublisher('${esc(v.publisher)}')">${v.user_avatar?`<img src="${esc(v.user_avatar)}" alt="">`:esc((v.publisher_name||v.publisher||'?').charAt(0).toUpperCase())}</div>
@@ -9885,18 +10350,18 @@ function renderWatch(v){
             </div>
           </div>
           <div class="video-watch-actions">
-            <button class="vw-action-btn ${liked?'active':''}" id="vwLikeBtn" onclick="toggleVideoReact('like')">${VSVG.like}<span id="vwLikeCount">${reactCountV(v)||'إعجاب'}</span></button>
-            <button class="vw-action-btn" onclick="document.getElementById('vwCommentInput')?.focus()">${VSVG.comment}<span>${comments.length||''} تعليق</span></button>
-            <button class="vw-action-btn" onclick="shareVideo(${v.id})">${VSVG.share}<span>مشاركة</span></button>
-            <button class="vw-action-btn ${v.is_saved?'active':''}" id="vwSaveBtn" onclick="toggleVideoSave(${v.id})">${v.is_saved?VSVG.bookmarkFilled:VSVG.bookmark}<span>${v.is_saved?'محفوظ':'حفظ'}</span></button>
+            <button class="vw-action-btn ${liked?'active':''}" id="vwLikeBtn" onclick="toggleVideoReact('like')">${VSVG.like}<span id="vwLikeCount">${reactCountV(v)||t('likeWord')}</span></button>
+            <button class="vw-action-btn" onclick="document.getElementById('vwCommentInput')?.focus()">${VSVG.comment}<span>${comments.length||''} ${t('commentWord')}</span></button>
+            <button class="vw-action-btn" onclick="shareVideo(${v.id})">${VSVG.share}<span>${t('shareWord')}</span></button>
+            <button class="vw-action-btn ${v.is_saved?'active':''}" id="vwSaveBtn" onclick="toggleVideoSave(${v.id})">${v.is_saved?VSVG.bookmarkFilled:VSVG.bookmark}<span>${v.is_saved?t('savedWord'):t('saveWord')}</span></button>
           </div>
         </div>
         ${v.content ? `<div class="video-watch-desc">${linkifyV(esc(v.content))}</div>` : ''}
 
         <div class="video-comments">
-          <div class="video-comments-head">${comments.length} تعليق</div>
+          <div class="video-comments-head">${comments.length} ${t('commentWord')}</div>
           ${ME ? `<div class="video-comment-input-row">
-            <input type="text" id="vwCommentInput" placeholder="أضف تعليقاً..." maxlength="500" onkeydown="if(event.key==='Enter') sendVideoComment(${v.id});">
+            <input type="text" id="vwCommentInput" placeholder="${t('addCommentPlaceholder')}" maxlength="500" onkeydown="if(event.key==='Enter') sendVideoComment(${v.id});">
             <button onclick="sendVideoComment(${v.id})">${VSVG.send}</button>
           </div>` : ''}
           <div id="vwCommentsList">${renderVideoComments(comments, v.id)}</div>
@@ -9904,8 +10369,8 @@ function renderWatch(v){
       </div>
 
       <div>
-        <div class="vc-up-next-title">فيديوهات أخرى</div>
-        <div class="vc-up-next-list">${others.length ? others.map(vunCardHtml).join('') : '<div style="color:var(--muted);font-size:0.85rem;">لا يوجد فيديوهات أخرى بعد</div>'}</div>
+        <div class="vc-up-next-title">${t('otherVideos')}</div>
+        <div class="vc-up-next-list">${others.length ? others.map(vunCardHtml).join('') : '<div style="color:var(--muted);font-size:0.85rem;">'+t('noOtherVideosYet')+'</div>'}</div>
       </div>
     </div>
   `;
@@ -9922,14 +10387,14 @@ function renderVideoComments(comments, videoId){
       <div class="c-avatar" style="width:32px;height:32px;border-radius:50%;overflow:hidden;background:var(--avatar-gradient);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">${ca}</div>
       <div class="c-bubble" style="flex:1;min-width:0;">
         <div class="c-name" style="font-weight:800;font-size:0.85rem;">${esc(c.display_name||c.username)}
-          ${canDelC?`<button onclick="delVideoComment(${c.id},${videoId})" style="background:none;border:none;color:var(--muted);cursor:pointer;margin-inline-start:8px;font-size:0.75rem;">حذف</button>`:''}
+          ${canDelC?`<button onclick="delVideoComment(${c.id},${videoId})" style="background:none;border:none;color:var(--muted);cursor:pointer;margin-inline-start:8px;font-size:0.75rem;">${t('deleteWord')}</button>`:''}
         </div>
         <div class="c-text" style="font-size:0.86rem;line-height:1.6;">${linkifyV(esc(c.content))}</div>
         ${replies.length ? `<div style="margin-inline-start:24px;margin-top:8px;">${replies.map(oneComment).join('')}</div>` : ''}
       </div>
     </div>`;
   }
-  return top.map(oneComment).join('') || `<div style="color:var(--muted);font-size:0.85rem;padding:12px 0;">لا توجد تعليقات بعد — كن أول من يعلّق</div>`;
+  return top.map(oneComment).join('') || `<div style="color:var(--muted);font-size:0.85rem;padding:12px 0;">${t('noCommentsYetFirst')}</div>`;
 }
 function linkifyV(html){
   return String(html||'').replace(/(https?:\/\/[^\s<]+)/g, url => `<a href="${url}" class="post-link" target="_blank" rel="noopener noreferrer">${url}</a>`);
@@ -9937,7 +10402,7 @@ function linkifyV(html){
 
 async function watchVideo(id){
   const v = allVideos.find(x => x.id === id);
-  if(!v){ showToast('تعذر العثور على الفيديو', 'error'); return; }
+  if(!v){ showToast(t('cantFindVideo'), 'error'); return; }
   window.scrollTo(0,0);
   renderWatch(v);
 }
@@ -9951,7 +10416,7 @@ async function toggleVideoReact(emoji){
   if(idx>-1) allVideos[idx] = currentVideo;
   const liked = currentVideo.userReaction === 'like';
   document.getElementById('vwLikeBtn').classList.toggle('active', liked);
-  document.getElementById('vwLikeCount').textContent = reactCountV(currentVideo) || 'إعجاب';
+  document.getElementById('vwLikeCount').textContent = reactCountV(currentVideo) || t('likeWord');
 }
 
 async function toggleVideoSave(id){
@@ -9964,15 +10429,15 @@ async function toggleVideoSave(id){
   const btn = document.getElementById('vwSaveBtn');
   if(btn){
     btn.classList.toggle('active', d.saved);
-    btn.innerHTML = (d.saved?VSVG.bookmarkFilled:VSVG.bookmark) + `<span>${d.saved?'محفوظ':'حفظ'}</span>`;
+    btn.innerHTML = (d.saved?VSVG.bookmarkFilled:VSVG.bookmark) + `<span>${d.saved?t('savedWord'):t('saveWord')}</span>`;
   }
-  showToast(d.saved ? 'تم حفظ الفيديو' : 'تم إلغاء حفظ الفيديو');
+  showToast(d.saved ? t('videoSaved') : t('videoUnsaved'));
 }
 
 function shareVideo(id){
   const url = location.origin + '/video?id=' + id;
   if (navigator.share) { navigator.share({ url }).catch(()=>{}); return; }
-  navigator.clipboard?.writeText(url).then(()=>showToast('تم نسخ رابط الفيديو')).catch(()=>showToast('تعذر النسخ','error'));
+  navigator.clipboard?.writeText(url).then(()=>showToast(t('videoLinkCopied'))).catch(()=>showToast(t('cantCopy'),'error'));
 }
 
 async function sendVideoComment(videoId){
@@ -9987,10 +10452,10 @@ async function sendVideoComment(videoId){
   const idx = allVideos.findIndex(x=>x.id===videoId);
   if(idx>-1) allVideos[idx].comments = comments;
   document.getElementById('vwCommentsList').innerHTML = renderVideoComments(comments, videoId);
-  document.querySelector('.video-comments-head').textContent = comments.length + ' تعليق';
+  document.querySelector('.video-comments-head').textContent = comments.length + ' ' + t('commentWord');
 }
 async function delVideoComment(commentId, videoId){
-  if(!confirm('حذف هذا التعليق؟')) return;
+  if(!confirm(t('confirmDeleteComment'))) return;
   await apiFetch('/api/comments/'+commentId,'DELETE');
   const comments = await apiFetch('/api/records/'+videoId+'/comments');
   if(currentVideo && currentVideo.id === videoId){ currentVideo.comments = comments; }
@@ -10005,7 +10470,7 @@ function renderGrid(){
 
 function renderEmptyVideos(){
   document.getElementById('videoPageWrap').innerHTML = `
-    <div class="video-empty">${VSVG.empty}<div>لا توجد فيديوهات بعد</div></div>
+    <div class="video-empty">${VSVG.empty}<div>${t('noVideosYet')}</div></div>
   `;
 }
 
