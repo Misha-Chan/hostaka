@@ -1744,15 +1744,18 @@ html.page-index {
     body.page-index .user-dropdown button:hover {background:var(--primary-light);color:var(--primary);padding-right:24px;}
     body.page-index .user-dropdown button svg {flex-shrink:0;width:17px;height:17px;}
     body.page-index .user-dropdown .dropdown-sep {height:1px;background:var(--border);margin:6px 0;}
-    body.page-index .user-dropdown a#reelsBtn {
+    body.page-index .user-dropdown a#reelsBtn,
+    body.page-index .user-dropdown a#videoBtn {
       width:100%;text-align:right;padding:11px 20px;
       background:none;border:none;color:var(--muted);
       cursor:pointer;font-family:'Cairo',sans-serif;
       font-size:0.9rem;display:flex;align-items:center;gap:12px;
       transition:all var(--transition-fast);text-decoration:none;
     }
-    body.page-index .user-dropdown a#reelsBtn:hover {background:var(--primary-light);color:var(--primary);padding-right:24px;}
-    body.page-index .user-dropdown a#reelsBtn svg {flex-shrink:0;width:17px;height:17px;}
+    body.page-index .user-dropdown a#reelsBtn:hover,
+    body.page-index .user-dropdown a#videoBtn:hover {background:var(--primary-light);color:var(--primary);padding-right:24px;}
+    body.page-index .user-dropdown a#reelsBtn svg,
+    body.page-index .user-dropdown a#videoBtn svg {flex-shrink:0;width:17px;height:17px;}
     body.page-index .user-dropdown .lang-selector {
       width:100%;text-align:right;padding:11px 20px;
       background:none;color:var(--muted);position:relative;
