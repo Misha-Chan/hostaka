@@ -3881,7 +3881,14 @@ body.page-profile .hashtag-tag:hover {text-decoration:underline;opacity:0.8;}
 html[dir="ltr"].page-index .user-dropdown,
 html[dir="ltr"].page-index .notif-dropdown,
 html[dir="ltr"].page-index .post-opts-menu,
-html[dir="ltr"].page-index .lang-menu {
+html[dir="ltr"].page-index .lang-menu,
+html[dir="ltr"].page-chat .peer-opts-menu,
+html[dir="ltr"].page-chat .lang-menu,
+html[dir="ltr"].page-group .lang-menu,
+html[dir="ltr"].page-group .m-menu,
+html[dir="ltr"].page-profile .lang-menu,
+html[dir="ltr"].page-profile .more-menu,
+html[dir="ltr"].page-shiziai .lang-menu {
   left: auto;
   right: 0;
 }
