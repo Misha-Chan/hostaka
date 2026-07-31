@@ -109,15 +109,15 @@
       <button class="btn-cancel" onclick="closeModal('groupSettingsModal')" id="gsCancelBtn" data-i18n="common.cancel">Cancel</button>
       <button class="btn-confirm" id="gsSaveBtn" onclick="saveGroupSettings()"><span id="gsSaveText" data-i18n="common.save">Save</span></button>
     </div>
-    <div style="border-top:1px solid var(--border);margin-top:18px;padding-top:14px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
-      <label class="cs-toggle-row" style="flex:1 1 100%;">
+    <div class="cs-actions" style="border-top:1px solid var(--border);margin-top:18px;padding-top:8px;">
+      <label class="cs-toggle-row">
         <span data-i18n="group.showReadReceipts">Show read receipts</span>
         <input type="checkbox" id="gsReadReceipts" onchange="toggleGroupReadReceipts(this.checked)">
       </label>
-      <button class="btn-confirm" onclick="openGroupMedia()" style="background:rgba(128,128,128,0.12);color:var(--text);" id="gsMediaBtn" data-i18n="group.viewChatMedia">View chat media</button>
-      <button class="btn-confirm" onclick="openReportGroupModal()" style="background:rgba(128,128,128,0.12);color:var(--text);" id="gsReportBtn" data-i18n="group.reportGroupChat">Report group chat</button>
-      <button class="btn-confirm" onclick="leaveGroup()" id="leaveGroupBtn" style="background:rgba(128,128,128,0.12);color:var(--text);" data-i18n="group.leaveGroup">Leave group</button>
-      <button class="btn-confirm btn-danger" onclick="deleteGroupConfirm()" id="deleteGroupBtn" style="display:none;" data-i18n="group.deleteGroup">Delete group</button>
+      <button onclick="openGroupMedia()" id="gsMediaBtn" data-i18n="group.viewChatMedia">View chat media</button>
+      <button onclick="openReportGroupModal()" id="gsReportBtn" data-i18n="group.reportGroupChat">Report group chat</button>
+      <button onclick="leaveGroup()" id="leaveGroupBtn" class="danger" data-i18n="group.leaveGroup">Leave group</button>
+      <button onclick="deleteGroupConfirm()" id="deleteGroupBtn" class="danger" style="display:none;" data-i18n="group.deleteGroup">Delete group</button>
     </div>
   </div>
 </div>
