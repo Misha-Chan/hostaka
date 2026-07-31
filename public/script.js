@@ -1365,8 +1365,8 @@ function openChatSettings(){
       <button class="btn-confirm" onclick="saveDmNickname()">${t('save')}</button>
     </div>
     <div class="cs-actions">
-      <button onclick="viewPeerProfile()">${SVG.user || ''}<span>${t('viewProfile')}</span></button>
-      <button onclick="openConversationMedia()">${SVG.imageIc || ''}<span>${t('viewMedia')}</span></button>
+      <button onclick="viewPeerProfile()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>${t('viewProfile')}</span></button>
+      <button onclick="openConversationMedia()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><span>${t('viewMedia')}</span></button>
       <label class="cs-toggle-row">
         <span>${t('readReceiptsToggle')}</span>
         <input type="checkbox" id="csReadReceipts" ${myReadReceiptsEnabled ? 'checked' : ''} onchange="toggleMyReadReceipts(this.checked)">
