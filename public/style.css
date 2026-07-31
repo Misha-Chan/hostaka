@@ -5104,6 +5104,41 @@ table { max-width: 100%; }
   }
 }
 
+/* Compact modern toggle switches for settings rows (Show read receipts,
+   auto-theme, etc). These checkboxes are intentionally small controls —
+   the rules below use !important + higher specificity to win over the
+   44px touch-target rule above, giving a proper switch look instead of
+   a giant native checkbox. The row/label around each one is still
+   comfortably tap-sized. */
+.cs-toggle-row input[type="checkbox"],
+.wp-check input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none;
+  width: 38px !important; height: 22px !important;
+  min-width: 38px !important; min-height: 22px !important;
+  border-radius: 999px; background: rgba(128,128,128,0.28);
+  position: relative; cursor: pointer; outline: none; flex-shrink: 0;
+  transition: background 0.2s; vertical-align: middle;
+}
+.cs-toggle-row input[type="checkbox"]::before,
+.wp-check input[type="checkbox"]::before {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px; border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3); transition: transform 0.2s;
+}
+.cs-toggle-row input[type="checkbox"]:checked,
+.wp-check input[type="checkbox"]:checked { background: var(--primary); }
+.cs-toggle-row input[type="checkbox"]:checked::before,
+.wp-check input[type="checkbox"]:checked::before { transform: translateX(16px); }
+html[dir="rtl"] .cs-toggle-row input[type="checkbox"]:checked::before,
+html[dir="rtl"] .wp-check input[type="checkbox"]:checked::before { transform: translateX(-16px); }
+
+/* Small member-selection checkboxes (group member picker lists) should
+   also stay compact rather than being blown up to 44px. */
+.member-check input[type="checkbox"] {
+  width: 16px !important; height: 16px !important;
+  min-width: 16px !important; min-height: 16px !important;
+}
+
 /* Respect safe-area insets on notched phones for fixed bottom/top bars. */
 @supports (padding: max(0px)) {
   .topbar, [class*="topbar"] {
