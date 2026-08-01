@@ -82,44 +82,19 @@
 
   function loadLang(l) {
     if (loaded[l]) return Promise.resolve();
-    // 1) Apply a cached copy instantly (if we have one from a previous visit)
-    //    so slow/flaky connections never show raw translation keys — the
-    //    user sees last-known-good text immediately instead of waiting.
-    try {
-      var cached = localStorage.getItem('hostaka_i18n_cache_' + l);
-      if (cached) { dict[l] = JSON.parse(cached); loaded[l] = true; }
-    } catch (e) {}
-    // 2) Always still fetch a fresh copy in the background and update the
-    //    cache + re-apply once it arrives, so translations stay current.
     return fetch('/translations/' + l + '.json')
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (json) {
-        if (json) {
-          dict[l] = json;
-          try { localStorage.setItem('hostaka_i18n_cache_' + l, JSON.stringify(json)); } catch (e) {}
-        }
-        loaded[l] = true;
-      })
+      .then(function (r) { return r.ok ? r.json() : {}; })
+      .then(function (json) { dict[l] = json; loaded[l] = true; })
       .catch(function () { dict[l] = dict[l] || {}; loaded[l] = true; });
   }
 
-  function applyWhenReady() {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function () { applyTranslations(); });
-    } else {
-      applyTranslations();
-    }
-  }
-
-  // loadLang() populates `dict`/`loaded` synchronously from cache (if any)
-  // before it returns its network-fetch promise — so calling it first here
-  // lets us apply cached translations immediately, with zero network wait.
-  var enPromise = loadLang('en');
-  var langPromise = lang !== 'en' ? loadLang(lang) : Promise.resolve();
-
-  if (loaded.en && (lang === 'en' || loaded[lang])) applyWhenReady();
-
-  // Then (re)apply once the network response arrives, in case translations
-  // changed since the cached copy was saved.
-  Promise.all([enPromise, langPromise]).then(applyWhenReady);
+  // Always load English (fallback) + the active language, then apply.
+  Promise.all([loadLang('en'), lang !== 'en' ? loadLang(lang) : Promise.resolve()])
+    .then(function () {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { applyTranslations(); });
+      } else {
+        applyTranslations();
+      }
+    });
 })();
