@@ -174,7 +174,7 @@ async function doLogin(){
   try{
     let d=await api('/api/login','POST',{email,password:pass});
     if(d.requires2FA){
-      const code = window.prompt(t('enter2faCode'));
+      const code = await hostakaPrompt(t('enter2faCode'));
       if(!code){ btn.disabled=false; btn.textContent=t('login'); return; }
       d = await api('/api/login/2fa-verify','POST',{ pendingToken:d.pendingToken, code:code.trim() });
     }
@@ -375,7 +375,7 @@ async function loadLogs(){
 }
 
 async function clearLogs(){
-  if(!confirm(t('confirmClearLogs'))) return;
+  if(!await hostakaConfirm(t('confirmClearLogs'))) return;
   const d = await api('/api/admin/logs','DELETE');
   if(d.success){ toast(t('logsCleared')); loadLogs(); }
   else toast(d.error||t('clearFail'));
@@ -409,28 +409,28 @@ async function loadUsers(){
 }
 
 async function promoteUser(id){
-  if(!confirm(t('confirmPromote'))) return;
+  if(!await hostakaConfirm(t('confirmPromote'))) return;
   await api('/api/admin/users/'+id+'/role','PUT',{role:'admin'});
   toast(t('promoted')); loadUsers();
 }
 async function deleteUser(id,name){
-  if(!confirm(t('confirmDeleteUser',{name}))) return;
+  if(!await hostakaConfirm(t('confirmDeleteUser',{name}))) return;
   await api('/api/admin/users/'+id,'DELETE');
   toast(t('deleted')); loadUsers();
 }
 async function suspendUser(id,name){
-  const reason = prompt(t('suspendReasonPrompt',{name}),'');
+  const reason = await hostakaPrompt(t('suspendReasonPrompt',{name}),'');
   if(reason===null) return;
   await api('/api/admin/users/'+id+'/suspend','PUT',{reason});
   toast(t('suspendedToast')); loadUsers();
 }
 async function unsuspendUser(id,name){
-  if(!confirm(t('confirmUnsuspend',{name}))) return;
+  if(!await hostakaConfirm(t('confirmUnsuspend',{name}))) return;
   await api('/api/admin/users/'+id+'/unsuspend','PUT');
   toast(t('unsuspendedToast')); loadUsers();
 }
 async function adminDisable2FA(id,name){
-  if(!confirm(t('confirmDisable2FA',{name}))) return;
+  if(!await hostakaConfirm(t('confirmDisable2FA',{name}))) return;
   const d = await api('/api/admin/users/'+id+'/2fa/disable','PUT');
   if(d.success){ toast(t('disabled2FAToast',{name})); loadUsers(); }
   else toast(d.error||t('execFail'));
@@ -457,7 +457,7 @@ async function loadPosts(){
 }
 
 async function deletePost(id){
-  if(!confirm(t('confirmDeletePost'))) return;
+  if(!await hostakaConfirm(t('confirmDeletePost'))) return;
   await api('/api/records/'+id,'DELETE');
   toast(t('deleted')); loadPosts();
 }
@@ -491,7 +491,7 @@ async function approveVerify(id){
   toast(t('verifyGranted')); loadVerify(); loadDashboard();
 }
 async function rejectVerify(id){
-  if(!confirm(t('confirmRejectRequest'))) return;
+  if(!await hostakaConfirm(t('confirmRejectRequest'))) return;
   await api('/api/admin/verify/'+id,'PUT',{action:'reject'});
   toast(t('rejected')); loadVerify();
 }
@@ -624,7 +624,7 @@ const LANG = {
     loadMsgsError: 'خطأ في تحميل الرسائل', cantConnectServer: 'تعذر الاتصال بالخادم',
     reactSendFail: 'فشل إرسال التفاعل', msgSendFail: 'فشل إرسال الرسالة', longPressToSave: 'اضغط مطولاً على الصورة لحفظها',
     jpgOnly: 'JPG/JPEG فقط', reasonAbuse: 'إساءة أو تنمر', reasonSpam: 'رسائل مزعجة', reasonFake: 'حساب مزيف أو منتحل', reasonOther: 'سبب آخر',
-    unblocked: 'تم إلغاء الحظر', blocked: 'تم حظر المستخدم'
+    unblocked: 'تم إلغاء الحظر', blocked: 'تم حظر المستخدم', cantDecrypt: 'تعذر فك تشفير هذه الرسالة'
   },
   en: {
     back: 'Hostaka', title: 'Messages', sidebarTitle: 'Messages',
@@ -654,7 +654,7 @@ const LANG = {
     loadMsgsError: 'Error loading messages', cantConnectServer: 'Could not connect to the server',
     reactSendFail: 'Failed to send reaction', msgSendFail: 'Failed to send message', longPressToSave: 'Press and hold the image to save it',
     jpgOnly: 'JPG/JPEG only', reasonAbuse: 'Abuse or harassment', reasonSpam: 'Spam messages', reasonFake: 'Fake or impersonation account', reasonOther: 'Other reason',
-    unblocked: 'Unblocked', blocked: 'User blocked'
+    unblocked: 'Unblocked', blocked: 'User blocked', cantDecrypt: 'Unable to decrypt this message'
   },
   fr: {
     back: 'Hostaka', title: 'Messages', sidebarTitle: 'Messages',
@@ -795,10 +795,10 @@ function openWallpaperModal(){
     empty.style.display = 'inline';
   }
 }
-function onWallpaperFile(evt){
+async function onWallpaperFile(evt){
   const file = evt.target.files && evt.target.files[0];
   if(!file) return;
-  if(file.size > 8*1024*1024){ alert(t('imageTooLarge')); return; }
+  if(file.size > 8*1024*1024){ await hostakaAlert(t('imageTooLarge')); return; }
   const reader = new FileReader();
   reader.onload = () => {
     const img = new Image();
@@ -1066,11 +1066,11 @@ async function apiFetch(url, method = 'GET', body = null) {
   return r.json();
 }
 
-function handleSuspended(reason){
+async function handleSuspended(reason){
   localStorage.removeItem('hostaka_token');
   localStorage.removeItem('hostaka_user');
   localStorage.removeItem('hostaka_role');
-  alert(t('suspendedMsg',{reason: reason ? ':\n' + reason : ''}));
+  await hostakaAlert(t('suspendedMsg',{reason: reason ? ':\n' + reason : ''}));
   window.location = '/';
 }
 
@@ -1126,6 +1126,8 @@ async function init() {
     ME = u;
   } catch (e) { showNotLogged(); return; }
 
+  if (window.HostakaCrypto) window.HostakaCrypto.ensureKeysRegistered();
+
   await loadSidebar();
 
   const withUser = new URLSearchParams(location.search).get('with');
@@ -1155,6 +1157,21 @@ function showToast(msg, type = 'success') {
 // ============================================================
 //  الشريط الجانبي
 // ============================================================
+async function decryptConversationPreviews(conversations) {
+  if (!Array.isArray(conversations) || !conversations.length || !window.HostakaCrypto) return;
+  for (const c of conversations) {
+    if (Number(c.encrypted) !== 1 || !c.content) continue;
+    const peerUsername = c.from_id == ME?.id ? c.to_name : c.from_name;
+    try {
+      const sharedKey = await window.HostakaCrypto.getSharedKeyFor(peerUsername);
+      if (!sharedKey) { c.content = '🔒'; continue; }
+      c.content = await window.HostakaCrypto.decryptText(sharedKey, c.content, c.iv);
+    } catch (e) {
+      c.content = '🔒';
+    }
+  }
+}
+
 async function loadSidebar() {
   try {
     [allUsers, conversations, groups] = await Promise.all([
@@ -1165,6 +1182,7 @@ async function loadSidebar() {
   } catch (e) {
     allUsers = []; conversations = []; groups = [];
   }
+  await decryptConversationPreviews(conversations);
   renderSidebar();
 }
 
@@ -1424,7 +1442,7 @@ function renderMediaGrid(items){
 }
 async function deleteConversationConfirm(){
   if (!currentPeerUsername) return;
-  if (!confirm(t('confirmDeleteConversation'))) return;
+  if (!await hostakaConfirm(t('confirmDeleteConversation'))) return;
   try {
     await apiFetch('/api/messages/' + encodeURIComponent(currentPeerUsername), 'DELETE');
     closeModal('chatSettingsModal');
@@ -1572,6 +1590,40 @@ function renderTypingRow(show){
 // ============================================================
 //  تحميل وعرض الرسائل (نسخة قديمة تعمل)
 // ============================================================
+// ============================================================
+//  التشفير من طرف لطرف (E2E) — دوال مساعدة لصفحة الدردشة الفردية
+//  النطاق: رسائل الدردشة الفردية فقط (وليس رسائل المجموعات).
+//  في حال عدم توفر مفتاح الطرف الآخر بعد (مثلاً أول مرة يفتح تطبيقه)،
+//  يتم الإرسال كنص عادي كإجراء احتياطي متوافق مع الإصدارات القديمة.
+// ============================================================
+async function encryptForPeer(peerUsername, plainText) {
+  if (!window.HostakaCrypto || !plainText) return { content: plainText, iv: '', encrypted: false };
+  try {
+    const sharedKey = await window.HostakaCrypto.getSharedKeyFor(peerUsername);
+    if (!sharedKey) return { content: plainText, iv: '', encrypted: false };
+    const { ciphertext, iv } = await window.HostakaCrypto.encryptText(sharedKey, plainText);
+    return { content: ciphertext, iv, encrypted: true };
+  } catch (e) {
+    console.error('encryptForPeer failed, sending as plaintext:', e);
+    return { content: plainText, iv: '', encrypted: false };
+  }
+}
+async function decryptMsgsInPlace(msgs, peerUsername) {
+  if (!Array.isArray(msgs) || !msgs.length) return;
+  const anyEncrypted = msgs.some(m => Number(m.encrypted) === 1);
+  if (!anyEncrypted || !window.HostakaCrypto) return;
+  const sharedKey = await window.HostakaCrypto.getSharedKeyFor(peerUsername);
+  for (const m of msgs) {
+    if (Number(m.encrypted) !== 1 || !m.content) continue;
+    if (!sharedKey) { m.content = '🔒 ' + t('cantDecrypt'); continue; }
+    try {
+      m.content = await window.HostakaCrypto.decryptText(sharedKey, m.content, m.iv);
+    } catch (e) {
+      m.content = '🔒 ' + t('cantDecrypt');
+    }
+  }
+}
+
 async function loadMsgs(username, scroll = true) {
   const area = document.getElementById('msgsArea');
   try {
@@ -1582,6 +1634,7 @@ async function loadMsgs(username, scroll = true) {
       return;
     }
     await loadMsgReactions(msgs);
+    await decryptMsgsInPlace(msgs, username);
     renderMsgs(msgs, scroll);
   } catch (e) {
     console.error('loadMsgs failed:', e);
@@ -1789,7 +1842,7 @@ function cancelEditMsg(){
 async function deleteMsg(e, mid){
   e.stopPropagation();
   document.querySelectorAll('.react-picker.show').forEach(p => p.classList.remove('show'));
-  if (!confirm(t('deleteMsgConfirm'))) return;
+  if (!await hostakaConfirm(t('deleteMsgConfirm'))) return;
   try {
     const d = await apiFetch('/api/messages/' + mid, 'DELETE');
     if (d.success) { await loadMsgs(currentPeer, false); loadSidebar(); }
@@ -1809,7 +1862,8 @@ async function sendMsg() {
     cancelEditMsg();
     document.getElementById('sendBtn').disabled = true;
     try {
-      const d = await apiFetch('/api/messages/' + mid, 'PUT', { content });
+      const enc = await encryptForPeer(currentPeer, content);
+      const d = await apiFetch('/api/messages/' + mid, 'PUT', { content: enc.content, iv: enc.iv, encrypted: enc.encrypted });
       if (d.success) await loadMsgs(currentPeer, false);
       else showToast(d.error || t('error'), 'error');
     } catch(e) { showToast(t('error'), 'error'); }
@@ -1829,7 +1883,8 @@ async function sendMsg() {
     }
     const replyTo = replyingToMsgId;
     cancelReplyMsg();
-    await apiFetch('/api/messages/' + encodeURIComponent(currentPeer), 'POST', { content, image: imageUrl, reply_to: replyTo });
+    const enc = await encryptForPeer(currentPeer, content);
+    await apiFetch('/api/messages/' + encodeURIComponent(currentPeer), 'POST', { content: enc.content, image: imageUrl, reply_to: replyTo, iv: enc.iv, encrypted: enc.encrypted });
     await loadMsgs(currentPeer);
     loadSidebar();
   } catch (e) {
@@ -2291,10 +2346,10 @@ function openWallpaperModal(){
     empty.style.display = 'inline';
   }
 }
-function onWallpaperFile(evt){
+async function onWallpaperFile(evt){
   const file = evt.target.files && evt.target.files[0];
   if(!file) return;
-  if(file.size > 8*1024*1024){ alert(t('imageTooLarge')); return; }
+  if(file.size > 8*1024*1024){ await hostakaAlert(t('imageTooLarge')); return; }
   const reader = new FileReader();
   reader.onload = () => {
     const img = new Image();
@@ -2474,11 +2529,11 @@ async function apiFetch(url, method='GET', body=null){
   return r.json();
 }
 
-function handleSuspended(reason){
+async function handleSuspended(reason){
   localStorage.removeItem('hostaka_token');
   localStorage.removeItem('hostaka_user');
   localStorage.removeItem('hostaka_role');
-  alert(t('suspendedMsg',{reason: reason ? ':\n' + reason : ''}));
+  await hostakaAlert(t('suspendedMsg',{reason: reason ? ':\n' + reason : ''}));
   window.location = '/';
 }
 
@@ -2646,7 +2701,7 @@ function toggleMemberMenu(e, uid){
 
 async function setMemberNicknamePrompt(uid, current){
   document.getElementById('mmenu-'+uid)?.classList.remove('show');
-  const val = prompt(t('setNicknamePromptTitle'), current || '');
+  const val = await hostakaPrompt(t('setNicknamePromptTitle'), current || '');
   if (val === null) return;
   try {
     await apiFetch(`/api/groups/${GROUP_ID}/members/${uid}/nickname`, 'PUT', { nickname: val.trim() });
@@ -2659,7 +2714,7 @@ async function setMemberNicknamePrompt(uid, current){
 
 async function blockMemberConfirm(username){
   document.querySelectorAll('.m-menu.show').forEach(m => m.classList.remove('show'));
-  if (!confirm(t('confirmBlockMember'))) return;
+  if (!await hostakaConfirm(t('confirmBlockMember'))) return;
   try {
     const d = await apiFetch('/api/block/' + encodeURIComponent(username), 'POST');
     if (d.success) showToast(t('settingsSaved'));
@@ -2786,7 +2841,7 @@ async function saveGroupSettings(){
 }
 
 async function leaveGroup(){
-  if (!confirm(t('confirmLeave'))) return;
+  if (!await hostakaConfirm(t('confirmLeave'))) return;
   try {
     await apiFetch(`/api/groups/${GROUP_ID}/members/${ME.id}`, 'DELETE');
     showToast(t('leftGroup'));
@@ -2795,7 +2850,7 @@ async function leaveGroup(){
 }
 
 async function deleteGroupConfirm(){
-  if (!confirm(t('confirmDelete'))) return;
+  if (!await hostakaConfirm(t('confirmDelete'))) return;
   try {
     await apiFetch('/api/groups/' + GROUP_ID, 'DELETE');
     showToast(t('groupDeleted'));
@@ -3137,7 +3192,7 @@ function cancelEditMsg(){
 async function deleteMsg(e, mid){
   e.stopPropagation();
   document.querySelectorAll('.react-picker.show').forEach(p => p.classList.remove('show'));
-  if (!confirm(t('deleteMsgConfirm'))) return;
+  if (!await hostakaConfirm(t('deleteMsgConfirm'))) return;
   try {
     const d = await apiFetch(`/api/groups/${GROUP_ID}/messages/${mid}`, 'DELETE');
     if (d.success) await loadMsgs(false);
@@ -3729,10 +3784,10 @@ function openWallpaperModal(){
   }
 }
 
-function onWallpaperFile(evt){
+async function onWallpaperFile(evt){
   const file = evt.target.files && evt.target.files[0];
   if(!file) return;
-  if(file.size > 8*1024*1024){ alert(t('imageTooLarge')); return; }
+  if(file.size > 8*1024*1024){ await hostakaAlert(t('imageTooLarge')); return; }
   const reader = new FileReader();
   reader.onload = () => {
     const img = new Image();
@@ -4027,11 +4082,11 @@ async function apiFetch(url, method='GET', body=null){
   return data;
 }
 
-function handleSuspended(reason){
+async function handleSuspended(reason){
   localStorage.removeItem('hostaka_user');
   localStorage.removeItem('hostaka_token');
   localStorage.removeItem('hostaka_role');
-  alert(t('suspendedMsg',{reason: reason ? ':\n' + reason : ''}));
+  await hostakaAlert(t('suspendedMsg',{reason: reason ? ':\n' + reason : ''}));
   window.location = '/';
 }
 
@@ -4758,10 +4813,10 @@ function goPublisher(username, isPage){
   window.location = (isPage ? '/page?u=' : '/profile?u=') + encodeURIComponent(username);
 }
 
-function sharePost(id){
+async function sharePost(id){
   const url = window.location.origin + '/post?id=' + id;
   if(navigator.clipboard){ navigator.clipboard.writeText(url).then(()=>showToast(t('copyLink'))); }
-  else { prompt(t('copyLinkPrompt'),url); }
+  else { await hostakaPrompt(t('copyLinkPrompt'),url); }
 }
 
 document.getElementById('searchInput').addEventListener('input', function(){
@@ -4977,7 +5032,7 @@ function openEditPost(id){
 }
 
 async function delPost(id){
-  if(!confirm(t('deleteConfirm'))) return;
+  if(!await hostakaConfirm(t('deleteConfirm'))) return;
   await apiFetch('/api/records/'+id,'DELETE');
   allPosts=allPosts.filter(p=>p.id!==id);
   document.getElementById('post-'+id)?.remove();
@@ -5224,7 +5279,7 @@ async function deleteCurrentStory(){
   const group = currentStoryGroup();
   const story = group?.stories[storySlideIndex];
   if (!story) return;
-  if (!confirm(t('storyDeleteConfirm'))) { showStorySlide(); return; } // نعيد المؤقت إذا ألغى المستخدم
+  if (!await hostakaConfirm(t('storyDeleteConfirm'))) { showStorySlide(); return; } // نعيد المؤقت إذا ألغى المستخدم
   const targetStoryId = story.id;
   const targetUserId = group.user_id;
   try {
@@ -5315,7 +5370,7 @@ async function sendComment(postId, parentId){
 }
 
 async function delComment(commentId, postId){
-  if(!confirm(t('deleteComment'))) return;
+  if(!await hostakaConfirm(t('deleteComment'))) return;
   await apiFetch('/api/comments/'+commentId,'DELETE');
   document.getElementById('cmt-'+commentId)?.remove();
 }
@@ -5622,7 +5677,7 @@ async function doLogin(){
   try {
     let d = await apiFetch('/api/login','POST',{ email, password: pass });
     if (d.requires2FA) {
-      const code = window.prompt(t('enter2faCode'));
+      const code = await hostakaPrompt(t('enter2faCode'));
       if (!code) { btn.disabled = false; btn.textContent = t('login'); return; }
       d = await apiFetch('/api/login/2fa-verify','POST',{ pendingToken: d.pendingToken, code: code.trim() });
     }
@@ -6388,11 +6443,11 @@ async function apiFetch(url, method = 'GET', body = null) {
   return data;
 }
 
-function handleSuspended(reason){
+async function handleSuspended(reason){
   localStorage.removeItem('hostaka_token');
   localStorage.removeItem('hostaka_user');
   localStorage.removeItem('hostaka_role');
-  alert(t('suspendedMsg',{reason: reason ? ':\n' + reason : ''}));
+  await hostakaAlert(t('suspendedMsg',{reason: reason ? ':\n' + reason : ''}));
   window.location = '/';
 }
 
@@ -7029,13 +7084,13 @@ async function sendComment(postId, parentId){
 }
 
 async function delComment(commentId, postId){
-  if(!confirm(t('confirmDeleteComment'))) return;
+  if(!await hostakaConfirm(t('confirmDeleteComment'))) return;
   await apiFetch('/api/comments/'+commentId,'DELETE');
   document.getElementById('cmt-'+commentId)?.remove();
 }
 
 async function delPost(id){
-  if(!confirm(t('confirmDeletePost'))) return;
+  if(!await hostakaConfirm(t('confirmDeletePost'))) return;
   const d = await apiFetch('/api/records/'+id, 'DELETE');
   if(d.success){
     profilePosts = profilePosts.filter(p => p.id !== id);
@@ -7278,10 +7333,10 @@ async function loadMyPages(){
   } catch(e) { list.innerHTML = `<div class="post-empty">${t('cantLoadPages')}</div>`; }
 }
 
-function openCreatePage(){
-  const name = prompt(t('pageNamePrompt'));
+async function openCreatePage(){
+  const name = await hostakaPrompt(t('pageNamePrompt'));
   if (!name || !name.trim()) return;
-  const handle = prompt(t('pageHandlePrompt'), name.trim().toLowerCase().replace(/\s+/g,'_'));
+  const handle = await hostakaPrompt(t('pageHandlePrompt'), name.trim().toLowerCase().replace(/\s+/g,'_'));
   if (!handle || !handle.trim()) return;
   createPage(name.trim(), handle.trim());
 }
@@ -7294,10 +7349,10 @@ async function createPage(name, username){
   } catch(e) { showToast(t('connectionError'), 'error'); }
 }
 
-function sharePost(id) {
+async function sharePost(id) {
   const url = window.location.origin + '/post?id=' + id;
   if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => showToast(t('linkCopied')));
-  else prompt(t('linkLabel'), url);
+  else await hostakaPrompt(t('linkLabel'), url);
 }
 
 // ============================================================
@@ -7674,10 +7729,10 @@ function openWallpaperModal(){
     empty.style.display = 'inline';
   }
 }
-function onWallpaperFile(evt){
+async function onWallpaperFile(evt){
   const file = evt.target.files && evt.target.files[0];
   if(!file) return;
-  if(file.size > 8*1024*1024){ alert(t('imageTooLarge')); return; }
+  if(file.size > 8*1024*1024){ await hostakaAlert(t('imageTooLarge')); return; }
   const reader = new FileReader();
   reader.onload = () => {
     const img = new Image();
@@ -8440,7 +8495,7 @@ async function apiFetch(url, method='GET', body=null){
   const data = await r.json();
   if(r.status===403 && data?.suspended){
     localStorage.removeItem('hostaka_token'); localStorage.removeItem('hostaka_user'); localStorage.removeItem('hostaka_role');
-    alert(t('suspendedMsg',{reason: data.reason?':\n'+data.reason:''}));
+    await hostakaAlert(t('suspendedMsg',{reason: data.reason?':\n'+data.reason:''}));
     window.location = '/';
   }
   return data;
@@ -8718,7 +8773,7 @@ async function apiFetch(url, method='GET', body=null){
   const data = await r.json().catch(()=>({}));
   if(r.status===403 && data?.suspended){
     localStorage.removeItem('hostaka_token'); localStorage.removeItem('hostaka_user'); localStorage.removeItem('hostaka_role');
-    alert(t('suspendedMsg',{reason: data.reason?':\n'+data.reason:''}));
+    await hostakaAlert(t('suspendedMsg',{reason: data.reason?':\n'+data.reason:''}));
     window.location = '/';
   }
   return data;
@@ -8941,14 +8996,14 @@ async function loadSessions(){
 }
 
 async function revokeSession(id){
-  if(!confirm(t('confirmEndSession'))) return;
+  if(!await hostakaConfirm(t('confirmEndSession'))) return;
   const d = await apiFetch('/api/account/sessions/'+id+'/revoke', 'POST');
   if(d.success){ showToast(t('sessionEnded')); loadSessions(); }
   else showToast(d.error||t('cantEndSession'), 'error');
 }
 
 async function revokeAllSessions(){
-  if(!confirm(t('confirmLogoutAllOther'))) return;
+  if(!await hostakaConfirm(t('confirmLogoutAllOther'))) return;
   const d = await apiFetch('/api/account/sessions/revoke-all', 'POST');
   if(d.success){ showToast(t('loggedOutAllOther')); loadSessions(); }
   else showToast(d.error||t('requestFail'), 'error');
@@ -9644,7 +9699,7 @@ async function sendComment(postId, parentId){
   document.getElementById('cmtToggle-'+postId)?.classList.add('expanded');
 }
 async function delComment(commentId, postId){
-  if(!confirm(t('confirmDeleteComment'))) return;
+  if(!await hostakaConfirm(t('confirmDeleteComment'))) return;
   await apiFetch('/api/comments/'+commentId,'DELETE');
   document.getElementById('cmt-'+commentId)?.remove();
 }
@@ -9694,7 +9749,7 @@ function collectionsBarHtml(){
 }
 
 async function createCollection(){
-  const name = (prompt(t('newCollectionPrompt'))||'').trim();
+  const name = (await hostakaPrompt(t('newCollectionPrompt'))||'').trim();
   if(!name) return;
   const d = await apiFetch('/api/save-collections','POST',{name});
   if(!d.success){ showToast(d.error||t('cantCreateCollection'),'error'); return; }
@@ -9704,7 +9759,7 @@ async function createCollection(){
 }
 
 async function deleteCollection(id, name){
-  if(!confirm(t('confirmDeleteCollection',{name}))) return;
+  if(!await hostakaConfirm(t('confirmDeleteCollection',{name}))) return;
   const d = await apiFetch('/api/save-collections/'+id,'DELETE');
   if(!d.success){ showToast(d.error||t('cantDelete'),'error'); return; }
   if(String(activeCollectionId)===String(id)) activeCollectionId = null;
@@ -10142,7 +10197,7 @@ async function sendComment(postId, parentId){
   document.getElementById('cmtToggle-'+postId)?.classList.add('expanded');
 }
 async function delComment(commentId, postId){
-  if(!confirm(t('confirmDeleteComment'))) return;
+  if(!await hostakaConfirm(t('confirmDeleteComment'))) return;
   await apiFetch('/api/comments/'+commentId,'DELETE');
   document.getElementById('cmt-'+commentId)?.remove();
 }
@@ -10158,7 +10213,7 @@ async function toggleSaveItem(id){
 }
 
 async function deletePostItem(id){
-  if(!confirm(t('confirmDeletePost'))) return;
+  if(!await hostakaConfirm(t('confirmDeletePost'))) return;
   const d = await apiFetch('/api/records/'+id, 'DELETE');
   if(d.success){ showToast(t('deleted')); setTimeout(()=>{ location.href='/'; }, 800); }
   else showToast(d.error||t('cantDelete'), 'error');
@@ -10455,7 +10510,7 @@ async function sendVideoComment(videoId){
   document.querySelector('.video-comments-head').textContent = comments.length + ' ' + t('commentWord');
 }
 async function delVideoComment(commentId, videoId){
-  if(!confirm(t('confirmDeleteComment'))) return;
+  if(!await hostakaConfirm(t('confirmDeleteComment'))) return;
   await apiFetch('/api/comments/'+commentId,'DELETE');
   const comments = await apiFetch('/api/records/'+videoId+'/comments');
   if(currentVideo && currentVideo.id === videoId){ currentVideo.comments = comments; }
