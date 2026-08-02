@@ -944,6 +944,9 @@ function getCloudinaryConfig() {
     if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
       cleaned = cleaned.slice(1, -1).trim();
     }
+    // خطأ شائع: لصق السطر كاملاً "CLOUDINARY_URL=cloudinary://..." داخل حقل
+    // القيمة بلوحة Vercel بدل القيمة فقط بعد علامة =.
+    cleaned = cleaned.replace(/^CLOUDINARY_URL\s*=\s*/i, '');
     cleaned = cleaned.replace(/\/+$/, '');
     const m = cleaned.match(/^cloudinary:\/\/([^:@]+):([^@]+)@([^/?#]+)/i);
     if (m) {
