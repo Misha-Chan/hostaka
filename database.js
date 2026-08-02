@@ -380,10 +380,6 @@ async function initDB() {
     "CREATE INDEX IF NOT EXISTS idx_heartbeats_last_seen ON visitor_heartbeats(last_seen)",
     "CREATE TABLE IF NOT EXISTS server_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, level TEXT NOT NULL DEFAULT 'error', message TEXT, meta TEXT, path TEXT, method TEXT, status_code INTEGER, created_at TEXT NOT NULL DEFAULT (datetime('now')))",
     "CREATE INDEX IF NOT EXISTS idx_server_logs_created ON server_logs(created_at)",
-    // ✅ التشفير من طرف لطرف (E2E) لرسائل الدردشة الفردية
-    "ALTER TABLE users ADD COLUMN public_key TEXT DEFAULT ''",       // مفتاح ECDH العام للمستخدم (raw، Base64)
-    "ALTER TABLE messages ADD COLUMN iv TEXT DEFAULT ''",            // متجه التهيئة (IV) الخاص بتشفير AES-GCM لكل رسالة
-    "ALTER TABLE messages ADD COLUMN encrypted INTEGER DEFAULT 0",   // 1 إذا كان content مشفّراً من طرف لطرف
   ];
   for (const sql of migrations) {
     try { await db.execute(sql); } catch(e) { /* column/table already exists */ }
@@ -452,7 +448,6 @@ const q = {
   createUser:       (username,email,password) => db.execute({ sql:'INSERT INTO users (username,email,password) VALUES (?,?,?)', args:[username,email,password] }),
   createVerifiedUser: (username,email,password) => db.execute({ sql:'INSERT INTO users (username,email,password,email_verified) VALUES (?,?,?,1)', args:[username,email,password] }),
   getUserByUsername: (username) => db.execute({ sql:'SELECT * FROM users WHERE username=?', args:[username] }).then(first),
-  setUserPublicKey: (userId, publicKey) => db.execute({ sql:'UPDATE users SET public_key=? WHERE id=?', args:[publicKey, userId] }),
   updateUserPasswordByEmail: (email, passwordHash) => db.execute({ sql:'UPDATE users SET password=? WHERE email=?', args:[passwordHash, email] }),
   updateProfile:    (display_name,bio,game_id,avatar,cover,id,country,favorite_song,school,certificates) => db.execute({ sql:'UPDATE users SET display_name=?,bio=?,game_id=?,avatar=?,cover=?,country=?,favorite_song=?,school=?,certificates=? WHERE id=?', args:[display_name,bio,game_id,avatar,cover,country||'',favorite_song||'',school||'',certificates||'',id] }),
   updatePrivacy:        (id, isPrivate) => db.execute({ sql:'UPDATE users SET is_private=? WHERE id=?', args:[isPrivate?1:0, id] }),
@@ -516,7 +511,7 @@ const q = {
   listPublicUsers:  () => db.execute('SELECT id,username,display_name,avatar,role,verified FROM users ORDER BY username ASC').then(rows),
   deleteUser:       (id) => db.execute({ sql:"DELETE FROM users WHERE id=? AND role!='admin'", args:[id] }),
   updateUserRole:   (role,id) => db.execute({ sql:'UPDATE users SET role=? WHERE id=?', args:[role,id] }),
-  searchUsers:      (q) => { const esc = String(q).replace(/[\\%_]/g, c => '\\' + c); return db.execute({ sql:"SELECT id,username,display_name,avatar,role,verified FROM users WHERE username LIKE ? ESCAPE '\\' OR display_name LIKE ? ESCAPE '\\' LIMIT 15", args:['%'+esc+'%','%'+esc+'%'] }).then(rows); },
+  searchUsers:      (q) => db.execute({ sql:"SELECT id,username,display_name,avatar,role,verified FROM users WHERE username LIKE ? OR display_name LIKE ? LIMIT 15", args:['%'+q+'%','%'+q+'%'] }).then(rows),
   suspendUser:      (id,reason) => db.execute({ sql:"UPDATE users SET suspended=1,suspend_reason=? WHERE id=? AND role!='admin'", args:[reason||'',id] }),
   unsuspendUser:    (id) => db.execute({ sql:"UPDATE users SET suspended=0,suspend_reason='' WHERE id=?", args:[id] }),
 
@@ -735,9 +730,9 @@ const q = {
     WHERE m.id IN (SELECT MAX(id) FROM messages WHERE from_id=? OR to_id=? GROUP BY CASE WHEN from_id=? THEN to_id ELSE from_id END)
     ORDER BY m.created_at DESC`, args:[uid,uid,uid] }).then(rows),
   getMessages:  (uid,oid) => db.execute({ sql:'SELECT m.*,u.avatar as from_avatar FROM messages m JOIN users u ON u.id=m.from_id WHERE (from_id=? AND to_id=?) OR (from_id=? AND to_id=?) ORDER BY created_at ASC', args:[uid,oid,oid,uid] }).then(rows),
-  sendMessage:  (fid,tid,fn,tn,content,image,replyTo,iv,encrypted) => db.execute({ sql:'INSERT INTO messages (from_id,to_id,from_name,to_name,content,image,reply_to,iv,encrypted) VALUES (?,?,?,?,?,?,?,?,?)', args:[fid,tid,fn,tn,content,image||'',replyTo||null,iv||'',encrypted?1:0] }),
+  sendMessage:  (fid,tid,fn,tn,content,image,replyTo) => db.execute({ sql:'INSERT INTO messages (from_id,to_id,from_name,to_name,content,image,reply_to) VALUES (?,?,?,?,?,?,?)', args:[fid,tid,fn,tn,content,image||'',replyTo||null] }),
   getMessage:   (id) => db.execute({ sql:'SELECT * FROM messages WHERE id=?', args:[id] }).then(first),
-  updateMessage:(id,content,iv) => db.execute({ sql:'UPDATE messages SET content=?, iv=?, edited=1 WHERE id=?', args:[content,iv||'',id] }),
+  updateMessage:(id,content) => db.execute({ sql:'UPDATE messages SET content=?, edited=1 WHERE id=?', args:[content,id] }),
   deleteMessage:(id) => db.execute({ sql:'DELETE FROM messages WHERE id=?', args:[id] }),
   markRead:     (fid,tid) => db.execute({ sql:"UPDATE messages SET read=1, read_at=datetime('now') WHERE from_id=? AND to_id=? AND read=0", args:[fid,tid] }),
   unreadCount:  (uid) => db.execute({ sql:'SELECT COUNT(*) as count FROM messages WHERE to_id=? AND read=0', args:[uid] }).then(first),
