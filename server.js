@@ -938,10 +938,12 @@ app.post('/api/upload', requireAuth, async (req, res) => {
 
 function getCloudinaryConfig() {
   if (process.env.CLOUDINARY_URL) {
-    const m = process.env.CLOUDINARY_URL.match(/^cloudinary:\/\/([^:]+):([^@]+)@(.+)$/);
+    const cleaned = process.env.CLOUDINARY_URL.trim().replace(/\/+$/, '');
+    const m = cleaned.match(/^cloudinary:\/\/([^:]+):([^@]+)@([^/?]+)/);
     if (m) {
       return { apiKey: m[1], apiSecret: m[2], cloudName: m[3] };
     }
+    console.error('⚠️ CLOUDINARY_URL موجود لكن صيغته غير متوقعة (المتوقع: cloudinary://API_KEY:API_SECRET@CLOUD_NAME)');
   }
   return {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME,
