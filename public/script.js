@@ -4971,11 +4971,12 @@ async function submitPost(){
         });
         const vData = await vRes.json();
         if (!vRes.ok || !vData.secure_url) {
-          throw new Error(vData.error?.message || t('videoUploadFail'));
+          console.error('Cloudinary video upload failed:', vData.error);
+          throw new Error(t('videoUploadFail'));
         }
         videoUrl = vData.secure_url;
       } catch (upErr) {
-        errEl.textContent = upErr.message || t('videoUploadFail');
+        errEl.textContent = t('videoUploadFail');
         errEl.style.display='block';
         btn.disabled=false; btn.innerHTML=`<span id="publishBtn">${t('publish')}</span>`;
         return;
@@ -5188,7 +5189,7 @@ async function submitStory(){
       fd.append('signature', sig.signature);
       const vRes = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/video/upload`, { method:'POST', body: fd });
       const vData = await vRes.json();
-      if (!vRes.ok || !vData.secure_url) throw new Error(vData.error?.message || t('videoUploadFail'));
+      if (!vRes.ok || !vData.secure_url) { console.error('Cloudinary video upload failed:', vData.error); throw new Error(t('videoUploadFail')); }
       mediaUrl = vData.secure_url;
     }
     const caption = document.getElementById('storyCaptionInput').value.trim();
@@ -7259,10 +7260,10 @@ async function submitPost(){
         fd.append('signature', sig.signature);
         const vRes = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/video/upload`, { method:'POST', body:fd });
         const vData = await vRes.json();
-        if (!vRes.ok || !vData.secure_url) throw new Error(vData.error?.message || t('videoUploadFail'));
+        if (!vRes.ok || !vData.secure_url) { console.error('Cloudinary video upload failed:', vData.error); throw new Error(t('videoUploadFail')); }
         videoUrl = vData.secure_url;
       } catch (upErr) {
-        errEl.textContent = upErr.message || t('videoUploadFail'); errEl.style.display='block';
+        errEl.textContent = t('videoUploadFail'); errEl.style.display='block';
         btn.disabled=false; return;
       }
     }
