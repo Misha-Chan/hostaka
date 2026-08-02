@@ -559,7 +559,7 @@ app.post('/api/auth/register/start', async (req, res) => {
     res.json({ success:true, email: mail, message:'تم إرسال كود التأكيد إلى بريدك الإلكتروني' });
   } catch(e) {
     console.error('❌ register/start error:', e);
-    res.status(500).json({ error: e.message || 'تعذر إرسال كود التأكيد' });
+    res.status(500).json({ error: 'تعذر إرسال كود التأكيد' });
   }
 });
 
@@ -584,7 +584,7 @@ app.post('/api/auth/register/resend', async (req, res) => {
     res.json({ success:true, message:'تم إرسال كود جديد إلى بريدك الإلكتروني' });
   } catch(e) {
     console.error('❌ register/resend error:', e);
-    res.status(500).json({ error: e.message || 'تعذر إعادة إرسال الكود' });
+    res.status(500).json({ error: 'تعذر إعادة إرسال الكود' });
   }
 });
 
@@ -627,7 +627,7 @@ app.post('/api/auth/register/verify', async (req, res) => {
     res.json({ success:true, token: await createLoginSession(user, req), username:user.username, role:user.role, avatar:'', id:user.id });
   } catch(e) {
     console.error('❌ register/verify error:', e);
-    res.status(500).json({ error: e.message || 'تعذر تأكيد الحساب' });
+    res.status(500).json({ error: 'تعذر تأكيد الحساب' });
   }
 });
 
@@ -660,7 +660,7 @@ app.post('/api/auth/password/forgot', async (req, res) => {
     res.json({ success:true, email: mail, message:'تم إرسال كود إعادة التعيين إلى بريدك الإلكتروني' });
   } catch(e) {
     console.error('❌ password/forgot error:', e);
-    res.status(500).json({ error: e.message || 'تعذر إرسال كود إعادة التعيين' });
+    res.status(500).json({ error: 'تعذر إرسال كود إعادة التعيين' });
   }
 });
 
@@ -689,7 +689,7 @@ app.post('/api/auth/password/resend', async (req, res) => {
     res.json({ success:true, message:'تم إرسال كود جديد إلى بريدك الإلكتروني' });
   } catch(e) {
     console.error('❌ password/resend error:', e);
-    res.status(500).json({ error: e.message || 'تعذر إعادة إرسال الكود' });
+    res.status(500).json({ error: 'تعذر إعادة إرسال الكود' });
   }
 });
 
@@ -731,7 +731,7 @@ app.post('/api/auth/password/reset', async (req, res) => {
     res.json({ success:true, token: await createLoginSession(user, req), username:user.username, role:user.role, avatar:user.avatar||'', id:user.id, message:'تم تحديث كلمة المرور بنجاح' });
   } catch(e) {
     console.error('❌ password/reset error:', e);
-    res.status(500).json({ error: e.message || 'تعذر إعادة تعيين كلمة المرور' });
+    res.status(500).json({ error: 'تعذر إعادة تعيين كلمة المرور' });
   }
 });
 
@@ -932,7 +932,8 @@ app.post('/api/upload', requireAuth, async (req, res) => {
     if (!data.success) return res.status(500).json({ error: 'فشل الرفع' });
     res.json({ url: data.data.url });
   } catch(e) {
-    res.status(500).json({ error: 'خطأ: ' + e.message });
+    console.error('❌ Image upload error:', e);
+    res.status(500).json({ error: 'تعذر رفع الصورة' });
   }
 });
 
@@ -984,7 +985,7 @@ app.post('/api/upload/video/signature', requireAuth, async (req, res) => {
     res.json({ cloudName, apiKey, timestamp, folder, signature });
   } catch (e) {
     console.error('❌ Cloudinary signature error:', e);
-    res.status(500).json({ error: 'خطأ في الخادم: ' + e.message });
+    res.status(500).json({ error: 'تعذر تجهيز رفع الفيديو' });
   }
 });
 
@@ -1212,7 +1213,7 @@ app.post('/api/records', requireAuth, async (req, res) => {
     res.json({ success: true, id: recordId, is_reel: isReel });
   } catch(e) {
     console.error('Create record error:', e);
-    res.status(500).json({ error: 'خطأ: ' + e.message });
+    res.status(500).json({ error: 'تعذر إنشاء المنشور' });
   }
 });
 
@@ -1425,7 +1426,7 @@ app.post('/api/stories', requireAuth, async (req, res) => {
     res.json({ success: true, id: Number(result.lastInsertRowid) });
   } catch(e) {
     console.error('Create story error:', e);
-    res.status(500).json({ error: 'خطأ: ' + e.message });
+    res.status(500).json({ error: 'تعذر إنشاء القصة' });
   }
 });
 
@@ -1873,7 +1874,7 @@ app.post('/api/account/change/request', requireAuth, async (req, res) => {
     res.json({ success:true, message:'تم إرسال كود التأكيد إلى البريد الإلكتروني', maskedEmail: maskEmail(targetEmail) });
   } catch(e) {
     console.error('❌ account/change/request error:', e);
-    res.status(500).json({ error: e.message || 'تعذر إرسال كود التأكيد' });
+    res.status(500).json({ error: 'تعذر إرسال كود التأكيد' });
   }
 });
 
@@ -1900,7 +1901,7 @@ app.post('/api/account/change/resend', requireAuth, async (req, res) => {
     res.json({ success:true, message:'تم إرسال كود جديد إلى بريدك الإلكتروني' });
   } catch(e) {
     console.error('❌ account/change/resend error:', e);
-    res.status(500).json({ error: e.message || 'تعذر إعادة إرسال الكود' });
+    res.status(500).json({ error: 'تعذر إعادة إرسال الكود' });
   }
 });
 
@@ -1978,7 +1979,7 @@ app.post('/api/account/change/verify', requireAuth, async (req, res) => {
     });
   } catch(e) {
     console.error('❌ account/change/verify error:', e);
-    res.status(500).json({ error: e.message || 'تعذر تأكيد التعديل' });
+    res.status(500).json({ error: 'تعذر تأكيد التعديل' });
   }
 });
 
@@ -3048,7 +3049,7 @@ app.post('/api/shizi/chat', requireAuth, async (req, res) => {
     res.json({ success: true, reply, remaining: SHIZI_DAILY_LIMIT - (usedToday + 1) });
   } catch(e) {
     console.error('❌ Shizi chat error:', e);
-    res.status(500).json({ error: 'خطأ في الخادم: ' + e.message });
+    res.status(500).json({ error: 'خطأ في الخادم' });
   }
 });
 
