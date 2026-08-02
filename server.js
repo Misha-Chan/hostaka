@@ -938,12 +938,25 @@ app.post('/api/upload', requireAuth, async (req, res) => {
 
 function getCloudinaryConfig() {
   if (process.env.CLOUDINARY_URL) {
-    const cleaned = process.env.CLOUDINARY_URL.trim().replace(/\/+$/, '');
-    const m = cleaned.match(/^cloudinary:\/\/([^:]+):([^@]+)@([^/?]+)/);
+    // Strip whitespace, surrounding quotes (a common copy/paste mistake in
+    // Vercel's env var UI), and any trailing slash.
+    let cleaned = process.env.CLOUDINARY_URL.trim();
+    if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+      cleaned = cleaned.slice(1, -1).trim();
+    }
+    cleaned = cleaned.replace(/\/+$/, '');
+    const m = cleaned.match(/^cloudinary:\/\/([^:@]+):([^@]+)@([^/?#]+)/i);
     if (m) {
       return { apiKey: m[1], apiSecret: m[2], cloudName: m[3] };
     }
-    console.error('⚠️ CLOUDINARY_URL موجود لكن صيغته غير متوقعة (المتوقع: cloudinary://API_KEY:API_SECRET@CLOUD_NAME)');
+    // Diagnostics that don't leak the secret: length + masked preview only.
+    const masked = cleaned.length > 14
+      ? cleaned.slice(0, 12) + '…' + cleaned.slice(-2)
+      : '(قصيرة جداً / فارغة تقريباً)';
+    console.error(
+      '⚠️ CLOUDINARY_URL موجود لكن صيغته غير متوقعة (المتوقع: cloudinary://API_KEY:API_SECRET@CLOUD_NAME). ' +
+      'الطول الحالي: ' + cleaned.length + ' حرف. معاينة مموّهة: ' + masked
+    );
   }
   return {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME,
