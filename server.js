@@ -917,6 +917,19 @@ app.get('/api/user/:username/posts', async (req, res) => {
 // ============================================================
 // UPLOAD (Images & Videos)
 // ============================================================
+// أخطاء تحدث بالكامل بين المتصفح وخدمة خارجية (مثل الرفع المباشر لـ Cloudinary)
+// لا يراها سيرفرنا أبداً بشكل طبيعي، فهذه النقطة تسمح للواجهة بإرسال تفاصيل
+// تقنية عن الفشل لتظهر في لوحة السجلات (Logs) بدل ما تضيع في console المتصفح فقط.
+app.post('/api/client-error-log', requireAuth, (req, res) => {
+  try {
+    const { context, detail } = req.body || {};
+    const safeContext = String(context || 'unknown').slice(0, 100);
+    const safeDetail = String(detail || '').slice(0, 500);
+    console.error(`❌ [client] ${safeContext} — user:${req.user?.username || '?'} — ${safeDetail}`);
+  } catch (e) {}
+  res.json({ success: true });
+});
+
 app.post('/api/upload', requireAuth, async (req, res) => {
   try {
     const { image } = req.body || {};
