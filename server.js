@@ -952,9 +952,14 @@ app.post('/api/upload', requireAuth, async (req, res) => {
 
 function getCloudinaryConfig() {
   if (process.env.CLOUDINARY_URL) {
-    // Strip whitespace, surrounding quotes (a common copy/paste mistake in
-    // Vercel's env var UI), and any trailing slash.
-    let cleaned = process.env.CLOUDINARY_URL.trim();
+    // Strip invisible/zero-width Unicode characters that regular .trim()
+    // does NOT remove (zero-width space, BOM, non-breaking space, etc).
+    // These are invisible in a browser/UI but silently break exact-match
+    // comparisons like Cloudinary's api_key check — a very common outcome
+    // of copy/pasting from a styled web page.
+    const stripInvisible = (s) => s.replace(/[\u200B-\u200D\uFEFF\u00A0\u2060]/g, '');
+
+    let cleaned = stripInvisible(process.env.CLOUDINARY_URL).trim();
     if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
       cleaned = cleaned.slice(1, -1).trim();
     }
@@ -964,7 +969,20 @@ function getCloudinaryConfig() {
     cleaned = cleaned.replace(/\/+$/, '');
     const m = cleaned.match(/^cloudinary:\/\/([^:@]+):([^@]+)@([^/?#]+)/i);
     if (m) {
-      return { apiKey: m[1], apiSecret: m[2], cloudName: m[3] };
+      const apiKey = stripInvisible(m[1]).trim();
+      const apiSecret = stripInvisible(m[2]).trim();
+      const cloudName = stripInvisible(m[3]).trim();
+      // Cloudinary api_key values are always purely numeric. If it's not,
+      // something got mangled (invisible char, wrong field copied, etc) —
+      // log a precise, secret-safe diagnostic so this is provable, not a guess.
+      if (!/^\d+$/.test(apiKey)) {
+        const codes = Array.from(apiKey).map(c => c.codePointAt(0).toString(16)).join(',');
+        console.error(
+          `⚠️ CLOUDINARY_URL: apiKey المستخرج "${apiKey}" ليس أرقاماً فقط كما هو متوقع من Cloudinary. ` +
+          `الطول: ${apiKey.length}. أكواد الأحرف (hex): ${codes}`
+        );
+      }
+      return { apiKey, apiSecret, cloudName };
     }
     // Diagnostics that don't leak the secret: length + masked preview only.
     const masked = cleaned.length > 14
