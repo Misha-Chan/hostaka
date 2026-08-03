@@ -3394,6 +3394,16 @@ try { window.pingGroupTyping = pingGroupTyping; } catch(e) {}
 
 /* ================= index.html ================= */
 if (document.body.classList.contains('page-index')) {
+function reportClientError(context, detail) {
+  try {
+    fetch('/api/client-error-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({ context, detail: typeof detail === 'string' ? detail : JSON.stringify(detail) }),
+    }).catch(() => {});
+  } catch (e) {}
+}
+
 if(sessionStorage.getItem('hostaka_splash_seen')) document.documentElement.classList.add('splash-seen');
 
 // ============================================================
@@ -4972,6 +4982,7 @@ async function submitPost(){
         const vData = await vRes.json();
         if (!vRes.ok || !vData.secure_url) {
           console.error('Cloudinary video upload failed:', vData.error);
+          reportClientError('cloudinary_video_upload', vData.error);
           throw new Error(t('videoUploadFail'));
         }
         videoUrl = vData.secure_url;
@@ -5189,7 +5200,8 @@ async function submitStory(){
       fd.append('signature', sig.signature);
       const vRes = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/video/upload`, { method:'POST', body: fd });
       const vData = await vRes.json();
-      if (!vRes.ok || !vData.secure_url) { console.error('Cloudinary video upload failed:', vData.error); throw new Error(t('videoUploadFail')); }
+      if (!vRes.ok || !vData.secure_url) { console.error('Cloudinary video upload failed:', vData.error);
+          reportClientError('cloudinary_video_upload', vData.error); throw new Error(t('videoUploadFail')); }
       mediaUrl = vData.secure_url;
     }
     const caption = document.getElementById('storyCaptionInput').value.trim();
@@ -6084,6 +6096,16 @@ try { window.savePageEdit = savePageEdit; } catch(e) {}
 
 /* ================= profile.html ================= */
 if (document.body.classList.contains('page-profile')) {
+function reportClientError(context, detail) {
+  try {
+    fetch('/api/client-error-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({ context, detail: typeof detail === 'string' ? detail : JSON.stringify(detail) }),
+    }).catch(() => {});
+  } catch (e) {}
+}
+
 window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
 
 // ============================================================
@@ -7260,7 +7282,8 @@ async function submitPost(){
         fd.append('signature', sig.signature);
         const vRes = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/video/upload`, { method:'POST', body:fd });
         const vData = await vRes.json();
-        if (!vRes.ok || !vData.secure_url) { console.error('Cloudinary video upload failed:', vData.error); throw new Error(t('videoUploadFail')); }
+        if (!vRes.ok || !vData.secure_url) { console.error('Cloudinary video upload failed:', vData.error);
+          reportClientError('cloudinary_video_upload', vData.error); throw new Error(t('videoUploadFail')); }
         videoUrl = vData.secure_url;
       } catch (upErr) {
         errEl.textContent = t('videoUploadFail'); errEl.style.display='block';
