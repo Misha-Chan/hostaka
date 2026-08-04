@@ -969,9 +969,14 @@ function getCloudinaryConfig() {
     cleaned = cleaned.replace(/\/+$/, '');
     const m = cleaned.match(/^cloudinary:\/\/([^:@]+):([^@]+)@([^/?#]+)/i);
     if (m) {
-      const apiKey = stripInvisible(m[1]).trim();
-      const apiSecret = stripInvisible(m[2]).trim();
-      const cloudName = stripInvisible(m[3]).trim();
+      // Also strip stray angle brackets (< >) that sometimes get copied by
+      // mistake from documentation placeholders or Cloudinary's own error
+      // message format (e.g. "Invalid api_key <123...>" uses <> around the
+      // value, and it's an easy mix-up to paste that literally).
+      const clean2 = (s) => stripInvisible(s).trim().replace(/^[<>\s]+|[<>\s]+$/g, '');
+      const apiKey = clean2(m[1]);
+      const apiSecret = clean2(m[2]);
+      const cloudName = clean2(m[3]);
       // Cloudinary api_key values are always purely numeric. If it's not,
       // something got mangled (invisible char, wrong field copied, etc) —
       // log a precise, secret-safe diagnostic so this is provable, not a guess.
