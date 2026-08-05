@@ -83,6 +83,44 @@ html {
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ---------- Surfaces used across modals/dropdowns/panels ---------- */
+  /* These used to be duplicated inside every html.page-X block; moved
+     here once and for all so every page gets them from one place. */
+  --modal-bg: #ffffff;
+  --input-bg: #f2f2f7;
+  --sidebar-bg: var(--glass-bg);
+  --topbar-bg: rgba(255,255,255,0.72);
+  --post-bg: #ffffff;
+  --surface-elevated: #ffffff;
+
+  /* ---------- Glass / frosted-panel effect (wallpaper feature) ---------- */
+  --glass-bg: rgba(255,255,255,0.65);
+  --glass-bg-strong: rgba(255,255,255,0.82);
+  --glass-border: rgba(255,255,255,0.4);
+  --glass-blur: 24px;
+  --wallpaper-img: none;
+  --wallpaper-overlay: rgba(255,255,255,0);
+
+  /* ---------- Chat bubble colors ---------- */
+  --mine-bg: linear-gradient(135deg, var(--primary), var(--primary-h));
+  --mine-border: rgba(139,94,60,0.12);
+  --their-bg: var(--card);
+  --their-border: rgba(0,0,0,0.06);
+
+  /* ---------- Misc brand-color aliases ---------- */
+  --red: var(--primary);
+  --red-h: var(--primary-h);
+  --pink: var(--primary);
+  --pink-h: var(--primary-h);
+  --sort-btn-bg: rgba(0,0,0,0.04);
+  --badge-verified-fill: var(--primary);
+  --badge-verified-check: #ffffff;
+
+  /* ---------- Shizi AI ---------- */
+  --shizi-bg: var(--primary-light);
+  --shizi-border: var(--primary-border);
+  --shizi-gradient: var(--avatar-gradient);
 }
 
 /* ---------- Dark mode ---------- */
@@ -105,6 +143,37 @@ html {
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
   --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5);
+
+  --modal-bg: #1c1c1e;
+  --input-bg: #1c1c1e;
+  --sidebar-bg: var(--glass-bg);
+  --topbar-bg: rgba(0,0,0,0.65);
+  --post-bg: #1c1c1e;
+  --surface-elevated: #2c2c2e;
+
+  --glass-bg: rgba(28,28,30,0.72);
+  --glass-bg-strong: rgba(28,28,30,0.88);
+  --glass-border: rgba(255,255,255,0.08);
+  --glass-blur: 24px;
+  --wallpaper-img: none;
+  --wallpaper-overlay: rgba(0,0,0,0);
+
+  --mine-bg: linear-gradient(135deg, var(--primary), var(--primary-h));
+  --mine-border: rgba(201,152,107,0.18);
+  --their-bg: var(--card);
+  --their-border: rgba(255,255,255,0.06);
+
+  --red: var(--primary);
+  --red-h: var(--primary-h);
+  --pink: var(--primary);
+  --pink-h: var(--primary-h);
+  --sort-btn-bg: rgba(255,255,255,0.04);
+  --badge-verified-fill: var(--primary);
+  --badge-verified-check: #000000;
+
+  --shizi-bg: var(--primary-light);
+  --shizi-border: var(--primary-border);
+  --shizi-gradient: var(--avatar-gradient);
 }
 
 /* ---------- Base reset shared by every page ---------- */
