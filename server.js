@@ -1,3 +1,9 @@
+/*
+ * © Hostaka — جميع الحقوق محفوظة.
+ * يُمنع نسخ أو إعادة توزيع أو استخدام هذا الكود المصدري كلياً أو جزئياً
+ * دون إذن كتابي صريح من صاحب المشروع. راجع ملف SECURITY-NOTES.md
+ * للتفاصيل حول إجراءات الحماية المتبعة.
+ */
 const express = require('express');
 const path    = require('path');
 const fs      = require('fs');
@@ -48,6 +54,55 @@ process.on('unhandledRejection', (reason) => {
 });
 
 const app = express();
+
+// ============================================================
+// رؤوس أمان أساسية (Security Headers)
+// تُقلّل من سهولة تضمين الموقع بإطار iframe خارجي (لنسخ الواجهة)،
+// ولا تكسر أي كود JS داخلي موجود بالمشروع (لا نستخدم CSP صارمة تمنع
+// السكربتات inline لأن الواجهة الحالية تعتمد عليها بكثرة).
+// ============================================================
+app.use((req, res, next) => {
+  res.removeHeader('X-Powered-By');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  next();
+});
+
+// ============================================================
+// حدّ معدّل الطلبات لمسارات API (Rate Limiting)
+// حماية بسيطة داخل الذاكرة تُبطئ محاولات الزحف/النسخ الآلي الجماعي
+// لبيانات الموقع عبر API. ملاحظة: بما أن المشروع قد يُنشر على بيئة
+// serverless (Vercel)، فكل نسخة (instance) من الدالة تملك ذاكرتها
+// الخاصة، لذا هذا الحدّ هو خط دفاع إضافي وليس حماية مطلقة — للحماية
+// الأقوى على نطاق واسع يُفضّل لاحقاً ربطها بخدمة خارجية مثل Redis
+// أو تفعيل حماية على مستوى الشبكة (Cloudflare مثلاً).
+// ============================================================
+const _rateBuckets = new Map();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // نافذة دقيقة واحدة
+const RATE_LIMIT_MAX = 240; // 240 طلب/دقيقة لكل IP على مسارات API
+app.use('/api', (req, res, next) => {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  let bucket = _rateBuckets.get(ip);
+  if (!bucket || now - bucket.start > RATE_LIMIT_WINDOW_MS) {
+    bucket = { start: now, count: 0 };
+    _rateBuckets.set(ip, bucket);
+  }
+  bucket.count++;
+  if (bucket.count > RATE_LIMIT_MAX) {
+    return res.status(429).json({ error: 'طلبات كثيرة جداً، الرجاء المحاولة لاحقاً' });
+  }
+  next();
+});
+// تنظيف دوري لسلال الذاكرة كي لا تتراكم إلى الأبد على استضافة دائمة
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, b] of _rateBuckets) if (now - b.start > RATE_LIMIT_WINDOW_MS * 5) _rateBuckets.delete(ip);
+}, RATE_LIMIT_WINDOW_MS * 5).unref?.();
+
 app.use(express.json({ limit: '25mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -122,8 +177,13 @@ function injectOG(html, meta) {
   const image = ogEscape(meta.image || '');
   const url   = ogEscape(meta.url || '');
   const type  = meta.type || 'website';
+  // فهرسة الصفحة: افتراضياً نسمح لجوجل بفهرستها، إلا إذا حددنا العكس صراحة
+  // (نستخدمه على صفحات لا تحتاج ظهورًا بنتائج البحث مثل لوحة الإدارة والدردشة)
+  const robots = meta.robots || 'index, follow';
 
   let tags = `
+  <meta name="robots" content="${robots}">
+  ${url ? `<link rel="canonical" href="${url}">` : ''}
   <meta property="og:type" content="${type}">
   <meta property="og:site_name" content="${SITE_NAME}">
   <meta property="og:title" content="${title}">
@@ -138,9 +198,15 @@ function injectOG(html, meta) {
   if (meta.video) {
     tags += `  <meta property="og:video" content="${ogEscape(meta.video)}">\n  <meta property="og:video:type" content="video/mp4">\n`;
   }
+  if (meta.jsonld) {
+    tags += `  <script type="application/ld+json">${JSON.stringify(meta.jsonld)}</script>\n`;
+  }
+  // سكربت خفيف لردع النسخ العرضي (راجع public/protect.js لملاحظة حدوده)
+  tags += `  <script src="/protect.js" defer></script>\n`;
 
-  // إزالة أي وسوم OG/Twitter موجودة مسبقًا لتفادي التكرار عند إعادة التوليد
-  html = html.replace(/\s*<meta[^>]+(?:property=["']og:|name=["']twitter:)[^>]*>\n?/gi, '');
+  // إزالة أي وسوم OG/Twitter/robots/canonical موجودة مسبقًا لتفادي التكرار عند إعادة التوليد
+  html = html.replace(/\s*<meta[^>]+(?:property=["']og:|name=["']twitter:|name=["']robots["'])[^>]*>\n?/gi, '');
+  html = html.replace(/\s*<link[^>]+rel=["']canonical["'][^>]*>\n?/gi, '');
 
   if (/<title>[\s\S]*?<\/title>/.test(html)) {
     return html.replace(/<title>[\s\S]*?<\/title>/, `<title>${title}</title>${tags}`);
@@ -3235,14 +3301,21 @@ app.post('/api/admin/notifications', requireAdmin, async (req, res) => {
 // ============================================================
 // Pages
 // ============================================================
-app.get('/login',   (req, res) => sendOG(req, res, 'login.html', baseMeta(req, 'تسجيل الدخول')));
-app.get('/admin',   (req, res) => sendOG(req, res, 'admin.html', baseMeta(req, 'لوحة التحكم')));
-app.get('/chat',    (req, res) => sendOG(req, res, 'chat.html', baseMeta(req, 'الدردشة')));
-app.get('/group',   (req, res) => sendOG(req, res, 'group.html', baseMeta(req, 'المجموعة')));
-app.get('/shiziai', (req, res) => sendOG(req, res, 'shiziai.html', baseMeta(req, 'شيزي الذكاء الاصطناعي')));
-app.get('/support', (req, res) => sendOG(req, res, 'support.html', baseMeta(req, 'الدعم الفني')));
-app.get('/manager', (req, res) => sendOG(req, res, 'manager.html', baseMeta(req, 'إدارة الحساب')));
-app.get('/save', (req, res) => sendOG(req, res, 'save.html', baseMeta(req, 'المحفوظات')));
+// صفحات خاصة/إدارية: لا فائدة من ظهورها بنتائج البحث، بل قد تكشف تفاصيل
+// حساسة لغير المخوّلين، لذا نمنع فهرستها صراحة (noindex)
+function privateMeta(req, title) {
+  const m = baseMeta(req, title);
+  m.robots = 'noindex, nofollow';
+  return m;
+}
+app.get('/login',   (req, res) => sendOG(req, res, 'login.html', privateMeta(req, 'تسجيل الدخول')));
+app.get('/admin',   (req, res) => sendOG(req, res, 'admin.html', privateMeta(req, 'لوحة التحكم')));
+app.get('/chat',    (req, res) => sendOG(req, res, 'chat.html', privateMeta(req, 'الدردشة')));
+app.get('/group',   (req, res) => sendOG(req, res, 'group.html', privateMeta(req, 'المجموعة')));
+app.get('/shiziai', (req, res) => sendOG(req, res, 'shiziai.html', privateMeta(req, 'شيزي الذكاء الاصطناعي')));
+app.get('/support', (req, res) => sendOG(req, res, 'support.html', privateMeta(req, 'الدعم الفني')));
+app.get('/manager', (req, res) => sendOG(req, res, 'manager.html', privateMeta(req, 'إدارة الحساب')));
+app.get('/save', (req, res) => sendOG(req, res, 'save.html', privateMeta(req, 'المحفوظات')));
 app.get('/post', (req, res) => sendOG(req, res, 'post.html', baseMeta(req, 'منشور')));
 
 app.get('/profile', async (req, res) => {
@@ -3256,6 +3329,18 @@ app.get('/profile', async (req, res) => {
         meta.description = ogTruncate(user.bio) || DEFAULT_DESC;
         meta.image = absUrl(req, user.avatar || DEFAULT_IMG);
         meta.type = 'profile';
+        meta.jsonld = {
+          '@context': 'https://schema.org',
+          '@type': 'ProfilePage',
+          dateCreated: user.created_at || undefined,
+          mainEntity: {
+            '@type': 'Person',
+            name: user.display_name || user.username,
+            alternateName: user.username,
+            image: meta.image,
+            description: ogTruncate(user.bio) || undefined
+          }
+        };
       }
     } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
   }
@@ -3316,9 +3401,82 @@ app.get('/video', async (req, res) => {
   sendOG(req, res, 'video.html', meta);
 });
 
+// ============================================================
+// robots.txt — يوجّه عناكب البحث (بما فيها Googlebot) لملف الـ sitemap
+// ويمنع الزحف على المسارات الخاصة/الإدارية وواجهة الـ API
+// ============================================================
+app.get('/robots.txt', (req, res) => {
+  const origin = `${req.protocol}://${req.get('host')}`;
+  res.type('text/plain').send(
+`User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin
+Disallow: /manager
+Disallow: /chat
+Disallow: /group
+Disallow: /save
+Disallow: /shiziai
+Disallow: /support
+Disallow: /login
+
+Sitemap: ${origin}/sitemap.xml
+`);
+});
+
+// ============================================================
+// sitemap.xml — خريطة موقع ديناميكية (مُولَّدة من قاعدة البيانات مباشرة)
+// تضم: الصفحة الرئيسية + الحسابات العامة (غير الخاصة) + صفحات الأعمال
+// + آخر المنشورات العامة. هذا يساعد Google على اكتشاف وأرشفة الموقع
+// بسرعة أكبر بدل انتظار الزحف العشوائي.
+// بعد رفع الموقع، يُفضّل أيضاً إضافته يدوياً على:
+// https://search.google.com/search-console (إضافة الموقع ثم "خرائط الموقع")
+// ============================================================
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const origin = `${req.protocol}://${req.get('host')}`;
+    const urls = [];
+    const addUrl = (loc, lastmod, priority) => {
+      urls.push(`  <url><loc>${ogEscape(loc)}</loc>${lastmod ? `<lastmod>${new Date(lastmod).toISOString()}</lastmod>` : ''}<priority>${priority}</priority></url>`);
+    };
+
+    addUrl(`${origin}/`, null, '1.0');
+
+    try {
+      const users = await q.listPublicUsernames();
+      for (const u of users) addUrl(`${origin}/profile?u=${encodeURIComponent(u.username)}`, u.created_at, '0.7');
+    } catch (e) { console.warn('sitemap: تعذر جلب المستخدمين', e.message); }
+
+    try {
+      const pages = await q.listAllPages();
+      for (const p of pages) addUrl(`${origin}/page?u=${encodeURIComponent(p.username)}`, p.created_at, '0.6');
+    } catch (e) { console.warn('sitemap: تعذر جلب الصفحات', e.message); }
+
+    try {
+      const posts = await q.listPublicPostIds();
+      for (const r of posts) addUrl(`${origin}/post?p=${r.id}`, r.created_at, '0.5');
+    } catch (e) { console.warn('sitemap: تعذر جلب المنشورات', e.message); }
+
+    res.type('application/xml').send(
+`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.join('\n')}
+</urlset>`);
+  } catch (e) {
+    console.error('❌ sitemap generation failed:', e);
+    res.status(500).type('text/plain').send('sitemap generation failed');
+  }
+});
+
 app.get('*', async (req, res) => {
   const meta = baseMeta(req, SITE_NAME);
   meta.title = SITE_NAME;
+  meta.jsonld = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE_NAME,
+    url: `${req.protocol}://${req.get('host')}/`
+  };
   const pid = (req.query.p || '').trim();
   if (pid) {
     try {
@@ -3329,6 +3487,7 @@ app.get('*', async (req, res) => {
         meta.description = ogTruncate(rec.content) || DEFAULT_DESC;
         if (rec.image) meta.image = absUrl(req, rec.image);
         meta.type = 'article';
+        delete meta.jsonld;
       }
     } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
   }

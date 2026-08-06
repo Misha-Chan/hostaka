@@ -514,6 +514,19 @@ const q = {
   deleteAccountChange: (userId, purpose) => db.execute({ sql:'DELETE FROM account_changes WHERE user_id=? AND purpose=?', args:[userId, purpose] }),
   listUsers:        () => db.execute('SELECT id,username,email,role,avatar,display_name,verified,suspended,suspend_reason,totp_enabled,created_at FROM users ORDER BY created_at DESC').then(rows),
   listPublicUsers:  () => db.execute('SELECT id,username,display_name,avatar,role,verified FROM users ORDER BY username ASC').then(rows),
+  // للـ sitemap.xml: فقط الحسابات العامة (غير الخاصة وغير الموقوفة)، بحدّ أقصى معقول
+  listPublicUsernames: () => db.execute(
+    "SELECT username, created_at FROM users WHERE COALESCE(is_private,0)=0 AND COALESCE(suspended,0)=0 ORDER BY created_at DESC LIMIT 2000"
+  ).then(rows),
+  listAllPages: () => db.execute(
+    "SELECT username, created_at FROM pages ORDER BY created_at DESC LIMIT 2000"
+  ).then(rows),
+  listPublicPostIds: () => db.execute(
+    `SELECT id, created_at FROM records
+     WHERE COALESCE(privacy,'public')='public'
+       AND (scheduled_at IS NULL OR scheduled_at='' OR scheduled_at <= datetime('now'))
+     ORDER BY created_at DESC LIMIT 3000`
+  ).then(rows),
   deleteUser:       (id) => db.execute({ sql:"DELETE FROM users WHERE id=? AND role!='admin'", args:[id] }),
   updateUserRole:   (role,id) => db.execute({ sql:'UPDATE users SET role=? WHERE id=?', args:[role,id] }),
   searchUsers:      (q) => { const esc = String(q).replace(/[\\%_]/g, c => '\\' + c); return db.execute({ sql:"SELECT id,username,display_name,avatar,role,verified FROM users WHERE username LIKE ? ESCAPE '\\' OR display_name LIKE ? ESCAPE '\\' LIMIT 15", args:['%'+esc+'%','%'+esc+'%'] }).then(rows); },
