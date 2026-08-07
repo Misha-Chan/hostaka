@@ -989,12 +989,15 @@ function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt
 // ============================================================
 const URL_RE = /(https?:\/\/[^\s<]+)/g;
 function linkifyEscaped(escapedText) {
-  const _t = (window.EmojiFluent ? EmojiFluent.render(String(escapedText || '')) : String(escapedText || ''));
-  return _t.replace(URL_RE, (url) => {
+  // ملاحظة: يجب تحويل الروابط لعناصر <a> أولاً، ثم استبدال رموز الإيموجي بعدها؛
+  // فلو عُكس الترتيب فإن رابط CDN الموجود داخل src الصورة الناتجة عن الإيموجي
+  // كان يتطابق أيضاً مع نمط الروابط فيُدرَج بداخله وسم <a> ويكسر وسم <img>.
+  const _linked = String(escapedText || '').replace(URL_RE, (url) => {
     const clean = url.replace(/[.,!?)\]]+$/, '');
     const trail = url.slice(clean.length);
     return `<a href="${clean}" target="_blank" rel="noopener noreferrer" class="msg-link">${clean}</a>${trail}`;
   });
+  return (window.EmojiFluent ? EmojiFluent.render(_linked) : _linked);
 }
 function extractFirstUrl(text) {
   const m = String(text || '').match(/https?:\/\/[^\s<]+/);
@@ -2196,12 +2199,15 @@ function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 // ============================================================
 const URL_RE = /(https?:\/\/[^\s<]+)/g;
 function linkifyEscaped(escapedText) {
-  const _t = (window.EmojiFluent ? EmojiFluent.render(String(escapedText || '')) : String(escapedText || ''));
-  return _t.replace(URL_RE, (url) => {
+  // ملاحظة: يجب تحويل الروابط لعناصر <a> أولاً، ثم استبدال رموز الإيموجي بعدها؛
+  // فلو عُكس الترتيب فإن رابط CDN الموجود داخل src الصورة الناتجة عن الإيموجي
+  // كان يتطابق أيضاً مع نمط الروابط فيُدرَج بداخله وسم <a> ويكسر وسم <img>.
+  const _linked = String(escapedText || '').replace(URL_RE, (url) => {
     const clean = url.replace(/[.,!?)\]]+$/, '');
     const trail = url.slice(clean.length);
     return `<a href="${clean}" target="_blank" rel="noopener noreferrer" class="msg-link">${clean}</a>${trail}`;
   });
+  return (window.EmojiFluent ? EmojiFluent.render(_linked) : _linked);
 }
 function extractFirstUrl(text) {
   const m = String(text || '').match(/https?:\/\/[^\s<]+/);
@@ -4740,7 +4746,7 @@ function renderPost(p){
     const ca = c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : esc((c.display_name||c.username||'?').charAt(0).toUpperCase());
     const cBadge = c.user_role==='Admin' ? `<span class="role-badge badge-admin">${t('adminRole')}</span>` : '';
     const canDelC = ME && (ME.role==='admin' || c.user_id==ME?.id);
-    const cleanContent = linkifyContent(stripEmojis(esc(c.content)));
+    const cleanContent = linkifyContent(esc(c.content));
     const replies = repliesOf(c.id);
     const repliesHtml = replies.length ? `<div class="replies-list">${replies.map(r=>oneCommentHtml(r, postId)).join('')}</div>` : '';
     return `<div class="comment" id="cmt-${c.id}">
@@ -6987,7 +6993,7 @@ function renderOnePost(p){
   function oneCommentHtml(c, postId){
     const ca = c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : esc((c.display_name||c.username||'?').charAt(0).toUpperCase());
     const canDelC = ME && (ME.role==='admin' || c.user_id==ME?.id);
-    const cleanContent = linkifyContent(stripEmojis(esc(c.content)));
+    const cleanContent = linkifyContent(esc(c.content));
     const replies = repliesOf(c.id);
     const repliesHtml = replies.length ? `<div class="replies-list">${replies.map(r=>oneCommentHtml(r, postId)).join('')}</div>` : '';
     return `<div class="comment" id="cmt-${c.id}">
@@ -9620,7 +9626,7 @@ function renderSavedCard(p){
   function oneCommentHtml(c, postId){
     const ca = c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : esc((c.display_name||c.username||'?').charAt(0).toUpperCase());
     const canDelC = ME && (ME.role==='admin' || c.user_id==ME?.id);
-    const cleanContent = linkifyContent(stripEmojis(esc(c.content)));
+    const cleanContent = linkifyContent(esc(c.content));
     const replies = repliesOf(c.id);
     const repliesHtml = replies.length ? `<div class="replies-list">${replies.map(r=>oneCommentHtml(r, postId)).join('')}</div>` : '';
     return `<div class="comment" id="cmt-${c.id}">
@@ -10120,7 +10126,7 @@ function renderPostCard(p){
   function oneCommentHtml(c, postId){
     const ca = c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : esc((c.display_name||c.username||'?').charAt(0).toUpperCase());
     const canDelC = ME && (ME.role==='admin' || c.user_id==ME?.id);
-    const cleanContent = linkifyContent(stripEmojis(esc(c.content)));
+    const cleanContent = linkifyContent(esc(c.content));
     const replies = repliesOf(c.id);
     const repliesHtml = replies.length ? `<div class="replies-list">${replies.map(r=>oneCommentHtml(r, postId)).join('')}</div>` : '';
     return `<div class="comment" id="cmt-${c.id}">
@@ -10487,8 +10493,9 @@ function renderVideoComments(comments, videoId){
   return top.map(oneComment).join('') || `<div style="color:var(--muted);font-size:0.85rem;padding:12px 0;">${t('noCommentsYetFirst')}</div>`;
 }
 function linkifyV(html){
-  const _t = (window.EmojiFluent ? EmojiFluent.render(String(html||'')) : String(html||''));
-  return _t.replace(/(https?:\/\/[^\s<]+)/g, url => `<a href="${url}" class="post-link" target="_blank" rel="noopener noreferrer">${url}</a>`);
+  // الترتيب مهم: تحويل الروابط أولاً ثم الإيموجي بعدها (راجع ملاحظة linkifyEscaped)
+  const _linked = String(html||'').replace(/(https?:\/\/[^\s<]+)/g, url => `<a href="${url}" class="post-link" target="_blank" rel="noopener noreferrer">${url}</a>`);
+  return (window.EmojiFluent ? EmojiFluent.render(_linked) : _linked);
 }
 
 async function watchVideo(id){

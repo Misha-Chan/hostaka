@@ -395,12 +395,15 @@ function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt
 // ============================================================
 const URL_RE = /(https?:\/\/[^\s<]+)/g;
 function linkifyEscaped(escapedText) {
-  const _t = (window.EmojiFluent ? EmojiFluent.render(String(escapedText || '')) : String(escapedText || ''));
-  return _t.replace(URL_RE, (url) => {
+  // ملاحظة: يجب تحويل الروابط لعناصر <a> أولاً، ثم استبدال رموز الإيموجي بعدها؛
+  // فلو عُكس الترتيب فإن رابط CDN الموجود داخل src الصورة الناتجة عن الإيموجي
+  // كان يتطابق أيضاً مع نمط الروابط فيُدرَج بداخله وسم <a> ويكسر وسم <img>.
+  const _linked = String(escapedText || '').replace(URL_RE, (url) => {
     const clean = url.replace(/[.,!?)\]]+$/, '');
     const trail = url.slice(clean.length);
     return `<a href="${clean}" target="_blank" rel="noopener noreferrer" class="msg-link">${clean}</a>${trail}`;
   });
+  return (window.EmojiFluent ? EmojiFluent.render(_linked) : _linked);
 }
 function extractFirstUrl(text) {
   const m = String(text || '').match(/https?:\/\/[^\s<]+/);
@@ -1097,7 +1100,7 @@ function renderMsgs(msgs, scroll = true) {
       `<div class="msg-reaction" onclick="togglePicker(${m.id})">${rc.reactions.map(r => r.icon || r.emoji).join('')} <span style="font-size:0.7rem;color:var(--muted);">${totalReacts}</span></div>` : '';
     const firstUrl = extractFirstUrl(m.content);
     const replySrc = m.reply_to ? msgs.find(x => x.id === m.reply_to) : null;
-    const replyQuoteHtml = replySrc ? `<div class="msg-reply-quote">${esc((replySrc.content || (replySrc.image ? '📷 صورة' : '')).slice(0,80))}</div>` : (m.reply_to ? `<div class="msg-reply-quote">${t('reply')}</div>` : '');
+    const replyQuoteHtml = replySrc ? `<div class="msg-reply-quote">${(window.EmojiFluent ? EmojiFluent.render(esc((replySrc.content || (replySrc.image ? '📷 صورة' : '')).slice(0,80))) : esc((replySrc.content || (replySrc.image ? '📷 صورة' : '')).slice(0,80)))}</div>` : (m.reply_to ? `<div class="msg-reply-quote">${t('reply')}</div>` : '');
     const pickerHtml = `<div class="react-picker" id="picker-${m.id}">
             ${REACTIONS.map(r => `<button class="r-emoji ${rc.userReaction === r.emoji ? 'active' : ''}" onclick="reactMsg(event,${m.id},'${r.emoji}')" title="${r.label}">${r.icon}</button>`).join('')}
             <div class="picker-sep"></div>
