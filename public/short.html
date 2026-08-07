@@ -43,6 +43,7 @@
     <div class="comments-list" id="commentsList"></div>
     <div class="comments-input-row">
       <input type="text" id="commentInput" placeholder="Add a comment..." data-i18n-placeholder="short.addComment" maxlength="500" onkeydown="if(event.key==='Enter') sendReelComment();">
+      <button type="button" class="femoji-comment-btn" data-target="commentInput" title="Emoji" style="background:none;border:none;cursor:pointer;font-size:1.1rem;">😀</button>
       <button onclick="sendReelComment()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
