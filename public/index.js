@@ -1342,7 +1342,7 @@ function renderPost(p){
     const ca = c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : esc((c.display_name||c.username||'?').charAt(0).toUpperCase());
     const cBadge = c.user_role==='Admin' ? `<span class="role-badge badge-admin">${t('adminRole')}</span>` : '';
     const canDelC = ME && (ME.role==='admin' || c.user_id==ME?.id);
-    const cleanContent = linkifyContent(stripEmojis(esc(c.content)));
+    const cleanContent = linkifyContent(esc(c.content));
     const replies = repliesOf(c.id);
     const repliesHtml = replies.length ? `<div class="replies-list">${replies.map(r=>oneCommentHtml(r, postId)).join('')}</div>` : '';
     return `<div class="comment" id="cmt-${c.id}">

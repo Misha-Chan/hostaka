@@ -191,8 +191,9 @@ function renderVideoComments(comments, videoId){
   return top.map(oneComment).join('') || `<div style="color:var(--muted);font-size:0.85rem;padding:12px 0;">${t('noCommentsYetFirst')}</div>`;
 }
 function linkifyV(html){
-  const _t = (window.EmojiFluent ? EmojiFluent.render(String(html||'')) : String(html||''));
-  return _t.replace(/(https?:\/\/[^\s<]+)/g, url => `<a href="${url}" class="post-link" target="_blank" rel="noopener noreferrer">${url}</a>`);
+  // الترتيب مهم: تحويل الروابط أولاً ثم الإيموجي بعدها (راجع ملاحظة linkifyEscaped)
+  const _linked = String(html||'').replace(/(https?:\/\/[^\s<]+)/g, url => `<a href="${url}" class="post-link" target="_blank" rel="noopener noreferrer">${url}</a>`);
+  return (window.EmojiFluent ? EmojiFluent.render(_linked) : _linked);
 }
 
 async function watchVideo(id){
