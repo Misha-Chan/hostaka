@@ -203,6 +203,8 @@ function injectOG(html, meta) {
   }
   // سكربت خفيف لردع النسخ العرضي (راجع public/protect.js لملاحظة حدوده)
   tags += `  <script src="/protect.js" defer></script>\n`;
+  // حزمة إيموجي Fluent Emoji (منتقي + عرض الرموز كصور متسقة الشكل بكل الصفحات)
+  tags += `  <link rel="stylesheet" href="/emoji.css">\n  <script src="/emoji.js" defer></script>\n`;
 
   // إزالة أي وسوم OG/Twitter/robots/canonical موجودة مسبقًا لتفادي التكرار عند إعادة التوليد
   html = html.replace(/\s*<meta[^>]+(?:property=["']og:|name=["']twitter:|name=["']robots["'])[^>]*>\n?/gi, '');
