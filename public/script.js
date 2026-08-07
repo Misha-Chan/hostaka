@@ -364,7 +364,7 @@ async function loadLogs(){
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap;">
           <span style="color:${LOG_LEVEL_COLORS[l.level]||'var(--muted)'};font-weight:800;text-transform:uppercase;">${esc(l.level)}</span>
           ${l.status_code ? `<span style="color:var(--muted);">${esc(l.method||'')} ${esc(l.path||'')} → ${l.status_code}</span>` : ''}
-          <span style="color:var(--muted);margin-right:auto;font-family:'Cairo';">${fmtDate(l.created_at)} ${toUTCDate(l.created_at).toLocaleTimeString('ar-SA')}</span>
+          <span style="color:var(--muted);margin-right:auto;font-family:'Ubuntu','El Messiri';">${fmtDate(l.created_at)} ${toUTCDate(l.created_at).toLocaleTimeString('ar-SA')}</span>
         </div>
         <div style="white-space:pre-wrap;word-break:break-all;color:var(--text);line-height:1.6;">${esc(l.message)}</div>
       </div>`).join('') + `</div>`;
