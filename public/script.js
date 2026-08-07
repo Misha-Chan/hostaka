@@ -989,7 +989,8 @@ function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt
 // ============================================================
 const URL_RE = /(https?:\/\/[^\s<]+)/g;
 function linkifyEscaped(escapedText) {
-  return String(escapedText || '').replace(URL_RE, (url) => {
+  const _t = (window.EmojiFluent ? EmojiFluent.render(String(escapedText || '')) : String(escapedText || ''));
+  return _t.replace(URL_RE, (url) => {
     const clean = url.replace(/[.,!?)\]]+$/, '');
     const trail = url.slice(clean.length);
     return `<a href="${clean}" target="_blank" rel="noopener noreferrer" class="msg-link">${clean}</a>${trail}`;
@@ -2195,7 +2196,8 @@ function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 // ============================================================
 const URL_RE = /(https?:\/\/[^\s<]+)/g;
 function linkifyEscaped(escapedText) {
-  return String(escapedText || '').replace(URL_RE, (url) => {
+  const _t = (window.EmojiFluent ? EmojiFluent.render(String(escapedText || '')) : String(escapedText || ''));
+  return _t.replace(URL_RE, (url) => {
     const clean = url.replace(/[.,!?)\]]+$/, '');
     const trail = url.slice(clean.length);
     return `<a href="${clean}" target="_blank" rel="noopener noreferrer" class="msg-link">${clean}</a>${trail}`;
@@ -4458,7 +4460,7 @@ function onNotifClick(id, recordId, link){
 function linkifyContent(html){
   try {
     const wrapper = document.createElement('div');
-    wrapper.innerHTML = html;
+    wrapper.innerHTML = (window.EmojiFluent ? EmojiFluent.render(html) : html);
     const walker = document.createTreeWalker(wrapper, NodeFilter.SHOW_TEXT);
     const textNodes = [];
     let node;
@@ -6409,7 +6411,7 @@ function extractFirstUrl(text){
 function linkifyContent(html){
   try {
     const wrapper = document.createElement('div');
-    wrapper.innerHTML = html;
+    wrapper.innerHTML = (window.EmojiFluent ? EmojiFluent.render(html) : html);
     const walker = document.createTreeWalker(wrapper, NodeFilter.SHOW_TEXT);
     const textNodes = [];
     let node;
@@ -9507,7 +9509,7 @@ function stripEmojis(text) {
 function linkifyContent(html){
   try {
     const wrapper = document.createElement('div');
-    wrapper.innerHTML = html;
+    wrapper.innerHTML = (window.EmojiFluent ? EmojiFluent.render(html) : html);
     const walker = document.createTreeWalker(wrapper, NodeFilter.SHOW_TEXT);
     const textNodes = [];
     let node;
@@ -10005,7 +10007,7 @@ function stripEmojis(text) {
 function linkifyContent(html){
   try {
     const wrapper = document.createElement('div');
-    wrapper.innerHTML = html;
+    wrapper.innerHTML = (window.EmojiFluent ? EmojiFluent.render(html) : html);
     const walker = document.createTreeWalker(wrapper, NodeFilter.SHOW_TEXT);
     const textNodes = [];
     let node;
@@ -10476,7 +10478,8 @@ function renderVideoComments(comments, videoId){
   return top.map(oneComment).join('') || `<div style="color:var(--muted);font-size:0.85rem;padding:12px 0;">${t('noCommentsYetFirst')}</div>`;
 }
 function linkifyV(html){
-  return String(html||'').replace(/(https?:\/\/[^\s<]+)/g, url => `<a href="${url}" class="post-link" target="_blank" rel="noopener noreferrer">${url}</a>`);
+  const _t = (window.EmojiFluent ? EmojiFluent.render(String(html||'')) : String(html||''));
+  return _t.replace(/(https?:\/\/[^\s<]+)/g, url => `<a href="${url}" class="post-link" target="_blank" rel="noopener noreferrer">${url}</a>`);
 }
 
 async function watchVideo(id){

@@ -311,7 +311,7 @@ function extractFirstUrl(text){
 function linkifyContent(html){
   try {
     const wrapper = document.createElement('div');
-    wrapper.innerHTML = html;
+    wrapper.innerHTML = (window.EmojiFluent ? EmojiFluent.render(html) : html);
     const walker = document.createTreeWalker(wrapper, NodeFilter.SHOW_TEXT);
     const textNodes = [];
     let node;
@@ -1091,6 +1091,11 @@ function openPostModal(){
   if (sched) sched.value = '';
   document.getElementById('postModal').classList.add('show');
   setTimeout(()=>document.getElementById('postEditor')?.focus(),100);
+  const emojiBtn = document.getElementById('postEmojiBtn');
+  if (emojiBtn && !emojiBtn._femojiWired && window.EmojiFluent) {
+    emojiBtn._femojiWired = true;
+    EmojiFluent.attachButton(emojiBtn, document.getElementById('postEditor'));
+  }
 }
 
 function selectPostPrivacy(p){
