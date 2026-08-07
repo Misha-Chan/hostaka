@@ -54,7 +54,7 @@ html.page-chat, body.page-chat {height:100%;overflow:hidden;}
 body.page-chat {
       background:radial-gradient(circle at 18% 16%,rgba(0,0,0,0.05),transparent 22%),var(--black);
       color:var(--text);
-      font-family:'Cairo',sans-serif;
+      font-family:'Ubuntu','El Messiri',sans-serif;
       display:flex;
       flex-direction:column;
       -webkit-font-smoothing:antialiased;
@@ -94,7 +94,7 @@ body.page-chat .wp-title {font-weight:800;font-size:1.02rem;color:var(--text);di
 body.page-chat .wp-title svg {width:19px;height:19px;color:var(--accent);flex-shrink:0;}
 body.page-chat .wp-desc {color:var(--muted);font-size:.8rem;line-height:1.7;margin-bottom:14px;}
 body.page-chat .wp-preview {width:100%;height:110px;border-radius:14px;border:1px solid var(--border);background:var(--input-bg);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.78rem;margin-bottom:14px;overflow:hidden;}
-body.page-chat .wp-upload-btn {width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(128,128,128,.08);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:12px;font-family:'Cairo',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;transition:all .2s;margin-bottom:14px;}
+body.page-chat .wp-upload-btn {width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(128,128,128,.08);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:12px;font-family:'Ubuntu','El Messiri',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;transition:all .2s;margin-bottom:14px;}
 body.page-chat .wp-upload-btn:hover {background:rgba(128,128,128,.14);}
 body.page-chat .wp-row {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
 body.page-chat .wp-row label {font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:6px;flex-shrink:0;}
@@ -102,9 +102,9 @@ body.page-chat .wp-row input[type=range] {flex:1;accent-color:var(--accent);}
 body.page-chat .wp-check {display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--muted);margin-bottom:16px;cursor:pointer;}
 body.page-chat .wp-check input {accent-color:var(--accent);}
 body.page-chat .wp-footer {display:flex;gap:10px;justify-content:flex-end;margin-top:6px;}
-body.page-chat .wp-btn-ghost {background:none;border:1px solid var(--border);color:var(--muted);padding:9px 16px;border-radius:10px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:6px;transition:all .2s;}
+body.page-chat .wp-btn-ghost {background:none;border:1px solid var(--border);color:var(--muted);padding:9px 16px;border-radius:10px;cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:6px;transition:all .2s;}
 body.page-chat .wp-btn-ghost:hover {color:var(--text);border-color:var(--text);}
-body.page-chat .wp-btn-primary {background:var(--accent);color:var(--black);border:none;padding:9px 20px;border-radius:10px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:.82rem;font-weight:800;transition:all .2s;}
+body.page-chat .wp-btn-primary {background:var(--accent);color:var(--black);border:none;padding:9px 20px;border-radius:10px;cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;font-size:.82rem;font-weight:800;transition:all .2s;}
 body.page-chat .wp-btn-primary:hover {opacity:.88;}
 /* ===== الشريط العلوي ===== */
     body.page-chat .topbar {
@@ -129,7 +129,7 @@ body.page-chat .back-btn {
       padding:6px 12px;border-radius:999px;
       background:rgba(128,128,128,0.06);
       border:1px solid var(--border);
-      font-family:'Cairo';font-weight:600;
+      font-family:'Ubuntu','El Messiri';font-weight:600;
       text-decoration:none;white-space:nowrap;
       transition:all 0.18s;
     }
@@ -161,7 +161,7 @@ body.page-chat .peer-opts-menu {
       z-index:30;box-shadow:var(--shadow);overflow:hidden;
     }
 body.page-chat .peer-opts-menu.show {opacity:1;visibility:visible;transform:translateY(0) scale(1);}
-body.page-chat .peer-opts-menu button {display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--text);font-family:'Cairo',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;text-align:right;transition:background 0.15s;}
+body.page-chat .peer-opts-menu button {display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--text);font-family:'Ubuntu','El Messiri',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;text-align:right;transition:background 0.15s;}
 body.page-chat .peer-opts-menu button:hover {background:rgba(128,128,128,0.08);}
 body.page-chat .peer-opts-menu button.danger {color:#dc2626;}
 body.page-chat .peer-opts-menu svg {width:14px;height:14px;flex-shrink:0;}
@@ -182,7 +182,7 @@ body.page-chat .lang-menu button {
       width:100%;padding:8px 16px;
       background:none;border:none;
       color:var(--text);
-      font-family:'Cairo',sans-serif;
+      font-family:'Ubuntu','El Messiri',sans-serif;
       font-size:0.85rem;
       cursor:pointer;transition:background 0.15s;
       text-align:right;
@@ -232,7 +232,7 @@ body.page-chat .btn-new-group {
       border:1px solid var(--border);
       color:var(--muted);
       padding:6px 12px;border-radius:8px;
-      cursor:pointer;font-family:'Cairo';font-size:0.78rem;font-weight:700;
+      cursor:pointer;font-family:'Ubuntu','El Messiri';font-size:0.78rem;font-weight:700;
       transition:all 0.18s;
     }
 body.page-chat .btn-new-group:hover {background:rgba(128,128,128,0.15);color:var(--text);border-color:var(--border);}
@@ -399,7 +399,7 @@ body.page-chat .iv-btn {
       display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.12);
       -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
       border:1px solid rgba(255,255,255,0.15);color:#fff;padding:9px 16px;
-      border-radius:999px;font-family:'Cairo',sans-serif;font-weight:700;font-size:0.85rem;
+      border-radius:999px;font-family:'Ubuntu','El Messiri',sans-serif;font-weight:700;font-size:0.85rem;
       cursor:pointer;transition:background 0.2s ease;
     }
 body.page-chat .iv-btn:hover {background:rgba(255,255,255,0.22);}
@@ -502,7 +502,7 @@ body.page-chat .msg-input {
       flex:1;padding:11px 16px;
       background:var(--input-bg);
       border:1px solid var(--border);border-radius:22px;
-      color:var(--text);font-family:'Cairo';font-size:0.9rem;
+      color:var(--text);font-family:'Ubuntu','El Messiri';font-size:0.9rem;
       resize:none;max-height:120px;overflow-y:auto;line-height:1.5;
       outline:none;transition:all 0.2s;
     }
@@ -586,7 +586,7 @@ body.page-chat .m-input {
       width:100%;padding:11px 14px;
       background:var(--input-bg);
       border:1px solid var(--border);border-radius:10px;
-      color:var(--text);font-family:'Cairo';font-size:0.9rem;
+      color:var(--text);font-family:'Ubuntu','El Messiri';font-size:0.9rem;
       margin-bottom:14px;transition:all 0.2s;
     }
 body.page-chat .m-input:focus {outline:none;border-color:var(--border);background:var(--input-bg);box-shadow:0 0 0 3px rgba(128,128,128,0.08);}
@@ -611,7 +611,7 @@ body.page-chat .btn-cancel {
       padding:10px 18px;
       background:rgba(128,128,128,0.06);
       border:1px solid var(--border);border-radius:9px;
-      color:var(--muted);cursor:pointer;font-family:'Cairo';
+      color:var(--muted);cursor:pointer;font-family:'Ubuntu','El Messiri';
       font-size:0.86rem;font-weight:600;transition:all 0.2s;
     }
 body.page-chat .btn-cancel:hover {background:rgba(128,128,128,0.12);color:var(--text);border-color:var(--border);}
@@ -619,7 +619,7 @@ body.page-chat .btn-cancel:active {transform:scale(0.96);}
 body.page-chat .btn-confirm {
       padding:10px 18px;
       background:var(--red);border:none;border-radius:9px;
-      color:#fff;font-weight:800;cursor:pointer;font-family:'Cairo';
+      color:#fff;font-weight:800;cursor:pointer;font-family:'Ubuntu','El Messiri';
       font-size:0.86rem;transition:all 0.2s;
     }
 body.page-chat .btn-confirm:hover {background:var(--red-h);transform:translateY(-1px);}

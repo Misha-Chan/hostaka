@@ -41,7 +41,7 @@
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   display: flex; align-items: center; justify-content: center;
   padding: 20px; opacity: 0; transition: opacity .15s ease;
-  font-family: 'Cairo', sans-serif;
+  font-family: 'Ubuntu', 'El Messiri', sans-serif;
 }
 .hst-dlg-overlay.show { opacity: 1; }
 .hst-dlg-box {

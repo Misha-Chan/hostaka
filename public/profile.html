@@ -7,7 +7,9 @@
   <title data-i18n="profile.pageTitle">Hostaka — Profile</title>
   
   <script defer src="/_vercel/insights/script.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&family=El+Messiri:wght@400..700&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/shared.css">
@@ -99,13 +101,13 @@
       </button>
     </div>
     <input type="hidden" id="reportUserTarget">
-    <select id="reportUserReason" style="width:100%;padding:11px 13px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Cairo',sans-serif;font-size:0.88rem;margin:12px 0 10px;">
+    <select id="reportUserReason" style="width:100%;padding:11px 13px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Ubuntu','El Messiri',sans-serif;font-size:0.88rem;margin:12px 0 10px;">
       <option value="abuse" data-i18n="profile.reasonAbuse">Abuse or harassment</option>
       <option value="fake" data-i18n="profile.reasonFake">Fake or impersonation account</option>
       <option value="spam" data-i18n="profile.reasonSpam">Spam / unwanted content</option>
       <option value="other" data-i18n="profile.reasonOther">Other reason</option>
     </select>
-    <textarea id="reportUserDetails" placeholder="Additional details (optional)" data-i18n-placeholder="profile.additionalDetails" style="width:100%;min-height:90px;padding:11px 13px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Cairo',sans-serif;font-size:0.88rem;resize:vertical;"></textarea>
+    <textarea id="reportUserDetails" placeholder="Additional details (optional)" data-i18n-placeholder="profile.additionalDetails" style="width:100%;min-height:90px;padding:11px 13px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Ubuntu','El Messiri',sans-serif;font-size:0.88rem;resize:vertical;"></textarea>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
       <button class="btn-edit" onclick="closeModal('reportUserModal')" data-i18n="common.cancel">Cancel</button>
       <button class="btn-follow" id="reportUserSubmitBtn" onclick="submitUserReport()" data-i18n="profile.sendReport">Send report</button>

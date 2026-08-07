@@ -54,7 +54,7 @@ html {
   --space-12: 48px;
 
   /* ---------- Typography scale ---------- */
-  --font-family: 'Cairo', sans-serif;
+  --font-family: 'Ubuntu', 'El Messiri', sans-serif;
   --text-xs: 0.75rem;    /* 12px */
   --text-sm: 0.85rem;    /* 13.6px */
   --text-base: 0.95rem;  /* 15.2px */
