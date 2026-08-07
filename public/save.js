@@ -229,6 +229,7 @@ function renderSavedCard(p){
     </div>
     <div class="reply-input-row" id="replyRow-${c.id}" style="display:none;">
       <input class="comment-input" type="text" placeholder="${t('replyToPlaceholder',{u:esc(c.username||'')})}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
+      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji">😀</button>
       <button class="btn-send-comment" onclick="sendComment(${postId},${c.id})">${SVG.send}</button>
     </div>
     ${repliesHtml}`;
@@ -236,6 +237,7 @@ function renderSavedCard(p){
   const commentsHtml = topComments.map(c => oneCommentHtml(c, p.id)).join('');
   const commentInputHtml = ME ? `<div class="comment-input-row">
     <input class="comment-input" type="text" placeholder="${t('commentPlaceholder')}" id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
+    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji">😀</button>
     <button class="btn-send-comment" onclick="sendComment(${p.id})">${SVG.send}</button>
   </div>` : '';
 

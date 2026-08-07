@@ -220,5 +220,21 @@
     });
   }
 
+  // ============================================================
+  // تفويض أحداث (Event Delegation) لأزرار الإيموجي داخل عناصر
+  // تُبنى ديناميكياً وتتكرر كثيراً (كل منشور/تعليق له صندوقه الخاص)،
+  // مثل صناديق التعليقات والردود. الزر يحمل data-target = id عنصر الإدخال.
+  // هذا يغني عن ربط كل زر يدوياً في كل مكان يُعاد فيه رسم القائمة.
+  // ============================================================
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.femoji-comment-btn');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const targetId = btn.getAttribute('data-target');
+    const targetEl = targetId && document.getElementById(targetId);
+    if (targetEl) openPicker(btn, (glyph) => insertGlyph(targetEl, glyph));
+  });
+
   global.EmojiFluent = { render, openPicker, attachButton, insertGlyph, loadCatalog };
 })(window);

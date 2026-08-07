@@ -155,6 +155,7 @@ function renderWatch(v){
           <div class="video-comments-head">${comments.length} ${t('commentWord')}</div>
           ${ME ? `<div class="video-comment-input-row">
             <input type="text" id="vwCommentInput" placeholder="${t('addCommentPlaceholder')}" maxlength="500" onkeydown="if(event.key==='Enter') sendVideoComment(${v.id});">
+            <button type="button" class="femoji-comment-btn" data-target="vwCommentInput" title="Emoji" style="background:none;border:none;cursor:pointer;font-size:1rem;">😀</button>
             <button onclick="sendVideoComment(${v.id})">${VSVG.send}</button>
           </div>` : ''}
           <div id="vwCommentsList">${renderVideoComments(comments, v.id)}</div>

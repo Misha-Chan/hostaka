@@ -4755,6 +4755,7 @@ function renderPost(p){
     </div>
     <div class="reply-input-row" id="replyRow-${c.id}" style="display:none;">
       <input class="comment-input" type="text" placeholder="${t('reply')} @${esc(c.username||'')}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
+      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji">😀</button>
       <button class="btn-send-comment" onclick="sendComment(${postId},${c.id})">${SVG.send}</button>
     </div>
     ${repliesHtml}`;
@@ -4763,6 +4764,7 @@ function renderPost(p){
 
   const commentInputHtml = ME ? `<div class="comment-input-row">
     <input class="comment-input" type="text" placeholder="${t('reply')}" id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
+    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji">😀</button>
     <button class="btn-send-comment" onclick="sendComment(${p.id})">${SVG.send}</button>
   </div>` : '';
 
@@ -7000,6 +7002,7 @@ function renderOnePost(p){
     </div>
     <div class="reply-input-row" id="replyRow-${c.id}" style="display:none;">
       <input class="comment-input" type="text" placeholder="${t('replyToPlaceholder',{u:esc(c.username||'')})}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
+      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji">😀</button>
       <button class="btn-send-comment" onclick="sendComment(${postId},${c.id})">${SVG.send}</button>
     </div>
     ${repliesHtml}`;
@@ -7007,6 +7010,7 @@ function renderOnePost(p){
   const commentsHtml = topComments.map(c => oneCommentHtml(c, p.id)).join('');
   const commentInputHtml = ME ? `<div class="comment-input-row">
     <input class="comment-input" type="text" placeholder="${t('commentPlaceholder')}" id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
+    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji">😀</button>
     <button class="btn-send-comment" onclick="sendComment(${p.id})">${SVG.send}</button>
   </div>` : '';
 
@@ -9631,6 +9635,7 @@ function renderSavedCard(p){
     </div>
     <div class="reply-input-row" id="replyRow-${c.id}" style="display:none;">
       <input class="comment-input" type="text" placeholder="${t('replyToPlaceholder',{u:esc(c.username||'')})}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
+      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji">😀</button>
       <button class="btn-send-comment" onclick="sendComment(${postId},${c.id})">${SVG.send}</button>
     </div>
     ${repliesHtml}`;
@@ -9638,6 +9643,7 @@ function renderSavedCard(p){
   const commentsHtml = topComments.map(c => oneCommentHtml(c, p.id)).join('');
   const commentInputHtml = ME ? `<div class="comment-input-row">
     <input class="comment-input" type="text" placeholder="${t('commentPlaceholder')}" id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
+    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji">😀</button>
     <button class="btn-send-comment" onclick="sendComment(${p.id})">${SVG.send}</button>
   </div>` : '';
 
@@ -10129,6 +10135,7 @@ function renderPostCard(p){
     </div>
     <div class="reply-input-row" id="replyRow-${c.id}" style="display:none;">
       <input class="comment-input" type="text" placeholder="${t('replyToPlaceholder',{u:esc(c.username||'')})}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
+      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji">😀</button>
       <button class="btn-send-comment" onclick="sendComment(${postId},${c.id})">${SVG.send}</button>
     </div>
     ${repliesHtml}`;
@@ -10136,6 +10143,7 @@ function renderPostCard(p){
   const commentsHtml = topComments.map(c => oneCommentHtml(c, p.id)).join('');
   const commentInputHtml = ME ? `<div class="comment-input-row">
     <input class="comment-input" type="text" placeholder="${t('commentPlaceholder')}" id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
+    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji">😀</button>
     <button class="btn-send-comment" onclick="sendComment(${p.id})">${SVG.send}</button>
   </div>` : '';
 
@@ -10443,6 +10451,7 @@ function renderWatch(v){
           <div class="video-comments-head">${comments.length} ${t('commentWord')}</div>
           ${ME ? `<div class="video-comment-input-row">
             <input type="text" id="vwCommentInput" placeholder="${t('addCommentPlaceholder')}" maxlength="500" onkeydown="if(event.key==='Enter') sendVideoComment(${v.id});">
+            <button type="button" class="femoji-comment-btn" data-target="vwCommentInput" title="Emoji" style="background:none;border:none;cursor:pointer;font-size:1rem;">😀</button>
             <button onclick="sendVideoComment(${v.id})">${VSVG.send}</button>
           </div>` : ''}
           <div id="vwCommentsList">${renderVideoComments(comments, v.id)}</div>
