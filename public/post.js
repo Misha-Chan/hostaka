@@ -95,7 +95,7 @@ function stripEmojis(text) {
 function linkifyContent(html){
   try {
     const wrapper = document.createElement('div');
-    wrapper.innerHTML = html;
+    wrapper.innerHTML = (window.EmojiFluent ? EmojiFluent.render(html) : html);
     const walker = document.createTreeWalker(wrapper, NodeFilter.SHOW_TEXT);
     const textNodes = [];
     let node;

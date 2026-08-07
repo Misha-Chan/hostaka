@@ -395,7 +395,8 @@ function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt
 // ============================================================
 const URL_RE = /(https?:\/\/[^\s<]+)/g;
 function linkifyEscaped(escapedText) {
-  return String(escapedText || '').replace(URL_RE, (url) => {
+  const _t = (window.EmojiFluent ? EmojiFluent.render(String(escapedText || '')) : String(escapedText || ''));
+  return _t.replace(URL_RE, (url) => {
     const clean = url.replace(/[.,!?)\]]+$/, '');
     const trail = url.slice(clean.length);
     return `<a href="${clean}" target="_blank" rel="noopener noreferrer" class="msg-link">${clean}</a>${trail}`;
@@ -926,9 +927,12 @@ async function openChat(username) {
     <div class="input-area">
       <button class="btn-attach" onclick="document.getElementById('chatImgFile').click()" title="${t('attach')}">${SVG.attach}</button>
       <input type="file" id="chatImgFile" accept=".jpg,.jpeg,image/jpeg" style="display:none;" onchange="onChatImg(event)">
+      <button class="btn-attach femoji-trigger-btn" id="chatEmojiBtn" title="Emoji">😀</button>
       <textarea class="msg-input" id="msgInput" placeholder="${t('sendPlaceholder')}" rows="1" onkeydown="onKey(event)" oninput="autoResize(this);pingTyping()"></textarea>
       <button class="send-btn" id="sendBtn" onclick="sendMsg()">${SVG.send}</button>
     </div>`;
+
+  if (window.EmojiFluent) EmojiFluent.attachButton(document.getElementById('chatEmojiBtn'), document.getElementById('msgInput'));
 
   // تحميل الرسائل
   await loadMsgs(username);
