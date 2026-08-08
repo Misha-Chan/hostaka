@@ -4761,7 +4761,7 @@ function renderPost(p){
     </div>
     <div class="reply-input-row" id="replyRow-${c.id}" style="display:none;">
       <input class="comment-input" type="text" placeholder="${t('reply')} @${esc(c.username||'')}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
-      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji">😀</button>
+      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
       <button class="btn-send-comment" onclick="sendComment(${postId},${c.id})">${SVG.send}</button>
     </div>
     ${repliesHtml}`;
@@ -4770,7 +4770,7 @@ function renderPost(p){
 
   const commentInputHtml = ME ? `<div class="comment-input-row">
     <input class="comment-input" type="text" placeholder="${t('reply')}" id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
-    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji">😀</button>
+    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
     <button class="btn-send-comment" onclick="sendComment(${p.id})">${SVG.send}</button>
   </div>` : '';
 
@@ -7008,7 +7008,7 @@ function renderOnePost(p){
     </div>
     <div class="reply-input-row" id="replyRow-${c.id}" style="display:none;">
       <input class="comment-input" type="text" placeholder="${t('replyToPlaceholder',{u:esc(c.username||'')})}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
-      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji">😀</button>
+      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
       <button class="btn-send-comment" onclick="sendComment(${postId},${c.id})">${SVG.send}</button>
     </div>
     ${repliesHtml}`;
@@ -7016,7 +7016,7 @@ function renderOnePost(p){
   const commentsHtml = topComments.map(c => oneCommentHtml(c, p.id)).join('');
   const commentInputHtml = ME ? `<div class="comment-input-row">
     <input class="comment-input" type="text" placeholder="${t('commentPlaceholder')}" id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
-    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji">😀</button>
+    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
     <button class="btn-send-comment" onclick="sendComment(${p.id})">${SVG.send}</button>
   </div>` : '';
 
@@ -8506,6 +8506,10 @@ function setTheme(theme){
   if(theme==='dark') html.setAttribute('data-theme','dark'); else html.removeAttribute('data-theme');
   currentTheme = theme;
   localStorage.setItem('hostaka_theme', theme);
+  // إصلاح: أيقونة الزر كانت لا تتحدث إطلاقاً بهذا القسم، فتبقى ثابتة (غالباً
+  // على شكل الشمس) حتى مع تفعيل الوضع الداكن فعلياً، ما يوهم المستخدم أن
+  // التبديل لا يعمل رغم أنه يعمل فعلياً في الخلفية
+  if (typeof setThemeIcon === 'function') setThemeIcon(theme === 'dark' ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>` : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`);
 }
 function toggleTheme(){ setTheme(currentTheme==='light'?'dark':'light'); }
 setTheme(currentTheme);
@@ -8784,6 +8788,10 @@ function setTheme(theme){
   if(theme==='dark') html.setAttribute('data-theme','dark'); else html.removeAttribute('data-theme');
   currentTheme = theme;
   localStorage.setItem('hostaka_theme', theme);
+  // إصلاح: أيقونة الزر كانت لا تتحدث إطلاقاً بهذا القسم، فتبقى ثابتة (غالباً
+  // على شكل الشمس) حتى مع تفعيل الوضع الداكن فعلياً، ما يوهم المستخدم أن
+  // التبديل لا يعمل رغم أنه يعمل فعلياً في الخلفية
+  if (typeof setThemeIcon === 'function') setThemeIcon(theme === 'dark' ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>` : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`);
 }
 function toggleTheme(){ setTheme(currentTheme==='light'?'dark':'light'); }
 setTheme(currentTheme);
@@ -9453,6 +9461,10 @@ function setTheme(theme){
   if(theme==='dark') html.setAttribute('data-theme','dark'); else html.removeAttribute('data-theme');
   currentTheme = theme;
   localStorage.setItem('hostaka_theme', theme);
+  // إصلاح: أيقونة الزر كانت لا تتحدث إطلاقاً بهذا القسم، فتبقى ثابتة (غالباً
+  // على شكل الشمس) حتى مع تفعيل الوضع الداكن فعلياً، ما يوهم المستخدم أن
+  // التبديل لا يعمل رغم أنه يعمل فعلياً في الخلفية
+  if (typeof setThemeIcon === 'function') setThemeIcon(theme === 'dark' ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>` : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`);
 }
 function toggleTheme(){ setTheme(currentTheme==='light'?'dark':'light'); }
 setTheme(currentTheme);
@@ -9641,7 +9653,7 @@ function renderSavedCard(p){
     </div>
     <div class="reply-input-row" id="replyRow-${c.id}" style="display:none;">
       <input class="comment-input" type="text" placeholder="${t('replyToPlaceholder',{u:esc(c.username||'')})}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
-      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji">😀</button>
+      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
       <button class="btn-send-comment" onclick="sendComment(${postId},${c.id})">${SVG.send}</button>
     </div>
     ${repliesHtml}`;
@@ -9649,7 +9661,7 @@ function renderSavedCard(p){
   const commentsHtml = topComments.map(c => oneCommentHtml(c, p.id)).join('');
   const commentInputHtml = ME ? `<div class="comment-input-row">
     <input class="comment-input" type="text" placeholder="${t('commentPlaceholder')}" id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
-    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji">😀</button>
+    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
     <button class="btn-send-comment" onclick="sendComment(${p.id})">${SVG.send}</button>
   </div>` : '';
 
@@ -9953,6 +9965,10 @@ function setTheme(theme){
   if(theme==='dark') html.setAttribute('data-theme','dark'); else html.removeAttribute('data-theme');
   currentTheme = theme;
   localStorage.setItem('hostaka_theme', theme);
+  // إصلاح: أيقونة الزر كانت لا تتحدث إطلاقاً بهذا القسم، فتبقى ثابتة (غالباً
+  // على شكل الشمس) حتى مع تفعيل الوضع الداكن فعلياً، ما يوهم المستخدم أن
+  // التبديل لا يعمل رغم أنه يعمل فعلياً في الخلفية
+  if (typeof setThemeIcon === 'function') setThemeIcon(theme === 'dark' ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>` : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`);
 }
 function toggleTheme(){ setTheme(currentTheme==='light'?'dark':'light'); }
 setTheme(currentTheme);
@@ -10141,7 +10157,7 @@ function renderPostCard(p){
     </div>
     <div class="reply-input-row" id="replyRow-${c.id}" style="display:none;">
       <input class="comment-input" type="text" placeholder="${t('replyToPlaceholder',{u:esc(c.username||'')})}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
-      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji">😀</button>
+      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
       <button class="btn-send-comment" onclick="sendComment(${postId},${c.id})">${SVG.send}</button>
     </div>
     ${repliesHtml}`;
@@ -10149,7 +10165,7 @@ function renderPostCard(p){
   const commentsHtml = topComments.map(c => oneCommentHtml(c, p.id)).join('');
   const commentInputHtml = ME ? `<div class="comment-input-row">
     <input class="comment-input" type="text" placeholder="${t('commentPlaceholder')}" id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
-    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji">😀</button>
+    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
     <button class="btn-send-comment" onclick="sendComment(${p.id})">${SVG.send}</button>
   </div>` : '';
 
@@ -10329,6 +10345,10 @@ function setTheme(theme){
   if(theme==='dark') html.setAttribute('data-theme','dark'); else html.removeAttribute('data-theme');
   currentTheme = theme;
   localStorage.setItem('hostaka_theme', theme);
+  // إصلاح: أيقونة الزر كانت لا تتحدث إطلاقاً بهذا القسم، فتبقى ثابتة (غالباً
+  // على شكل الشمس) حتى مع تفعيل الوضع الداكن فعلياً، ما يوهم المستخدم أن
+  // التبديل لا يعمل رغم أنه يعمل فعلياً في الخلفية
+  if (typeof setThemeIcon === 'function') setThemeIcon(theme === 'dark' ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>` : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`);
 }
 function toggleTheme(){ setTheme(currentTheme==='light'?'dark':'light'); }
 setTheme(currentTheme);
@@ -10457,7 +10477,7 @@ function renderWatch(v){
           <div class="video-comments-head">${comments.length} ${t('commentWord')}</div>
           ${ME ? `<div class="video-comment-input-row">
             <input type="text" id="vwCommentInput" placeholder="${t('addCommentPlaceholder')}" maxlength="500" onkeydown="if(event.key==='Enter') sendVideoComment(${v.id});">
-            <button type="button" class="femoji-comment-btn" data-target="vwCommentInput" title="Emoji" style="background:none;border:none;cursor:pointer;font-size:1rem;">😀</button>
+            <button type="button" class="femoji-comment-btn" data-target="vwCommentInput" title="Emoji" style="background:none;border:none;cursor:pointer;font-size:1rem;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
             <button onclick="sendVideoComment(${v.id})">${VSVG.send}</button>
           </div>` : ''}
           <div id="vwCommentsList">${renderVideoComments(comments, v.id)}</div>

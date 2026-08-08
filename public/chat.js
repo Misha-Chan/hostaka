@@ -515,7 +515,31 @@ const REACTIONS = [
 // ============================================================
 //  التهيئة
 // ============================================================
+// ============================================================
+//  ضبط الارتفاع حسب لوحة المفاتيح (تفادي تغطيتها لصندوق الإرسال)
+//  ملاحظة: body.page-chat يستخدم height:100% ثابت، وبعض متصفحات/واجهات
+//  الويب على أندرويد (WebView) لا تُقلّص هذا الارتفاع تلقائياً عند ظهور
+//  لوحة المفاتيح (بعكس تغيّر visualViewport.height الفعلي)، فيبقى صندوق
+//  الإرسال بمكانه الأصلي مختفياً خلف الكيبورد. نصحح هذا يدوياً بربط
+//  ارتفاع الصفحة بـ visualViewport، تماماً كما تفعل ماسنجر وواتساب.
+function setupKeyboardAwareLayout() {
+  if (!window.visualViewport) return;
+  const vv = window.visualViewport;
+  function onViewportChange() {
+    const h = vv.height;
+    document.documentElement.style.height = h + 'px';
+    document.body.style.height = h + 'px';
+    // نمرر لأسفل لضمان بقاء آخر رسالة ظاهرة فوق صندوق الإرسال بعد فتح الكيبورد
+    const area = document.getElementById('msgsArea');
+    if (area) area.scrollTop = area.scrollHeight;
+  }
+  vv.addEventListener('resize', onViewportChange);
+  vv.addEventListener('scroll', onViewportChange);
+  onViewportChange();
+}
+
 async function init() {
+  setupKeyboardAwareLayout();
   // تطبيق الثيم المخزن
   if (currentTheme === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
@@ -930,7 +954,7 @@ async function openChat(username) {
     <div class="input-area">
       <button class="btn-attach" onclick="document.getElementById('chatImgFile').click()" title="${t('attach')}">${SVG.attach}</button>
       <input type="file" id="chatImgFile" accept=".jpg,.jpeg,image/jpeg" style="display:none;" onchange="onChatImg(event)">
-      <button class="btn-attach femoji-trigger-btn" id="chatEmojiBtn" title="Emoji">😀</button>
+      <button class="btn-attach femoji-trigger-btn" id="chatEmojiBtn" title="Emoji"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
       <textarea class="msg-input" id="msgInput" placeholder="${t('sendPlaceholder')}" rows="1" onkeydown="onKey(event)" oninput="autoResize(this);pingTyping()"></textarea>
       <button class="send-btn" id="sendBtn" onclick="sendMsg()">${SVG.send}</button>
     </div>`;

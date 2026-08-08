@@ -24,11 +24,16 @@ function t(key, vars){
   return s;
 }
 let currentTheme = localStorage.getItem('hostaka_theme') || 'light';
+const THEME_ICON_DARK = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+const THEME_ICON_LIGHT = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
 function setTheme(theme){
   const html = document.documentElement;
   if(theme==='dark') html.setAttribute('data-theme','dark'); else html.removeAttribute('data-theme');
   currentTheme = theme;
   localStorage.setItem('hostaka_theme', theme);
+  // كان أيقونة الزر لا تتحدث أبداً على هذه الصفحة فتبقى دائماً على شكل الشمس
+  // حتى لو كان الوضع الداكن فعلياً مُفعّلاً، ما يعطي انطباعاً بأن التبديل معطّل
+  if (typeof setThemeIcon === 'function') setThemeIcon(theme === 'dark' ? THEME_ICON_DARK : THEME_ICON_LIGHT);
 }
 function toggleTheme(){ setTheme(currentTheme==='light'?'dark':'light'); }
 setTheme(currentTheme);
@@ -217,7 +222,7 @@ function renderPostCard(p){
     </div>
     <div class="reply-input-row" id="replyRow-${c.id}" style="display:none;">
       <input class="comment-input" type="text" placeholder="${t('replyToPlaceholder',{u:esc(c.username||'')})}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
-      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji">😀</button>
+      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
       <button class="btn-send-comment" onclick="sendComment(${postId},${c.id})">${SVG.send}</button>
     </div>
     ${repliesHtml}`;
@@ -225,7 +230,7 @@ function renderPostCard(p){
   const commentsHtml = topComments.map(c => oneCommentHtml(c, p.id)).join('');
   const commentInputHtml = ME ? `<div class="comment-input-row">
     <input class="comment-input" type="text" placeholder="${t('commentPlaceholder')}" id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
-    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji">😀</button>
+    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
     <button class="btn-send-comment" onclick="sendComment(${p.id})">${SVG.send}</button>
   </div>` : '';
 
