@@ -1357,7 +1357,7 @@ function renderPost(p){
     </div>
     <div class="reply-input-row" id="replyRow-${c.id}" style="display:none;">
       <input class="comment-input" type="text" placeholder="${t('reply')} @${esc(c.username||'')}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
-      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji">😀</button>
+      <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
       <button class="btn-send-comment" onclick="sendComment(${postId},${c.id})">${SVG.send}</button>
     </div>
     ${repliesHtml}`;
@@ -1366,7 +1366,7 @@ function renderPost(p){
 
   const commentInputHtml = ME ? `<div class="comment-input-row">
     <input class="comment-input" type="text" placeholder="${t('reply')}" id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
-    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji">😀</button>
+    <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
     <button class="btn-send-comment" onclick="sendComment(${p.id})">${SVG.send}</button>
   </div>` : '';
 

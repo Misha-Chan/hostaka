@@ -36,6 +36,11 @@
         const glyphs = data.map(e => e.glyph).sort((a, b) => b.length - a.length);
         const escaped = glyphs.map(g => g.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
         glyphRegex = new RegExp(escaped.join('|'), 'gu');
+        // أي محتوى (منشورات/تعليقات/رسائل) رُسم قبل اكتمال هذا التحميل يكون قد
+        // ظهر برموز يونيكود الخام (خط الجهاز) بدل صور Fluent، لأن render() كان
+        // يتجاهل الاستبدال حين glyphRegex ما زال فارغاً. نعيد فحص الصفحة الآن
+        // ونحوّل أي رمز إيموجي متبقٍ لصورة، لضمان ظهور الحزمة دائماً.
+        try { sweepPage(); } catch (e) {}
         return catalog;
       }).catch(err => {
         console.warn('EmojiFluent: تعذر تحميل قائمة الإيموجي', err);
@@ -46,6 +51,35 @@
       });
     }
     return catalogPromise;
+  }
+
+  // يمشي على كل عناصر النص بالصفحة (باستثناء صناديق الإدخال والسكربتات) ويحوّل
+  // أي رمز إيموجي خام لصورة Fluent — يُستدعى تلقائياً بعد اكتمال تحميل القائمة
+  function sweepPage() {
+    if (!glyphRegex || typeof document === 'undefined' || !document.body) return;
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const p = node.parentElement;
+        if (!p) return NodeFilter.FILTER_REJECT;
+        const tag = p.tagName;
+        if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'TEXTAREA' || tag === 'INPUT' || p.isContentEditable) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        glyphRegex.lastIndex = 0;
+        return glyphRegex.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    const nodes = [];
+    let n;
+    while ((n = walker.nextNode())) nodes.push(n);
+    nodes.forEach(node => {
+      const span = document.createElement('span');
+      span.innerHTML = render(node.nodeValue);
+      const parent = node.parentNode;
+      if (!parent) return;
+      while (span.firstChild) parent.insertBefore(span.firstChild, node);
+      parent.removeChild(node);
+    });
   }
 
   // يستبدل رموز يونيكود للإيموجي داخل نص/HTML بصور <img> صغيرة (نمط Fluent Color)
@@ -116,7 +150,7 @@
   function renderTabs() {
     const tabsEl = panelEl.querySelector('.femoji-picker-tabs');
     tabsEl.innerHTML = GROUP_ORDER.map(g =>
-      `<button type="button" class="femoji-tab ${g === currentGroup ? 'active' : ''}" data-group="${g}" title="${g}">${GROUP_LABELS[g].split(' ')[0]}</button>`
+      `<button type="button" class="femoji-tab ${g === currentGroup ? 'active' : ''}" data-group="${g}" title="${g}">${render(GROUP_LABELS[g].split(' ')[0])}</button>`
     ).join('');
     tabsEl.querySelectorAll('.femoji-tab').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -176,7 +210,8 @@
 
   function positionPanel(anchorEl) {
     const rect = anchorEl.getBoundingClientRect();
-    const panelW = 300, panelH = 360;
+    const panelRect = panelEl.getBoundingClientRect();
+    const panelW = panelRect.width || 300, panelH = panelRect.height || 360;
     let top = rect.bottom + 8;
     let left = rect.left;
     if (top + panelH > window.innerHeight) top = Math.max(8, rect.top - panelH - 8);
@@ -236,5 +271,5 @@
     if (targetEl) openPicker(btn, (glyph) => insertGlyph(targetEl, glyph));
   });
 
-  global.EmojiFluent = { render, openPicker, attachButton, insertGlyph, loadCatalog };
+  global.EmojiFluent = { render, openPicker, attachButton, insertGlyph, loadCatalog, sweepPage };
 })(window);
