@@ -3312,8 +3312,32 @@ function privateMeta(req, title) {
 }
 app.get('/login',   (req, res) => sendOG(req, res, 'login.html', privateMeta(req, 'تسجيل الدخول')));
 app.get('/admin',   (req, res) => sendOG(req, res, 'admin.html', privateMeta(req, 'لوحة التحكم')));
-app.get('/chat',    (req, res) => sendOG(req, res, 'chat.html', privateMeta(req, 'الدردشة')));
-app.get('/group',   (req, res) => sendOG(req, res, 'group.html', privateMeta(req, 'المجموعة')));
+
+// ============================================================
+// الدردشة والمجموعات انتقلت لمستودع/نطاق مستقل: orbithub.hostaka.fun
+// بدل حذف كل الروابط الداخلية المتناثرة بالكود (window.location='/chat'،
+// '/group?g='...)، نُبقي هذين المسارين كصفحتي تحويل خفيفتين: تقرأ توكن
+// الدخول من localStorage (لأنه لا يُشارَك تلقائياً بين النطاقين الفرعيين)
+// وتُرفقه مع أي query string موجودة، ثم تحوّل المستخدم لـ orbithub فوراً.
+const ORBITHUB_BASE = process.env.ORBITHUB_BASE || 'https://orbithub.hostaka.fun';
+function sendOrbithubRedirect(req, res, path) {
+  res.set('Content-Type', 'text/html; charset=utf-8').send(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="robots" content="noindex, nofollow">
+<title>هوستاكا</title></head><body>
+<script>
+(function () {
+  var token = localStorage.getItem('hostaka_token') || '';
+  var qs = new URLSearchParams(window.location.search);
+  if (token) qs.set('token', token);
+  var q = qs.toString();
+  window.location.replace('${ORBITHUB_BASE}${path}' + (q ? '?' + q : ''));
+})();
+</script>
+</body></html>`);
+}
+app.get('/chat',    (req, res) => sendOrbithubRedirect(req, res, '/chat'));
+app.get('/group',   (req, res) => sendOrbithubRedirect(req, res, '/group'));
+
 app.get('/shiziai', (req, res) => sendOG(req, res, 'shiziai.html', privateMeta(req, 'شيزي الذكاء الاصطناعي')));
 app.get('/support', (req, res) => sendOG(req, res, 'support.html', privateMeta(req, 'الدعم الفني')));
 app.get('/manager', (req, res) => sendOG(req, res, 'manager.html', privateMeta(req, 'إدارة الحساب')));
