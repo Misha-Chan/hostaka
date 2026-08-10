@@ -3389,6 +3389,33 @@ app.get('/page', async (req, res) => {
   sendOG(req, res, 'page.html', meta);
 });
 
+// ============================================================
+// الفيديو والريلز انتقلا لمستودع/نطاق مستقل: aethercast.hostaka.fun
+// نفس فكرة /chat و/group: نُبقي المسارين هنا كصفحتي تحويل، لكن بفارق
+// مهم — الفيديو محتوى عام يُشارَك على مواقع التواصل، فلازم نحافظ على
+// وسوم Open Graph (العنوان/الوصف/الصورة المصغّرة/الفيديو) عشان روابط
+// المشاركة تطلع بمعاينة صحيحة على واتساب/تويتر/ديسكورد. لذلك:
+// 1) نبني نفس بيانات الميتا كما كان (بالاستعلام عن السجل من قاعدة البيانات)
+// 2) نحقنها بصفحة HTML خفيفة عبر injectOG (بوتات المعاينة تقرأ الـ <head>
+//    فقط، ما تنفّذ جافاسكريبت، فتشوف الميتا الصحيحة)
+// 3) جسم الصفحة يحوّل الزائر الحقيقي (متصفح ينفّذ JS) لـ aethercast مع
+//    توكن الدخول، لأن localStorage ما ينشارك بين النطاقين الفرعيين
+const AETHERCAST_BASE = process.env.AETHERCAST_BASE || 'https://aethercast.hostaka.fun';
+function sendAethercastRedirect(req, res, path, meta) {
+  const baseHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
+<script>
+(function () {
+  var token = localStorage.getItem('hostaka_token') || '';
+  var qs = new URLSearchParams(window.location.search);
+  if (token) qs.set('token', token);
+  var q = qs.toString();
+  window.location.replace('${AETHERCAST_BASE}${path}' + (q ? '?' + q : ''));
+})();
+</script>
+</body></html>`;
+  res.set('Content-Type', 'text/html; charset=utf-8').send(injectOG(baseHtml, meta || {}));
+}
+
 app.get('/short', async (req, res) => {
   const meta = baseMeta(req, 'ريلز');
   meta.type = 'video.other';
@@ -3405,11 +3432,11 @@ app.get('/short', async (req, res) => {
       }
     } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
   }
-  sendOG(req, res, 'short.html', meta);
+  sendAethercastRedirect(req, res, '/short', meta);
 });
 
 app.get('/video', async (req, res) => {
-  const meta = baseMeta(req, 'Hostaka Video');
+  const meta = baseMeta(req, 'aethercast');
   meta.type = 'video.other';
   const id = (req.query.id || '').trim();
   if (id) {
@@ -3417,14 +3444,14 @@ app.get('/video', async (req, res) => {
       const rec = await q.getRecordById(id);
       if (rec) {
         const who = rec.publisher_name || rec.publisher;
-        meta.title = `${who} على Hostaka Video`;
+        meta.title = `${who} على aethercast`;
         meta.description = ogTruncate(rec.content) || DEFAULT_DESC;
         if (rec.image) meta.image = absUrl(req, rec.image);
         if (rec.video) meta.video = absUrl(req, rec.video);
       }
     } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
   }
-  sendOG(req, res, 'video.html', meta);
+  sendAethercastRedirect(req, res, '/video', meta);
 });
 
 // ============================================================
