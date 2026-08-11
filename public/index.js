@@ -757,11 +757,20 @@ function clearUser(){
   localStorage.removeItem('hostaka_user');
   localStorage.removeItem('hostaka_token');
   localStorage.removeItem('hostaka_role');
+  clearOAuthRelay();
   document.getElementById('btnLogin').style.display = 'flex';
   document.getElementById('userBadgeWrap').style.display = 'none';
   document.getElementById('notifWrap').style.display = 'none';
   renderStoriesBar();
   renderAccountSwitcher();
+}
+
+// يمسح الجلسة المشتركة عند oauth.hostaka.fun (وسيط التحقق) عشان الخروج
+// من حساب هنا ما يخلي نطاق فرعي ثاني يلتقط جلسة قديمة بالغلط. طلب صامت.
+function clearOAuthRelay(){
+  try {
+    fetch('https://oauth.hostaka.fun/api/token', { method: 'DELETE', credentials: 'include' }).catch(() => {});
+  } catch (e) {}
 }
 
 // ============================================================
