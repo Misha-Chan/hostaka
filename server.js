@@ -3311,16 +3311,14 @@ function privateMeta(req, title) {
   return m;
 }
 app.get('/login',   (req, res) => sendOG(req, res, 'login.html', privateMeta(req, 'تسجيل الدخول')));
-app.get('/admin',   (req, res) => sendOG(req, res, 'admin.html', privateMeta(req, 'لوحة التحكم')));
 
 // ============================================================
-// الدردشة والمجموعات انتقلت لمستودع/نطاق مستقل: orbithub.hostaka.fun
-// بدل حذف كل الروابط الداخلية المتناثرة بالكود (window.location='/chat'،
-// '/group?g='...)، نُبقي هذين المسارين كصفحتي تحويل خفيفتين: تقرأ توكن
-// الدخول من localStorage (لأنه لا يُشارَك تلقائياً بين النطاقين الفرعيين)
-// وتُرفقه مع أي query string موجودة، ثم تحوّل المستخدم لـ orbithub فوراً.
-const ORBITHUB_BASE = process.env.ORBITHUB_BASE || 'https://orbithub.hostaka.fun';
-function sendOrbithubRedirect(req, res, path) {
+// صفحات انتقلت لمستودعات/نطاقات مستقلة (orbithub، console...). بدل حذف كل
+// الروابط الداخلية المتناثرة بالكود (window.location='/chat'، '/group?g='،
+// '/admin'...)، نُبقي هذي المسارات كصفحات تحويل خفيفة: تقرأ توكن الدخول من
+// localStorage (لأنه لا يُشارَك تلقائياً بين النطاقات الفرعية) وتُرفقه مع
+// أي query string موجودة، ثم تحوّل المستخدم فوراً للنطاق الجديد.
+function sendSubdomainRedirect(req, res, base, path) {
   res.set('Content-Type', 'text/html; charset=utf-8').send(`<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="robots" content="noindex, nofollow">
 <title>هوستاكا</title></head><body>
@@ -3330,13 +3328,22 @@ function sendOrbithubRedirect(req, res, path) {
   var qs = new URLSearchParams(window.location.search);
   if (token) qs.set('token', token);
   var q = qs.toString();
-  window.location.replace('${ORBITHUB_BASE}${path}' + (q ? '?' + q : ''));
+  window.location.replace('${base}${path}' + (q ? '?' + q : ''));
 })();
 </script>
 </body></html>`);
 }
-app.get('/chat',    (req, res) => sendOrbithubRedirect(req, res, '/chat'));
-app.get('/group',   (req, res) => sendOrbithubRedirect(req, res, '/group'));
+
+// الدردشة والمجموعات → orbithub.hostaka.fun
+const ORBITHUB_BASE = process.env.ORBITHUB_BASE || 'https://orbithub.hostaka.fun';
+app.get('/chat',    (req, res) => sendSubdomainRedirect(req, res, ORBITHUB_BASE, '/chat'));
+app.get('/group',   (req, res) => sendSubdomainRedirect(req, res, ORBITHUB_BASE, '/group'));
+
+// لوحة التحكم (بالكامل، بدون زر أو صفحة على المنصة الرئيسية بعد اليوم) →
+// console.hostaka.fun/user/console. التفاصيل والصلاحيات نفسها لم تتغيّر —
+// كل /api/admin/* بقيت هنا بالسيرفر الرئيسي كما هي تماماً، بس الواجهة انتقلت.
+const CONSOLE_BASE = process.env.CONSOLE_BASE || 'https://console.hostaka.fun';
+app.get('/admin', (req, res) => sendSubdomainRedirect(req, res, CONSOLE_BASE, '/user/console'));
 
 app.get('/shiziai', (req, res) => sendOG(req, res, 'shiziai.html', privateMeta(req, 'شيزي الذكاء الاصطناعي')));
 app.get('/support', (req, res) => sendOG(req, res, 'support.html', privateMeta(req, 'الدعم الفني')));
