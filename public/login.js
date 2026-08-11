@@ -48,8 +48,15 @@ function getNextUrl() {
 }
 
 // If the user is already logged in, redirect them to the home page (or ?next=)
+// مهم: هذا المسار (مسجّل دخول من قبل) ما كان يبعث التوكن لوسيط oauth إطلاقاً
+// (بس مسارات تسجيل الدخول الجديد/التسجيل/استرجاع كلمة المرور كانت تسويها) —
+// فأي شخص مسجّل دخول من قبل (حتى قبل ما يكون oauth موجود أصلاً) ما تنحفظ
+// جلسته بالوسيط المشترك، ويضل النطاق الفرعي ما يقدر يلتقطها أبداً حتى لو
+// رجعه هذا المسار له صح. نبعثه هنا كمان قبل التحويل.
 if (localStorage.getItem('hostaka_token')) {
-  location.href = getNextUrl();
+  relayTokenToOAuth(localStorage.getItem('hostaka_token')).then(() => {
+    location.href = getNextUrl();
+  });
 }
 
 async function apiFetch(url, method='GET', body=null){
@@ -106,23 +113,36 @@ function setLoggedIn(d){
   localStorage.setItem('hostaka_token', d.token);
   localStorage.setItem('hostaka_role', d.role);
   localStorage.setItem('hostaka_user', JSON.stringify({ username:d.username, role:d.role, avatar:d.avatar||'' }));
-  relayTokenToOAuth(d.token);
+  return relayTokenToOAuth(d.token);
 }
 
 // يرسل التوكن لـ oauth.hostaka.fun (وسيط التحقق) عشان يخزّنه بكوكي مشترك
 // بين كل النطاقات الفرعية (Domain=.hostaka.fun). بعدها أي نطاق فرعي
 // (orbithub/aethercast/console...) يقدر يسحب الجلسة تلقائياً وبصمت عند
 // أول تحميل، بدون ما يحتاج المستخدم يمر برحلة تسجيل دخول يدوية كل مرة.
-// طلب صامت (fire-and-forget) — فشله لا يوقف تسجيل الدخول نفسه.
+//
+// مهم: هذا طلب POST بجسم JSON عبر نطاقات مختلفة، فالمتصفح يسوي طلب
+// preflight (OPTIONS) قبل الطلب الحقيقي — رحلة شبكة كاملة قبل ما يصير
+// أي إرسال فعلي. لو ناديناه fire-and-forget وبعده مباشرة location.href
+// للتنقّل، المتصفح ممكن يقطع الطلب بعد التنقّل قبل ما يوصل الـ preflight
+// حتى، فيضيع تسجيل الجلسة بصمت بدون أي خطأ ظاهر. لذلك نرجّع Promise هنا
+// ونستنى عليه (بحد أقصى قصير) قبل أي تحويل، بدل ما نطلقه ونمشي.
 function relayTokenToOAuth(token){
-  try {
-    fetch('https://oauth.hostaka.fun/api/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ token })
-    }).catch(() => {});
-  } catch (e) {}
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = () => { if (!done) { done = true; resolve(); } };
+    // سقف أمان: لو oauth.hostaka.fun بطيء أو معطّل، ما نعلّق تسجيل
+    // الدخول أبداً — نكمل بعد أقصى 1.2 ثانية بغض النظر عن نتيجة الطلب
+    const safety = setTimeout(finish, 1200);
+    try {
+      fetch('https://oauth.hostaka.fun/api/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ token })
+      }).catch(() => {}).finally(() => { clearTimeout(safety); finish(); });
+    } catch (e) { clearTimeout(safety); finish(); }
+  });
 }
 
 function showErr(id, msg){
@@ -147,7 +167,7 @@ async function doLogin(){
       if (!code) { btn.disabled = false; btn.textContent = t('login'); return; }
       d = await apiFetch('/api/login/2fa-verify','POST',{ pendingToken: d.pendingToken, code: code.trim() });
     }
-    if (d.success) { setLoggedIn(d); location.href = getNextUrl(); }
+    if (d.success) { await setLoggedIn(d); location.href = getNextUrl(); }
     else showErr('loginErr', d.error || t('loginFail'));
   } catch(e) { showErr('loginErr',t('cantConnectServer')); }
   finally { btn.disabled = false; btn.textContent = t('login'); }
@@ -196,7 +216,7 @@ async function verifyRegister(){
   try {
     const d = await apiFetch('/api/auth/register/verify','POST',{ email: regPayload.email, code });
     if (d.success) {
-      setLoggedIn(d);
+      await setLoggedIn(d);
       location.href = getNextUrl();
     } else {
       showErr('verifyErr', d.error || t('wrongCode'));
@@ -288,7 +308,7 @@ async function doResetPassword(){
   try {
     const d = await apiFetch('/api/auth/password/reset','POST',{ email: forgotEmail, code, newPassword });
     if (d.success) {
-      setLoggedIn(d);
+      await setLoggedIn(d);
       location.href = getNextUrl();
     } else {
       showErr('resetErr', d.error || t('cantResetPass'));
