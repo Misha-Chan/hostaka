@@ -34,9 +34,22 @@ function t(key, vars){
   }
 })();
 
-// If the user is already logged in, redirect them to the home page
+// ===== دعم ?next= للعودة للنطاق الفرعي اللي طلب تسجيل الدخول (orbithub/aethercast/console...) =====
+function getNextUrl() {
+  const params = new URLSearchParams(location.search);
+  const next = params.get('next');
+  if (!next) return '/';
+  try {
+    const u = new URL(next, location.origin);
+    // أمان: نسمح فقط بالتحويل لنطاقات هوستاكا نفسها (منع open redirect)
+    if (/^([a-z0-9-]+\.)?hostaka\.fun$/i.test(u.hostname)) return u.href;
+  } catch (e) {}
+  return '/';
+}
+
+// If the user is already logged in, redirect them to the home page (or ?next=)
 if (localStorage.getItem('hostaka_token')) {
-  location.href = '/';
+  location.href = getNextUrl();
 }
 
 async function apiFetch(url, method='GET', body=null){
@@ -93,6 +106,23 @@ function setLoggedIn(d){
   localStorage.setItem('hostaka_token', d.token);
   localStorage.setItem('hostaka_role', d.role);
   localStorage.setItem('hostaka_user', JSON.stringify({ username:d.username, role:d.role, avatar:d.avatar||'' }));
+  relayTokenToOAuth(d.token);
+}
+
+// يرسل التوكن لـ oauth.hostaka.fun (وسيط التحقق) عشان يخزّنه بكوكي مشترك
+// بين كل النطاقات الفرعية (Domain=.hostaka.fun). بعدها أي نطاق فرعي
+// (orbithub/aethercast/console...) يقدر يسحب الجلسة تلقائياً وبصمت عند
+// أول تحميل، بدون ما يحتاج المستخدم يمر برحلة تسجيل دخول يدوية كل مرة.
+// طلب صامت (fire-and-forget) — فشله لا يوقف تسجيل الدخول نفسه.
+function relayTokenToOAuth(token){
+  try {
+    fetch('https://oauth.hostaka.fun/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ token })
+    }).catch(() => {});
+  } catch (e) {}
 }
 
 function showErr(id, msg){
@@ -117,7 +147,7 @@ async function doLogin(){
       if (!code) { btn.disabled = false; btn.textContent = t('login'); return; }
       d = await apiFetch('/api/login/2fa-verify','POST',{ pendingToken: d.pendingToken, code: code.trim() });
     }
-    if (d.success) { setLoggedIn(d); location.href = '/'; }
+    if (d.success) { setLoggedIn(d); location.href = getNextUrl(); }
     else showErr('loginErr', d.error || t('loginFail'));
   } catch(e) { showErr('loginErr',t('cantConnectServer')); }
   finally { btn.disabled = false; btn.textContent = t('login'); }
@@ -167,7 +197,7 @@ async function verifyRegister(){
     const d = await apiFetch('/api/auth/register/verify','POST',{ email: regPayload.email, code });
     if (d.success) {
       setLoggedIn(d);
-      location.href = '/';
+      location.href = getNextUrl();
     } else {
       showErr('verifyErr', d.error || t('wrongCode'));
       if (d.expired) backToStart();
@@ -259,7 +289,7 @@ async function doResetPassword(){
     const d = await apiFetch('/api/auth/password/reset','POST',{ email: forgotEmail, code, newPassword });
     if (d.success) {
       setLoggedIn(d);
-      location.href = '/';
+      location.href = getNextUrl();
     } else {
       showErr('resetErr', d.error || t('cantResetPass'));
       if (d.expired) backToForgotStart();
