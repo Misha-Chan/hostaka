@@ -494,6 +494,15 @@ function requireAdmin(req,res,next) {
   if(u.role!=='admin') return res.status(403).json({error:'تحتاج صلاحية admin'});
   req.user=u; next();
 }
+// صلاحية "مشرف" (moderator): رتبة محدودة يعيّنها الأدمن، تقدر بس تعلّق
+// حسابات/منشورات وترد على البلاغات — أضيق من admin اللي يقدر يسوي كل شي.
+// أي endpoint يسمح لـ admin يسمح تلقائياً لـ moderator هنا كمان (admin
+// يقدر يسوي كل شي يقدر عليه moderator وأكثر).
+function requireModerator(req,res,next) {
+  const u=verifyToken(req); if(!u) return res.status(401).json({error:'غير مصرح'});
+  if(u.role!=='admin' && u.role!=='moderator') return res.status(403).json({error:'تحتاج صلاحية admin أو moderator'});
+  req.user=u; next();
+}
 
 // ============================================================
 // نظام الإشعارات — الإشارة (@) والتنبيهات
@@ -2543,14 +2552,14 @@ app.get('/api/reports/mine', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/admin/reports', requireAdmin, async (req, res) => {
+app.get('/api/admin/reports', requireModerator, async (req, res) => {
   try {
     res.json(await q.getReportsByStatus(req.query.status));
   } catch(e) {
     res.status(500).json({ error: 'خطأ في الخادم' });
   }
 });
-app.put('/api/admin/reports/:id', requireAdmin, async (req, res) => {
+app.put('/api/admin/reports/:id', requireModerator, async (req, res) => {
   try {
     const { status, admin_reply } = req.body || {};
     const report = await q.getReportById(req.params.id);
@@ -3218,9 +3227,35 @@ app.delete('/api/admin/logs', requireAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/admin/users', requireAdmin, async (req, res) => {
+app.get('/api/admin/users', requireModerator, async (req, res) => {
   try {
     res.json(await q.listUsers());
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// إدارة المنشورات (تشمل المعلَّقة) — يشوفها admin وmoderator
+app.get('/api/admin/posts', requireModerator, async (req, res) => {
+  try {
+    res.json(await q.listRecordsForAdmin());
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.put('/api/admin/posts/:id/suspend', requireModerator, async (req, res) => {
+  try {
+    const { reason } = req.body || {};
+    await q.suspendRecord(req.params.id, reason || '');
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.put('/api/admin/posts/:id/unsuspend', requireModerator, async (req, res) => {
+  try {
+    await q.unsuspendRecord(req.params.id);
+    res.json({ success: true });
   } catch(e) {
     res.status(500).json({ error: 'خطأ في الخادم' });
   }
@@ -3228,7 +3263,7 @@ app.get('/api/admin/users', requireAdmin, async (req, res) => {
 app.put('/api/admin/users/:id/role', requireAdmin, async (req, res) => {
   try {
     const { role } = req.body || {};
-    if (!['user', 'admin'].includes(role)) {
+    if (!['user', 'admin', 'moderator'].includes(role)) {
       return res.status(400).json({ error: 'role غير صحيح' });
     }
     await q.updateUserRole(role, req.params.id);
@@ -3246,7 +3281,7 @@ app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
   }
 });
 
-app.put('/api/admin/users/:id/suspend', requireAdmin, async (req, res) => {
+app.put('/api/admin/users/:id/suspend', requireModerator, async (req, res) => {
   try {
     const { reason } = req.body || {};
     await q.suspendUser(req.params.id, reason || '');
@@ -3255,7 +3290,7 @@ app.put('/api/admin/users/:id/suspend', requireAdmin, async (req, res) => {
     res.status(500).json({ error: 'خطأ في الخادم' });
   }
 });
-app.put('/api/admin/users/:id/unsuspend', requireAdmin, async (req, res) => {
+app.put('/api/admin/users/:id/unsuspend', requireModerator, async (req, res) => {
   try {
     await q.unsuspendUser(req.params.id);
     res.json({ success: true });
