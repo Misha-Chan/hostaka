@@ -306,6 +306,8 @@ async function initDB() {
     "ALTER TABLE records ADD COLUMN video_height INTEGER DEFAULT 0",  // ✅ ارتفاع الفيديو بالبكسل
     "ALTER TABLE records ADD COLUMN edited      INTEGER DEFAULT 0",  // ✅ تعديل المنشور
     "ALTER TABLE records ADD COLUMN page_id     INTEGER DEFAULT NULL",  // ✅ نشر باسم صفحة/قناة
+    "ALTER TABLE records ADD COLUMN suspended      INTEGER DEFAULT 0",  // ✅ تعليق المنشور من قبل مشرف/أدمن (يختفي من الفيد، رجوعه ممكن)
+    "ALTER TABLE records ADD COLUMN suspend_reason TEXT DEFAULT ''",
     "ALTER TABLE users   ADD COLUMN last_seen   TEXT DEFAULT ''",  // ✅ آخر ظهور (تُملأ لاحقاً بقيمة حقيقية)
     "ALTER TABLE messages ADD COLUMN edited     INTEGER NOT NULL DEFAULT 0",  // ✅ تعديل الرسالة
     "ALTER TABLE group_messages ADD COLUMN edited INTEGER NOT NULL DEFAULT 0",  // ✅ تعديل رسالة المجموعة
@@ -532,6 +534,8 @@ const q = {
   searchUsers:      (q) => { const esc = String(q).replace(/[\\%_]/g, c => '\\' + c); return db.execute({ sql:"SELECT id,username,display_name,avatar,role,verified FROM users WHERE username LIKE ? ESCAPE '\\' OR display_name LIKE ? ESCAPE '\\' LIMIT 15", args:['%'+esc+'%','%'+esc+'%'] }).then(rows); },
   suspendUser:      (id,reason) => db.execute({ sql:"UPDATE users SET suspended=1,suspend_reason=? WHERE id=? AND role!='admin'", args:[reason||'',id] }),
   unsuspendUser:    (id) => db.execute({ sql:"UPDATE users SET suspended=0,suspend_reason='' WHERE id=?", args:[id] }),
+  suspendRecord:    (id,reason) => db.execute({ sql:"UPDATE records SET suspended=1,suspend_reason=? WHERE id=?", args:[reason||'',id] }),
+  unsuspendRecord:  (id) => db.execute({ sql:"UPDATE records SET suspended=0,suspend_reason='' WHERE id=?", args:[id] }),
 
   // ── Records ──
   listRecords: (viewerId) => db.execute({ sql: `
@@ -548,6 +552,7 @@ const q = {
     LEFT JOIN follows f ON f.follower_id = ? AND f.followed_id = r.user_id
     LEFT JOIN saved_posts sp ON sp.record_id = r.id AND sp.user_id = ?
     WHERE (r.scheduled_at IS NULL OR r.scheduled_at = '' OR r.scheduled_at <= datetime('now'))
+      AND COALESCE(r.suspended,0) = 0
       AND (
         COALESCE(r.privacy,'public') = 'public'
         OR (r.privacy = 'close_friends' AND EXISTS (SELECT 1 FROM close_friends cf WHERE cf.user_id = r.user_id AND cf.friend_id = ?))
@@ -559,6 +564,17 @@ const q = {
       )
     ORDER BY r.created_at DESC
   `, args: [viewerId || 0, viewerId || 0, viewerId || 0, viewerId || 0] }).then(rows),
+  // نسخة إدارية من listRecords: تشمل المنشورات المعلَّقة (suspended) وما
+  // تطبّق فلترة الخصوصية العادية، عشان المشرف/الأدمن يشوف كل شي وقادر
+  // يعلّق/يرجّع أي منشور من لوحة console
+  listRecordsForAdmin: () => db.execute({ sql: `
+    SELECT r.*,
+           COALESCE(u.avatar, r.user_avatar, '') as user_avatar,
+           COALESCE(u.display_name, u.username, r.publisher, '') as publisher_name
+    FROM records r
+    LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND u.username = r.publisher)
+    ORDER BY r.created_at DESC
+  `, args: [] }).then(rows),
   getRecordById: (id) => db.execute({ sql: `
     SELECT r.*,
            COALESCE(u.avatar, r.user_avatar, '') as user_avatar,
@@ -665,6 +681,7 @@ const q = {
     LEFT JOIN follows f ON f.follower_id = ? AND f.followed_id = r.user_id
     LEFT JOIN saved_posts sp ON sp.record_id = r.id AND sp.user_id = ?
     WHERE r.video IS NOT NULL AND r.video != '' AND r.is_reel = 1
+      AND COALESCE(r.suspended,0) = 0
       AND COALESCE(r.privacy,'public') = 'public'
       AND (r.scheduled_at IS NULL OR r.scheduled_at = '' OR r.scheduled_at <= datetime('now'))
     ORDER BY RANDOM()
@@ -683,6 +700,7 @@ const q = {
     LEFT JOIN follows f ON f.follower_id = ? AND f.followed_id = r.user_id
     LEFT JOIN saved_posts sp ON sp.record_id = r.id AND sp.user_id = ?
     WHERE r.video IS NOT NULL AND r.video != '' AND COALESCE(r.is_reel,0) = 0
+      AND COALESCE(r.suspended,0) = 0
       AND COALESCE(r.privacy,'public') = 'public'
       AND (r.scheduled_at IS NULL OR r.scheduled_at = '' OR r.scheduled_at <= datetime('now'))
     ORDER BY r.created_at DESC
