@@ -283,7 +283,7 @@ async function initDB() {
       created_at   TEXT NOT NULL DEFAULT (datetime('now')),
       UNIQUE(user_id, purpose)
     );
-    -- ===== جدول تطبيقات apps.hostaka.fun (متجر التطبيقات) =====
+    -- ===== جدول تطبيقات هوستاكا (Hostaka Apps) — apps.hostaka.fun =====
     CREATE TABLE IF NOT EXISTS apps (
       id              INTEGER PRIMARY KEY AUTOINCREMENT,
       token           TEXT NOT NULL UNIQUE,
@@ -1087,14 +1087,14 @@ const q = {
   ]),
 
   // ============================================================
-  // apps.hostaka.fun — متجر التطبيقات
+  // apps.hostaka.fun — تطبيقات هوستاكا (Hostaka Apps)
   // ============================================================
   createApp: (a) => db.execute({
     sql: `INSERT INTO apps (token,publisher_id,publisher_name,name,description,category,icon,screenshots,download_url,status)
           VALUES (?,?,?,?,?,?,?,?,?,'pending')`,
     args: [a.token, a.publisher_id, a.publisher_name, a.name, a.description, a.category, a.icon, JSON.stringify(a.screenshots || []), a.download_url]
   }),
-  // التطبيقات المعتمدة فقط (للعرض العام بمتجر التطبيقات)
+  // التطبيقات المعتمدة فقط (للعرض العام بتطبيقات هوستاكا (Hostaka Apps))
   listApprovedApps: () => db.execute({
     sql: `SELECT a.*, (SELECT COUNT(*) FROM app_reviews r WHERE r.app_id = a.id) as reviews_count,
                  (SELECT AVG(rating) FROM app_reviews r WHERE r.app_id = a.id) as avg_rating

@@ -1457,7 +1457,7 @@ app.get('/api/reels', async (req, res) => {
 });
 
 // ============================================================
-// apps.hostaka.fun — متجر التطبيقات (API عام)
+// apps.hostaka.fun — تطبيقات هوستاكا (Hostaka Apps) (API عام)
 // ============================================================
 const APP_CATEGORIES = ['Tools', 'Games', 'Social', 'Productivity', 'Education', 'Entertainment', 'Other'];
 function generateAppToken() { return crypto.randomBytes(10).toString('hex'); }
@@ -3629,7 +3629,7 @@ app.get('/video', async (req, res) => {
 });
 
 // ============================================================
-// متجر التطبيقات انتقل لمستودع/نطاق مستقل: apps.hostaka.fun
+// تطبيقات هوستاكا (Hostaka Apps) انتقلت لمستودع/نطاق مستقل: apps.hostaka.fun
 // نفس فكرة /video بالضبط — صفحة تحويل خفيفة، لكن مع وسوم Open Graph
 // صحيحة لصفحة التطبيق الفردي (/app/:token) عشان روابط المشاركة تطلع
 // بمعاينة صحيحة (اسم التطبيق + وصفه + أيقونته).
@@ -3650,7 +3650,7 @@ function sendAppsRedirect(req, res, path, meta) {
 }
 
 app.get('/apps', (req, res) => {
-  const meta = baseMeta(req, 'متجر التطبيقات');
+  const meta = baseMeta(req, 'Hostaka Apps');
   sendAppsRedirect(req, res, '/', meta);
 });
 app.get('/apps/submit', (req, res) => {
@@ -3663,7 +3663,7 @@ app.get('/app/:token', async (req, res) => {
     try {
       const app_ = await q.getAppByToken(tok);
       if (app_ && app_.status === 'approved') {
-        meta.title = `${app_.name} · App Store`;
+        meta.title = `${app_.name} · Hostaka Apps`;
         meta.description = ogTruncate(app_.description) || DEFAULT_DESC;
         if (app_.icon) meta.image = absUrl(req, app_.icon);
       }
