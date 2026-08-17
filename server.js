@@ -1457,6 +1457,138 @@ app.get('/api/reels', async (req, res) => {
 });
 
 // ============================================================
+// apps.hostaka.fun — متجر التطبيقات (API عام)
+// ============================================================
+const APP_CATEGORIES = ['Tools', 'Games', 'Social', 'Productivity', 'Education', 'Entertainment', 'Other'];
+function generateAppToken() { return crypto.randomBytes(10).toString('hex'); }
+
+app.get('/api/apps', async (req, res) => {
+  try {
+    res.json(await q.listApprovedApps());
+  } catch(e) {
+    console.error('List apps error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.get('/api/apps/:token', async (req, res) => {
+  try {
+    const app_ = await q.getAppByToken(req.params.token);
+    if (!app_) return res.status(404).json({ error: 'التطبيق غير موجود' });
+    if (app_.status !== 'approved') {
+      // تطبيق غير معتمد بعد: يظهر فقط لصاحبه أو للإدارة (معاينة قبل الموافقة)
+      const u = verifyToken(req);
+      const isOwner = u && u.id === app_.publisher_id;
+      const isStaff = u && (u.role === 'admin' || u.role === 'moderator');
+      if (!isOwner && !isStaff) return res.status(404).json({ error: 'التطبيق غير موجود' });
+    }
+    res.json(app_);
+  } catch(e) {
+    console.error('Get app error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.post('/api/apps', requireAuth, async (req, res) => {
+  try {
+    const { name, description, category, icon, screenshots, download_url } = req.body || {};
+    if (!name?.trim() || !download_url?.trim()) {
+      return res.status(400).json({ error: 'الاسم ورابط التحميل مطلوبان' });
+    }
+    if (!Array.isArray(screenshots) || !screenshots.length) {
+      return res.status(400).json({ error: 'صورة واحدة على الأقل من التطبيق مطلوبة' });
+    }
+    const user = await q.getUserById(req.user.id);
+    const token = generateAppToken();
+    await q.createApp({
+      token,
+      publisher_id: user.id,
+      publisher_name: user.display_name || user.username,
+      name: name.trim().slice(0, 100),
+      description: (description || '').trim().slice(0, 2000),
+      category: APP_CATEGORIES.includes(category) ? category : 'Other',
+      icon: icon || '',
+      screenshots: screenshots.slice(0, 8),
+      download_url: download_url.trim()
+    });
+    res.json({ success: true, token });
+  } catch(e) {
+    console.error('Create app error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.post('/api/apps/:token/download', async (req, res) => {
+  try {
+    const app_ = await q.getAppByToken(req.params.token);
+    if (!app_ || app_.status !== 'approved') return res.status(404).json({ error: 'التطبيق غير موجود' });
+    q.incrementAppDownloads(app_.id).catch(()=>{}); // fire-and-forget، ما نوقف الرد بسببه
+    res.json({ success: true, download_url: app_.download_url });
+  } catch(e) {
+    console.error('App download error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.get('/api/apps/:token/reviews', async (req, res) => {
+  try {
+    const app_ = await q.getAppByToken(req.params.token);
+    if (!app_) return res.status(404).json({ error: 'التطبيق غير موجود' });
+    res.json(await q.listAppReviews(app_.id));
+  } catch(e) {
+    console.error('List app reviews error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.post('/api/apps/:token/reviews', requireAuth, async (req, res) => {
+  try {
+    const app_ = await q.getAppByToken(req.params.token);
+    if (!app_ || app_.status !== 'approved') return res.status(404).json({ error: 'التطبيق غير موجود' });
+    const rating = Math.max(1, Math.min(5, parseInt(req.body?.rating, 10) || 0));
+    if (!rating) return res.status(400).json({ error: 'تقييم غير صالح' });
+    const comment = String(req.body?.comment || '').trim().slice(0, 1000);
+    const user = await q.getUserById(req.user.id);
+    await q.upsertAppReview(app_.id, user.id, user.display_name || user.username, rating, comment);
+    res.json({ success: true });
+  } catch(e) {
+    console.error('Create app review error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ── لوحة مراجعة التطبيقات (console-facing، بنفس صلاحيات المشرفين حق المنشورات) ──
+app.get('/api/admin/apps', requireModerator, async (req, res) => {
+  try {
+    res.json(await q.listAllAppsForAdmin());
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.put('/api/admin/apps/:id', requireModerator, async (req, res) => {
+  try {
+    const { action, warning } = req.body || {};
+    const app_ = await q.getAppById(req.params.id);
+    if (!app_) return res.status(404).json({ error: 'التطبيق غير موجود' });
+    if (action === 'approve') await q.setAppStatus(app_.id, 'approved');
+    else if (action === 'reject') await q.setAppStatus(app_.id, 'rejected');
+    else if (action === 'warning') await q.setAppWarning(app_.id, warning || '');
+    else return res.status(400).json({ error: 'إجراء غير معروف' });
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.delete('/api/admin/apps/:id', requireAdmin, async (req, res) => {
+  try {
+    await q.deleteApp(req.params.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ============================================================
 // Hostaka Video (فيديوهات عادية/أفقية — تُعرض بطريقة يوتيوب في /video)
 // ============================================================
 app.get('/api/videos', async (req, res) => {
@@ -3494,6 +3626,50 @@ app.get('/video', async (req, res) => {
     } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
   }
   sendAethercastRedirect(req, res, '/video', meta);
+});
+
+// ============================================================
+// متجر التطبيقات انتقل لمستودع/نطاق مستقل: apps.hostaka.fun
+// نفس فكرة /video بالضبط — صفحة تحويل خفيفة، لكن مع وسوم Open Graph
+// صحيحة لصفحة التطبيق الفردي (/app/:token) عشان روابط المشاركة تطلع
+// بمعاينة صحيحة (اسم التطبيق + وصفه + أيقونته).
+const APPS_BASE = process.env.APPS_BASE || 'https://apps.hostaka.fun';
+function sendAppsRedirect(req, res, path, meta) {
+  const baseHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
+<script>
+(function () {
+  var token = localStorage.getItem('hostaka_token') || '';
+  var qs = new URLSearchParams(window.location.search);
+  if (token) qs.set('token', token);
+  var q = qs.toString();
+  window.location.replace('${APPS_BASE}${path}' + (q ? '?' + q : ''));
+})();
+</script>
+</body></html>`;
+  res.set('Content-Type', 'text/html; charset=utf-8').send(injectOG(baseHtml, meta || {}));
+}
+
+app.get('/apps', (req, res) => {
+  const meta = baseMeta(req, 'متجر التطبيقات');
+  sendAppsRedirect(req, res, '/', meta);
+});
+app.get('/apps/submit', (req, res) => {
+  sendAppsRedirect(req, res, '/submit', privateMeta(req, 'نشر تطبيق'));
+});
+app.get('/app/:token', async (req, res) => {
+  const meta = baseMeta(req, 'apps');
+  const tok = (req.params.token || '').trim();
+  if (tok) {
+    try {
+      const app_ = await q.getAppByToken(tok);
+      if (app_ && app_.status === 'approved') {
+        meta.title = `${app_.name} · App Store`;
+        meta.description = ogTruncate(app_.description) || DEFAULT_DESC;
+        if (app_.icon) meta.image = absUrl(req, app_.icon);
+      }
+    } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
+  }
+  sendAppsRedirect(req, res, '/app?id=' + encodeURIComponent(tok), meta);
 });
 
 // ============================================================

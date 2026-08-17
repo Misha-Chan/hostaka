@@ -283,6 +283,39 @@ async function initDB() {
       created_at   TEXT NOT NULL DEFAULT (datetime('now')),
       UNIQUE(user_id, purpose)
     );
+    -- ===== جدول تطبيقات apps.hostaka.fun (متجر التطبيقات) =====
+    CREATE TABLE IF NOT EXISTS apps (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      token           TEXT NOT NULL UNIQUE,
+      publisher_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      publisher_name  TEXT NOT NULL DEFAULT '',
+      name            TEXT NOT NULL,
+      description     TEXT NOT NULL DEFAULT '',
+      category        TEXT NOT NULL DEFAULT '',
+      icon            TEXT NOT NULL DEFAULT '',
+      screenshots     TEXT NOT NULL DEFAULT '[]',
+      download_url    TEXT NOT NULL DEFAULT '',
+      status          TEXT NOT NULL DEFAULT 'pending',
+      warning         TEXT NOT NULL DEFAULT '',
+      downloads_count INTEGER NOT NULL DEFAULT 0,
+      created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_apps_status ON apps(status);
+    CREATE INDEX IF NOT EXISTS idx_apps_category ON apps(category);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_apps_token ON apps(token);
+
+    -- ===== جدول تقييمات التطبيقات (نجوم + نص) =====
+    CREATE TABLE IF NOT EXISTS app_reviews (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      app_id     INTEGER NOT NULL REFERENCES apps(id) ON DELETE CASCADE,
+      user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      username   TEXT NOT NULL DEFAULT '',
+      rating     INTEGER NOT NULL DEFAULT 5,
+      comment    TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(app_id, user_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_app_reviews_app ON app_reviews(app_id);
   `);
 
   // Migrations — إضافة أعمدة مفقودة
@@ -1052,6 +1085,53 @@ const q = {
     db.execute(`DELETE FROM visitor_heartbeats WHERE last_seen < datetime('now','-1 day')`),
     db.execute(`DELETE FROM server_logs WHERE created_at < datetime('now','-30 days')`),
   ]),
+
+  // ============================================================
+  // apps.hostaka.fun — متجر التطبيقات
+  // ============================================================
+  createApp: (a) => db.execute({
+    sql: `INSERT INTO apps (token,publisher_id,publisher_name,name,description,category,icon,screenshots,download_url,status)
+          VALUES (?,?,?,?,?,?,?,?,?,'pending')`,
+    args: [a.token, a.publisher_id, a.publisher_name, a.name, a.description, a.category, a.icon, JSON.stringify(a.screenshots || []), a.download_url]
+  }),
+  // التطبيقات المعتمدة فقط (للعرض العام بمتجر التطبيقات)
+  listApprovedApps: () => db.execute({
+    sql: `SELECT a.*, (SELECT COUNT(*) FROM app_reviews r WHERE r.app_id = a.id) as reviews_count,
+                 (SELECT AVG(rating) FROM app_reviews r WHERE r.app_id = a.id) as avg_rating
+          FROM apps a WHERE a.status = 'approved' ORDER BY a.created_at DESC`,
+    args: []
+  }).then(rows),
+  // كل التطبيقات (لوحة المراجعة بـ console — كل الحالات)
+  listAllAppsForAdmin: () => db.execute({
+    sql: `SELECT a.*, (SELECT COUNT(*) FROM app_reviews r WHERE r.app_id = a.id) as reviews_count,
+                 (SELECT AVG(rating) FROM app_reviews r WHERE r.app_id = a.id) as avg_rating
+          FROM apps a ORDER BY
+            CASE a.status WHEN 'pending' THEN 0 ELSE 1 END, a.created_at DESC`,
+    args: []
+  }).then(rows),
+  getAppByToken: (token) => db.execute({
+    sql: `SELECT a.*, (SELECT COUNT(*) FROM app_reviews r WHERE r.app_id = a.id) as reviews_count,
+                 (SELECT AVG(rating) FROM app_reviews r WHERE r.app_id = a.id) as avg_rating
+          FROM apps a WHERE a.token = ?`,
+    args: [token]
+  }).then(r => rows(r)[0] || null),
+  getAppById: (id) => db.execute({ sql: 'SELECT * FROM apps WHERE id = ?', args: [id] }).then(r => rows(r)[0] || null),
+  setAppStatus: (id, status) => db.execute({ sql: "UPDATE apps SET status=? WHERE id=?", args: [status, id] }),
+  setAppWarning: (id, warning) => db.execute({ sql: "UPDATE apps SET warning=? WHERE id=?", args: [warning || '', id] }),
+  incrementAppDownloads: (id) => db.execute({ sql: 'UPDATE apps SET downloads_count = downloads_count + 1 WHERE id = ?', args: [id] }),
+  deleteApp: (id) => db.execute({ sql: 'DELETE FROM apps WHERE id = ?', args: [id] }),
+
+  listAppReviews: (appId) => db.execute({
+    sql: `SELECT r.*, COALESCE(u.avatar,'') as user_avatar FROM app_reviews r
+          LEFT JOIN users u ON u.id = r.user_id
+          WHERE r.app_id = ? ORDER BY r.created_at DESC`,
+    args: [appId]
+  }).then(rows),
+  upsertAppReview: (appId, userId, username, rating, comment) => db.execute({
+    sql: `INSERT INTO app_reviews (app_id,user_id,username,rating,comment) VALUES (?,?,?,?,?)
+          ON CONFLICT(app_id,user_id) DO UPDATE SET rating=excluded.rating, comment=excluded.comment, created_at=datetime('now')`,
+    args: [appId, userId, username, rating, comment || '']
+  }),
 };
 
 module.exports = { db, q, initDB };
