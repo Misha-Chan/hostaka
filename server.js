@@ -1589,6 +1589,176 @@ app.delete('/api/admin/apps/:id', requireAdmin, async (req, res) => {
 });
 
 // ============================================================
+// wiki.hostaka.fun — Hostaka Wiki (نظام نشر بالامتدادات/المواضيع)
+// ============================================================
+function generateWikiToken() { return crypto.randomBytes(10).toString('hex'); }
+// يطبّع اسم الامتداد عشان "Chat-Error" و"chat error" و"chat-error " كلها
+// تطابق نفس الامتداد بالضبط؛ يسمح بحروف عربي/إنجليزي وأرقام وشرطات فقط
+function normalizeExtension(str) {
+  return String(str || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\p{L}\p{N}_-]/gu, '')
+    .slice(0, 60);
+}
+// شكل موحّد للرد على العميل — نفصل حقول الناشر عن باقي المنشور، ونحدد
+// صراحة إذا الحساب admin (تُعرض شارة admin جانب اسم الناشر بالواجهة)
+function formatWikiPost(p) {
+  if (!p) return null;
+  return {
+    token: p.token, extension: p.extension, parent_token: null, // يُعبّى تحت لو احتجناه
+    title: p.title, body: p.body, image: p.image,
+    created_at: p.created_at, updated_at: p.updated_at,
+    comments_count: p.comments_count || 0,
+    is_comment: !!p.parent_id,
+    mentioned_username: p.mentioned_username || null,
+    author: {
+      username: p.author_username,
+      display_name: p.author_display_name || p.author_username,
+      avatar: p.author_avatar || '',
+      is_admin: p.author_role === 'admin'
+    }
+  };
+}
+
+app.get('/api/wiki/extensions', async (req, res) => {
+  try {
+    const search = normalizeExtension(req.query.q || '');
+    res.json(await q.searchWikiExtensions(search));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.get('/api/wiki/extensions/:extension/posts', async (req, res) => {
+  try {
+    const extension = normalizeExtension(req.params.extension);
+    const posts = await q.listWikiPostsByExtension(extension);
+    res.json(posts.map(formatWikiPost));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.get('/api/wiki/posts/:token', async (req, res) => {
+  try {
+    const post = await q.getWikiPostByToken(req.params.token);
+    if (!post) return res.status(404).json({ error: 'المنشور غير موجود' });
+    let parentToken = null;
+    if (post.parent_id) {
+      const parent = await q.getWikiPostById(post.parent_id);
+      parentToken = parent ? parent.token : null;
+    }
+    const formatted = formatWikiPost(post);
+    formatted.parent_token = parentToken;
+    res.json(formatted);
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.get('/api/wiki/posts/:token/comments', async (req, res) => {
+  try {
+    const post = await q.getWikiPostByToken(req.params.token);
+    if (!post) return res.status(404).json({ error: 'المنشور غير موجود' });
+    const comments = await q.listWikiComments(post.id);
+    res.json(comments.map(c => { const f = formatWikiPost(c); f.parent_token = post.token; return f; }));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.post('/api/wiki/posts', requireAuth, async (req, res) => {
+  try {
+    const extension = normalizeExtension(req.body?.extension);
+    const title = String(req.body?.title || '').trim().slice(0, 150);
+    const body = String(req.body?.body || '').trim().slice(0, 5000);
+    const image = String(req.body?.image || '').trim();
+    if (!extension) return res.status(400).json({ error: 'اسم الامتداد مطلوب' });
+    if (!title) return res.status(400).json({ error: 'عنوان المنشور مطلوب' });
+    if (!body) return res.status(400).json({ error: 'تفاصيل المنشور مطلوبة' });
+
+    const token = generateWikiToken();
+    await q.createWikiPost({ token, extension, parent_id: null, author_id: req.user.id, title, body, image });
+    res.json({ success: true, token, extension });
+  } catch(e) {
+    console.error('Create wiki post error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.post('/api/wiki/posts/:token/comments', requireAuth, async (req, res) => {
+  try {
+    const parent = await q.getWikiPostByToken(req.params.token);
+    if (!parent) return res.status(404).json({ error: 'المنشور غير موجود' });
+    const body = String(req.body?.body || '').trim().slice(0, 5000);
+    const image = String(req.body?.image || '').trim();
+    if (!body) return res.status(400).json({ error: 'نص الرد مطلوب' });
+
+    const token = generateWikiToken();
+    await q.createWikiPost({ token, extension: parent.extension, parent_id: parent.id, author_id: req.user.id, title: '', body, image });
+    res.json({ success: true, token, extension: parent.extension });
+  } catch(e) {
+    console.error('Create wiki comment error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.put('/api/wiki/posts/:token', requireAuth, async (req, res) => {
+  try {
+    const post = await q.getWikiPostByToken(req.params.token);
+    if (!post) return res.status(404).json({ error: 'المنشور غير موجود' });
+    if (post.author_id !== req.user.id) return res.status(403).json({ error: 'ما تقدر تعدّل منشور مو لك' });
+
+    const title = post.parent_id ? '' : String(req.body?.title ?? post.title).trim().slice(0, 150);
+    const body = String(req.body?.body ?? post.body).trim().slice(0, 5000);
+    const image = String(req.body?.image ?? post.image).trim();
+    if (!post.parent_id && !title) return res.status(400).json({ error: 'عنوان المنشور مطلوب' });
+    if (!body) return res.status(400).json({ error: 'تفاصيل المنشور مطلوبة' });
+
+    await q.updateWikiPost(post.id, { title, body, image });
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.delete('/api/wiki/posts/:token', requireAuth, async (req, res) => {
+  try {
+    const post = await q.getWikiPostByToken(req.params.token);
+    if (!post) return res.status(404).json({ error: 'المنشور غير موجود' });
+    const isOwner = post.author_id === req.user.id;
+    const isStaff = req.user.role === 'admin' || req.user.role === 'moderator';
+    if (!isOwner && !isStaff) return res.status(403).json({ error: 'ما تقدر تحذف منشور مو لك' });
+    await q.deleteWikiPost(post.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ── لوحة مراجعة الويكي (console-facing) — المنشورات تُنشر فوراً بلا
+// موافقة مسبقة، فدور الإدارة هنا تنظيف/حذف المسيء بس، بدون approve/reject ──
+app.get('/api/admin/wiki-posts', requireModerator, async (req, res) => {
+  try {
+    const search = (req.query.q || '').trim();
+    const list = await q.listAllWikiPostsForAdmin(search);
+    res.json(list.map(p => ({ ...formatWikiPost(p), id: p.id })));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.delete('/api/admin/wiki-posts/:id', requireAdmin, async (req, res) => {
+  try {
+    await q.deleteWikiPost(req.params.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ============================================================
 // Hostaka Video (فيديوهات عادية/أفقية — تُعرض بطريقة يوتيوب في /video)
 // ============================================================
 app.get('/api/videos', async (req, res) => {
@@ -3670,6 +3840,57 @@ app.get('/app/:token', async (req, res) => {
     } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
   }
   sendAppsRedirect(req, res, '/app?id=' + encodeURIComponent(tok), meta);
+});
+
+// ============================================================
+// wiki.hostaka.fun — Hostaka Wiki (نفس أسلوب /apps بالضبط)
+// ============================================================
+const WIKI_BASE = process.env.WIKI_BASE || 'https://wiki.hostaka.fun';
+function sendWikiRedirect(req, res, path, meta) {
+  const baseHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
+<script>
+(function () {
+  var token = localStorage.getItem('hostaka_token') || '';
+  var qs = new URLSearchParams(window.location.search);
+  if (token) qs.set('token', token);
+  var q = qs.toString();
+  window.location.replace('${WIKI_BASE}${path}' + (q ? '?' + q : ''));
+})();
+</script>
+</body></html>`;
+  res.set('Content-Type', 'text/html; charset=utf-8').send(injectOG(baseHtml, meta || {}));
+}
+
+app.get('/wiki', (req, res) => {
+  sendWikiRedirect(req, res, '/', baseMeta(req, 'Hostaka Wiki'));
+});
+// نموذج منشور جديد — خاص (يتطلب تسجيل دخول)، بدون فهرسة؛ ?ext= (لو موجود)
+// ينمرّر تلقائياً مع باقي الـ query string عبر sendWikiRedirect
+app.get('/wiki/new', (req, res) => {
+  sendWikiRedirect(req, res, '/new', privateMeta(req, 'منشور جديد بالويكي'));
+});
+// صفحة امتداد (موضوع) — قائمة كل المنشورات الأصلية تحته
+app.get('/wiki/:extension', (req, res) => {
+  const ext = (req.params.extension || '').trim();
+  const meta = baseMeta(req, `${ext} · Hostaka Wiki`);
+  sendWikiRedirect(req, res, '/' + encodeURIComponent(ext), meta);
+});
+// منشور فردي (أصلي أو تعليق/رد — كلهم بنفس الشكل وتوكن مستقل)
+app.get('/wiki/:extension/:token', async (req, res) => {
+  const ext = (req.params.extension || '').trim();
+  const tok = (req.params.token || '').trim();
+  const meta = baseMeta(req, `${ext} · Hostaka Wiki`);
+  if (tok) {
+    try {
+      const post = await q.getWikiPostByToken(tok);
+      if (post) {
+        meta.title = post.title ? `${post.title} · Hostaka Wiki` : `رد من @${post.author_username} · Hostaka Wiki`;
+        meta.description = ogTruncate(post.body) || DEFAULT_DESC;
+        if (post.image) meta.image = absUrl(req, post.image);
+      }
+    } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
+  }
+  sendWikiRedirect(req, res, '/' + encodeURIComponent(ext) + '/' + encodeURIComponent(tok), meta);
 });
 
 // ============================================================
