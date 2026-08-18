@@ -316,6 +316,26 @@ async function initDB() {
       UNIQUE(app_id, user_id)
     );
     CREATE INDEX IF NOT EXISTS idx_app_reviews_app ON app_reviews(app_id);
+
+    -- ===== جدول منشورات wiki.hostaka.fun (Hostaka Wiki) =====
+    -- منشور أصلي (parent_id فاضي) ينشئ/ينضم لامتداد (extension) موجود؛
+    -- تعليق/رد (parent_id معبّى) يشاور لأي منشور آخر (أصلي أو تعليق ثاني)
+    -- بنفس الجدول، وياخذ توكن ورابط مستقل مثل أي منشور تماماً.
+    CREATE TABLE IF NOT EXISTS wiki_posts (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      token      TEXT NOT NULL UNIQUE,
+      extension  TEXT NOT NULL DEFAULT '',
+      parent_id  INTEGER REFERENCES wiki_posts(id) ON DELETE CASCADE,
+      author_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      title      TEXT NOT NULL DEFAULT '',
+      body       TEXT NOT NULL DEFAULT '',
+      image      TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_wiki_posts_extension ON wiki_posts(extension);
+    CREATE INDEX IF NOT EXISTS idx_wiki_posts_parent ON wiki_posts(parent_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_wiki_posts_token ON wiki_posts(token);
   `);
 
   // Migrations — إضافة أعمدة مفقودة
@@ -458,6 +478,22 @@ async function initDB() {
 // ──────────────────────────────────────────────────────────────
 //  QUERIES
 // ──────────────────────────────────────────────────────────────
+
+// SELECT مشترك لمنشورات wiki.hostaka.fun — يجيب معلومات الناشر (بما فيها
+// الدور، لعرض شارة admin)، وعدد التعليقات، واسم المستخدم اللي يتّم "تاغه"
+// بـ @ لو المنشور نفسه تعليق/رد (يعني صاحب المنشور الأب اللي رد عليه)
+const WIKI_POST_SELECT = `
+  SELECT wp.*,
+         u.username as author_username, u.display_name as author_display_name,
+         COALESCE(u.avatar,'') as author_avatar, u.role as author_role,
+         (SELECT COUNT(*) FROM wiki_posts c WHERE c.parent_id = wp.id) as comments_count,
+         pu.username as mentioned_username
+  FROM wiki_posts wp
+  JOIN users u ON u.id = wp.author_id
+  LEFT JOIN wiki_posts pp ON pp.id = wp.parent_id
+  LEFT JOIN users pu ON pu.id = pp.author_id
+`;
+
 const q = {
   // ── Users ──
   getUserByEmail:   (email)    => db.execute({ sql:'SELECT * FROM users WHERE email=?', args:[email] }).then(first),
@@ -1132,6 +1168,45 @@ const q = {
           ON CONFLICT(app_id,user_id) DO UPDATE SET rating=excluded.rating, comment=excluded.comment, created_at=datetime('now')`,
     args: [appId, userId, username, rating, comment || '']
   }),
+
+  // ============================================================
+  // wiki.hostaka.fun — Hostaka Wiki
+  // ============================================================
+  createWikiPost: (p) => db.execute({
+    sql: `INSERT INTO wiki_posts (token,extension,parent_id,author_id,title,body,image)
+          VALUES (?,?,?,?,?,?,?)`,
+    args: [p.token, p.extension, p.parent_id || null, p.author_id, p.title || '', p.body || '', p.image || '']
+  }),
+  getWikiPostById: (id) => db.execute({ sql: 'SELECT * FROM wiki_posts WHERE id = ?', args: [id] }).then(r => rows(r)[0] || null),
+  getWikiPostByToken: (token) => db.execute({
+    sql: `${WIKI_POST_SELECT} WHERE wp.token = ?`,
+    args: [token]
+  }).then(r => rows(r)[0] || null),
+  listWikiPostsByExtension: (extension) => db.execute({
+    sql: `${WIKI_POST_SELECT} WHERE wp.extension = ? AND wp.parent_id IS NULL ORDER BY wp.created_at DESC`,
+    args: [extension]
+  }).then(rows),
+  listWikiComments: (parentId) => db.execute({
+    sql: `${WIKI_POST_SELECT} WHERE wp.parent_id = ? ORDER BY wp.created_at ASC`,
+    args: [parentId]
+  }).then(rows),
+  searchWikiExtensions: (search) => db.execute({
+    sql: `SELECT extension, COUNT(*) as posts_count, MAX(created_at) as last_activity
+          FROM wiki_posts WHERE parent_id IS NULL AND (? = '' OR extension LIKE ?)
+          GROUP BY extension ORDER BY last_activity DESC LIMIT 50`,
+    args: [search || '', '%' + (search || '') + '%']
+  }).then(rows),
+  updateWikiPost: (id, { title, body, image }) => db.execute({
+    sql: `UPDATE wiki_posts SET title=?, body=?, image=?, updated_at=datetime('now') WHERE id=?`,
+    args: [title || '', body || '', image || '', id]
+  }),
+  deleteWikiPost: (id) => db.execute({ sql: 'DELETE FROM wiki_posts WHERE id = ?', args: [id] }),
+  listAllWikiPostsForAdmin: (search) => db.execute({
+    sql: `${WIKI_POST_SELECT}
+          WHERE (? = '' OR wp.extension LIKE ? OR wp.title LIKE ? OR wp.body LIKE ? OR u.username LIKE ?)
+          ORDER BY wp.created_at DESC LIMIT 200`,
+    args: (() => { const s = '%' + (search || '') + '%'; return [search || '', s, s, s, s]; })()
+  }).then(rows),
 };
 
 module.exports = { db, q, initDB };
