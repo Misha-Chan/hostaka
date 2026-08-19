@@ -268,6 +268,14 @@ const CODE_TTL_MINUTES   = 10;   // صلاحية الكود بالدقائق
 const RESEND_COOLDOWN_S  = 45;   // مدة الانتظار قبل إعادة إرسال الكود (ثواني)
 const MAX_CODE_ATTEMPTS  = 5;    // أقصى عدد محاولات لإدخال الكود
 
+// نسخة PIN الاحتياطية لمفتاح التشفير — حماية ضد تخمين الرمز عبر الـ API.
+// ملاحظة: هذا يحمي من التخمين "المباشر عبر السيرفر" (المهدِّد الأكثر واقعية:
+// جلسة مسروقة). لا يوجد حل برمجي بحت يمنع تخمين رمز 6 أرقام بالكامل لو
+// تسرّبت قاعدة البيانات نفسها بالكامل — هذا قيد أساسي لأي رمز قصير، وليس
+// نقص حماية بهذا الكود تحديداً.
+const PIN_MAX_ATTEMPTS      = 5;   // أقصى عدد محاولات قبل القفل المؤقت
+const PIN_LOCKOUT_MINUTES   = 15;  // مدة القفل المؤقت بعد تجاوز المحاولات
+
 function generateCode() {
   return String(crypto.randomInt(100000, 999999)); // كود من 6 أرقام
 }
@@ -3013,6 +3021,120 @@ app.get('/api/keys/:username', requireAuth, async (req, res) => {
     const user = await q.getUserByUsername(req.params.username);
     if (!user) return res.status(404).json({ error: 'غير موجود' });
     res.json({ publicKey: user.public_key || null });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ===== E2E encryption — نسخة PIN الاحتياطية لمفتاح التشفير =====
+// السيرفر لا يرى الرمز (PIN) ولا المفتاح الخاص بصيغة قابلة للقراءة أبداً؛
+// كل شيء يُشفَّر/يُفكّ من طرف المتصفح فقط. دور السيرفر هنا:
+//  1) تخزين البيانات المشفّرة (salt/iv/wrapped_key) كما هي.
+//  2) التحقق من "verifier" (بصمة أحادية الاتجاه) قبل ما يرجّع wrapped_key،
+//     وتطبيق قفل مؤقت بعد عدة محاولات خاطئة — هذا يحمي من تخمين الرمز عبر
+//     الـ API (مثلاً لو انسرق توكن الدخول)، لكنه لا يحمي من تسريب كامل
+//     لقاعدة البيانات (انظر الملاحظة أعلى الملف).
+function keyBackupIsLocked(backup) {
+  if (!backup || !backup.locked_until) return false;
+  return parseSqliteUTC(backup.locked_until).getTime() > Date.now();
+}
+
+app.get('/api/keys/pin-status', requireAuth, async (req, res) => {
+  try {
+    const backup = await q.getKeyBackup(req.user.id);
+    if (!backup) return res.json({ hasBackup: false });
+    const locked = keyBackupIsLocked(backup);
+    res.json({
+      hasBackup: true,
+      locked,
+      lockedUntil: locked ? backup.locked_until : null,
+      attemptsRemaining: locked ? 0 : Math.max(0, PIN_MAX_ATTEMPTS - (backup.failed_attempts || 0)),
+      salt: backup.salt,
+      iterations: backup.iterations,
+    });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.post('/api/keys/pin-setup', requireAuth, async (req, res) => {
+  try {
+    const { salt, iv, wrappedKey, verifier, iterations } = req.body || {};
+    if (!salt || !iv || !wrappedKey || !verifier) {
+      return res.status(400).json({ error: 'بيانات غير مكتملة' });
+    }
+    const iters = Number(iterations) || 0;
+    if (iters < 200000 || iters > 2000000) {
+      return res.status(400).json({ error: 'عدد تكرارات KDF غير مقبول' });
+    }
+    if (String(wrappedKey).length > 20000 || String(salt).length > 500 || String(iv).length > 500 || String(verifier).length > 500) {
+      return res.status(400).json({ error: 'بيانات كبيرة بشكل غير متوقع' });
+    }
+    await q.upsertKeyBackup(req.user.id, { salt, iv, wrappedKey, verifier, iterations: iters });
+    res.json({ success: true });
+  } catch(e) {
+    console.error('❌ pin-setup error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.post('/api/keys/pin-unlock', requireAuth, async (req, res) => {
+  try {
+    const { verifier } = req.body || {};
+    if (!verifier || typeof verifier !== 'string') {
+      return res.status(400).json({ error: 'verifier مطلوب' });
+    }
+    const backup = await q.getKeyBackup(req.user.id);
+    if (!backup) return res.status(404).json({ error: 'لا يوجد نسخة احتياطية' });
+
+    if (keyBackupIsLocked(backup)) {
+      return res.status(429).json({
+        error: `تم تجاوز عدد المحاولات، حاول بعد ${PIN_LOCKOUT_MINUTES} دقيقة`,
+        lockedUntil: backup.locked_until,
+      });
+    }
+
+    // مقارنة بوقت ثابت (constant-time) لتفادي تسريب معلومة عن الفرق عبر توقيت الاستجابة
+    const a = Buffer.from(String(verifier));
+    const b = Buffer.from(String(backup.verifier));
+    const match = a.length === b.length && crypto.timingSafeEqual(a, b);
+
+    if (!match) {
+      const attempts = (backup.failed_attempts || 0) + 1;
+      await q.incrementKeyBackupFailedAttempts(req.user.id);
+      if (attempts >= PIN_MAX_ATTEMPTS) {
+        const lockedUntil = new Date(Date.now() + PIN_LOCKOUT_MINUTES * 60000).toISOString().replace('T', ' ').slice(0, 19);
+        await q.lockKeyBackup(req.user.id, lockedUntil);
+        return res.status(429).json({
+          error: `تم تجاوز عدد المحاولات، حاول بعد ${PIN_LOCKOUT_MINUTES} دقيقة`,
+          lockedUntil,
+        });
+      }
+      return res.status(401).json({
+        error: 'رمز PIN غير صحيح',
+        attemptsRemaining: Math.max(0, PIN_MAX_ATTEMPTS - attempts),
+      });
+    }
+
+    await q.resetKeyBackupFailedAttempts(req.user.id);
+    res.json({ wrappedKey: backup.wrapped_key, iv: backup.iv });
+  } catch(e) {
+    console.error('❌ pin-unlock error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// إلغاء النسخة الاحتياطية (مثلاً قبل إعادة تعيينها برمز جديد من صفحة الإعدادات)
+// يتطلب كلمة مرور الحساب الحالية كحماية إضافية — وليس اعتماداً على التوكن فقط.
+app.delete('/api/keys/pin', requireAuth, async (req, res) => {
+  try {
+    const { password } = req.body || {};
+    const dbUser = await q.getUserById(req.user.id);
+    if (!dbUser || !password || !bcrypt.compareSync(String(password), dbUser.password)) {
+      return res.status(401).json({ error: 'كلمة المرور غير صحيحة' });
+    }
+    await q.deleteKeyBackup(req.user.id);
+    res.json({ success: true });
   } catch(e) {
     res.status(500).json({ error: 'خطأ في الخادم' });
   }

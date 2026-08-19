@@ -439,6 +439,14 @@ async function initDB() {
     "ALTER TABLE users ADD COLUMN public_key TEXT DEFAULT ''",       // مفتاح ECDH العام للمستخدم (raw، Base64)
     "ALTER TABLE messages ADD COLUMN iv TEXT DEFAULT ''",            // متجه التهيئة (IV) الخاص بتشفير AES-GCM لكل رسالة
     "ALTER TABLE messages ADD COLUMN encrypted INTEGER DEFAULT 0",   // 1 إذا كان content مشفّراً من طرف لطرف
+    // ✅ نسخة احتياطية لمفتاح التشفير الخاص، مغلّفة برمز PIN مكون من 6 أرقام.
+    // تحل مشكلة فقدان فك تشفير الرسائل القديمة عند تغيّر الجلسة/الجهاز/النطاق
+    // الفرعي: بدل ما كل origin يولّد مفتاح خاص جديد (ويكسر التوافق مع اللي قبله)،
+    // أي origin/جهاز جديد يسترجع نفس المفتاح الأصلي عبر فك تغليف هذه النسخة
+    // بالرمز. السيرفر لا يخزّن الـ PIN نفسه ولا المفتاح بصيغة قابلة للقراءة —
+    // فقط: salt عشوائي، iv، النص المشفّر (wrapped_key)، وverifier (بصمة أحادية
+    // الاتجاه تسمح للسيرفر يتحقق من صحة المحاولة قبل ما يرجّع wrapped_key).
+    "CREATE TABLE IF NOT EXISTS key_backups (user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, salt TEXT NOT NULL, iv TEXT NOT NULL, wrapped_key TEXT NOT NULL, verifier TEXT NOT NULL, iterations INTEGER NOT NULL DEFAULT 600000, failed_attempts INTEGER NOT NULL DEFAULT 0, locked_until TEXT DEFAULT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')))",
   ];
   for (const sql of migrations) {
     try { await db.execute(sql); } catch(e) { /* column/table already exists */ }
@@ -524,6 +532,33 @@ const q = {
   createVerifiedUser: (username,email,password) => db.execute({ sql:'INSERT INTO users (username,email,password,email_verified) VALUES (?,?,?,1)', args:[username,email,password] }),
   getUserByUsername: (username) => db.execute({ sql:'SELECT * FROM users WHERE username=?', args:[username] }).then(first),
   setUserPublicKey: (userId, publicKey) => db.execute({ sql:'UPDATE users SET public_key=? WHERE id=?', args:[publicKey, userId] }),
+
+  // ===== نسخة PIN الاحتياطية لمفتاح التشفير (E2E) =====
+  getKeyBackup: (userId) => db.execute({
+    sql: 'SELECT * FROM key_backups WHERE user_id=?', args: [userId]
+  }).then(first),
+  upsertKeyBackup: (userId, { salt, iv, wrappedKey, verifier, iterations }) => db.execute({
+    sql: `INSERT INTO key_backups (user_id, salt, iv, wrapped_key, verifier, iterations, failed_attempts, locked_until, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, 0, NULL, datetime('now'))
+          ON CONFLICT(user_id) DO UPDATE SET
+            salt=excluded.salt, iv=excluded.iv, wrapped_key=excluded.wrapped_key,
+            verifier=excluded.verifier, iterations=excluded.iterations,
+            failed_attempts=0, locked_until=NULL, updated_at=datetime('now')`,
+    args: [userId, salt, iv, wrappedKey, verifier, iterations]
+  }),
+  deleteKeyBackup: (userId) => db.execute({ sql: 'DELETE FROM key_backups WHERE user_id=?', args: [userId] }),
+  incrementKeyBackupFailedAttempts: (userId) => db.execute({
+    sql: `UPDATE key_backups SET failed_attempts = failed_attempts + 1, updated_at = datetime('now') WHERE user_id=?`,
+    args: [userId]
+  }),
+  lockKeyBackup: (userId, lockedUntilIso) => db.execute({
+    sql: `UPDATE key_backups SET locked_until=?, updated_at=datetime('now') WHERE user_id=?`,
+    args: [lockedUntilIso, userId]
+  }),
+  resetKeyBackupFailedAttempts: (userId) => db.execute({
+    sql: `UPDATE key_backups SET failed_attempts=0, locked_until=NULL, updated_at=datetime('now') WHERE user_id=?`,
+    args: [userId]
+  }),
   updateUserPasswordByEmail: (email, passwordHash) => db.execute({ sql:'UPDATE users SET password=? WHERE email=?', args:[passwordHash, email] }),
   updateProfile:    (display_name,bio,game_id,avatar,cover,id,country,favorite_song,school,certificates) => db.execute({ sql:'UPDATE users SET display_name=?,bio=?,game_id=?,avatar=?,cover=?,country=?,favorite_song=?,school=?,certificates=? WHERE id=?', args:[display_name,bio,game_id,avatar,cover,country||'',favorite_song||'',school||'',certificates||'',id] }),
   updatePrivacy:        (id, isPrivate) => db.execute({ sql:'UPDATE users SET is_private=? WHERE id=?', args:[isPrivate?1:0, id] }),

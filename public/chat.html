@@ -14,6 +14,7 @@
 <script src="/i18n.js"></script>
 <script src="/modal.js"></script>
 <script src="/crypto.js"></script>
+<script src="/pin-modal.js"></script>
 </head>
 <body class="page-chat">
 
@@ -28,6 +29,7 @@
       <span id="backText">Hostaka</span>
     </a>
     <span class="topbar-title" id="topbarTitle" data-i18n="chat.title">Messages</span>
+    <button class="icon-btn" id="pinUnlockBtn" onclick="window.HostakaPinModal && window.HostakaPinModal.ensureUnlocked()" style="display:none;" title="Unlock encrypted messages">🔒</button>
   </div>
   <div class="topbar-right">
     <div class="peer-opts-wrap" id="peerOptsWrap" style="position:relative;display:none;">
