@@ -561,6 +561,10 @@ async function init() {
   } catch (e) { showNotLogged(); return; }
 
   if (window.HostakaCrypto) window.HostakaCrypto.ensureKeysRegistered();
+  if (window.HostakaPinModal) {
+    await window.HostakaPinModal.ensureUnlocked();
+    await refreshPinUnlockButton();
+  }
 
   await loadSidebar();
 
@@ -570,6 +574,24 @@ async function init() {
     setTimeout(() => openChat(withUser), 100);
   }
 }
+
+// ============================================================
+//  زر فتح تشفير الرسائل (يظهر فقط لو الجلسة الحالية تحتاج رمز PIN)
+// ============================================================
+async function refreshPinUnlockButton() {
+  const btn = document.getElementById('pinUnlockBtn');
+  if (!btn || !window.HostakaCrypto) return;
+  try {
+    const status = await window.HostakaCrypto.getIdentityStatus();
+    btn.style.display = (status.status === 'ready') ? 'none' : '';
+  } catch (e) { /* تجاهل، الزر يبقى مخفي بالحالة الافتراضية */ }
+}
+
+window.addEventListener('hostaka:identity-unlocked', async () => {
+  await refreshPinUnlockButton();
+  await loadSidebar();
+  if (currentPeer) await loadMsgs(currentPeer, false);
+});
 
 function showNotLogged() {
   document.getElementById('chatMain').innerHTML = `<div class="not-logged">${SVG.user}<h2>${t('loginRequired')}</h2><p>${t('loginRequired')}</p><a href="/" class="btn-go">${SVG.arrow}${t('home')}</a></div>`;

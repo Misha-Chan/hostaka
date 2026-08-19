@@ -46,6 +46,71 @@ function setThemeIcon(html) {
   });
 })();
 
+/* ================= مزامنة الثيم بين نطاقات هوستاكا الفرعية =================
+ * السبب الجذري للمشكلة: كل نطاق فرعي (orbithub.hostaka.fun، console.hostaka.fun،
+ * hostaka.fun نفسه...) عنده localStorage منفصل تماماً (كل origin له تخزين خاص
+ * بيه، هذا سلوك المتصفح الطبيعي)، فتبديل الثيم بنطاق فرعي واحد ما ينعكس على
+ * الباقي. الحل: كوكي واحدة مشتركة على مستوى Domain=.hostaka.fun (تُقرأ من كل
+ * النطاقات الفرعية) تُستخدم كمرآة لقيمة hostaka_theme المحلية:
+ *   - عند تحميل أي صفحة: لو الكوكي المشتركة تختلف عن القيمة المحلية، نحدّث
+ *     localStorage بقيمة الكوكي *قبل* ما كود الصفحة (chat.js/script.js...)
+ *     يقرأ hostaka_theme — بما إنه shared.js يُحمَّل (defer) قبل سكربتات
+ *     الصفحة بالترتيب دايماً، هذا كافي بدون أي تعديل على كل صفحة لحالها.
+ *   - عند أي تغيير فعلي للثيم (بأي صفحة، بأي طريقة: زر يدوي أو تلقائي حسب
+ *     النظام) — نراقب تغيّر خاصية data-theme على <html> عبر MutationObserver
+ *     بدل ما نعدّل كل دالة setTheme() بكل ملف (مكرّرة بعدة أماكن)، ونعكس
+ *     القيمة الجديدة على الكوكي المشتركة فوراً.
+ * ملاحظة: لو الموقع يشتغل على نطاق غير hostaka.fun (تطوير محلي / preview)
+ * المتصفح ببساطة يتجاهل الكوكي بـ Domain=.hostaka.fun (فشل صامت وآمن) —
+ * يبقى localStorage العادي شغّال داخل نفس النطاق كما كان.
+ */
+(function () {
+  var COOKIE_NAME = 'hostaka_theme';
+  var LS_KEY = 'hostaka_theme';
+  var isHostakaDomain = /(^|\.)hostaka\.fun$/.test(location.hostname);
+  var COOKIE_DOMAIN = isHostakaDomain ? '.hostaka.fun' : null;
+  var MAX_AGE = 60 * 60 * 24 * 365; // سنة كاملة
+
+  function readCookie(name) {
+    var m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  function writeCookie(name, value) {
+    if (!COOKIE_DOMAIN) return; // ما نكتب كوكي دومين-واسع على نطاق مش تابع لهوستاكا
+    try {
+      document.cookie = name + '=' + encodeURIComponent(value) +
+        '; Max-Age=' + MAX_AGE + '; Path=/; Domain=' + COOKIE_DOMAIN + '; SameSite=Lax';
+    } catch (e) {}
+  }
+
+  // 1) مزامنة عند التحميل: الكوكي المشتركة (لو موجودة) هي "آخر قيمة معروفة
+  //    عبر كل النطاقات"، فتفوز على القيمة المحلية القديمة بهذا النطاق تحديداً.
+  try {
+    var cookieVal = readCookie(COOKIE_NAME);
+    var localVal = localStorage.getItem(LS_KEY);
+    if (cookieVal && cookieVal !== localVal) {
+      localStorage.setItem(LS_KEY, cookieVal);
+    } else if (!cookieVal && localVal) {
+      writeCookie(COOKIE_NAME, localVal); // أول مرة نهجّر فيها قيمة كانت محلية بس
+    }
+  } catch (e) {}
+
+  // 2) مزامنة عند أي تغيير فعلي (بغض النظر شو الصفحة أو الزر يلي استخدمه):
+  //    setTheme() بكل الصفحات دايماً تعدّل data-theme على <html>، فمراقبتها
+  //    نقطة مركزية وحيدة تغطي كل الحالات بدون تكرار الكود بكل ملف.
+  function mirrorNow() {
+    try {
+      var v = localStorage.getItem(LS_KEY);
+      if (v && v !== readCookie(COOKIE_NAME)) writeCookie(COOKIE_NAME, v);
+    } catch (e) {}
+  }
+  try {
+    new MutationObserver(mirrorNow).observe(document.documentElement, {
+      attributes: true, attributeFilter: ['data-theme']
+    });
+  } catch (e) {}
+})();
+
 /* ================= تتبّع الزيارات (لوحة الإدارة) ================= */
 (function () {
   try {
