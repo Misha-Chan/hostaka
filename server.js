@@ -3016,16 +3016,6 @@ app.post('/api/keys/register', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/keys/:username', requireAuth, async (req, res) => {
-  try {
-    const user = await q.getUserByUsername(req.params.username);
-    if (!user) return res.status(404).json({ error: 'غير موجود' });
-    res.json({ publicKey: user.public_key || null });
-  } catch(e) {
-    res.status(500).json({ error: 'خطأ في الخادم' });
-  }
-});
-
 // ===== E2E encryption — نسخة PIN الاحتياطية لمفتاح التشفير =====
 // السيرفر لا يرى الرمز (PIN) ولا المفتاح الخاص بصيغة قابلة للقراءة أبداً؛
 // كل شيء يُشفَّر/يُفكّ من طرف المتصفح فقط. دور السيرفر هنا:
@@ -3034,6 +3024,12 @@ app.get('/api/keys/:username', requireAuth, async (req, res) => {
 //     وتطبيق قفل مؤقت بعد عدة محاولات خاطئة — هذا يحمي من تخمين الرمز عبر
 //     الـ API (مثلاً لو انسرق توكن الدخول)، لكنه لا يحمي من تسريب كامل
 //     لقاعدة البيانات (انظر الملاحظة أعلى الملف).
+//
+// ⚠️ مهم: هذه الراوتات لازم تُعرَّف *قبل* GET /api/keys/:username تحت —
+// إكسبريس يطابق الراوتات بترتيب تعريفها بالكود، و:username بارامتر عام
+// بيطابق أي نص، فلو صارت بعده، أي طلب لـ GET /api/keys/pin-status كان
+// رح يوصل لراوت :username (يفهمها كأنها اسم مستخدم "pin-status" ويرجع
+// 404) وأبداً ما توصل لهاندلر الـ PIN الحقيقي تحت.
 function keyBackupIsLocked(backup) {
   if (!backup || !backup.locked_until) return false;
   return parseSqliteUTC(backup.locked_until).getTime() > Date.now();
@@ -3129,12 +3125,25 @@ app.post('/api/keys/pin-unlock', requireAuth, async (req, res) => {
 app.delete('/api/keys/pin', requireAuth, async (req, res) => {
   try {
     const { password } = req.body || {};
-    const dbUser = await q.getUserById(req.user.id);
+    const dbUser = await q.getUserByIdFull(req.user.id);
     if (!dbUser || !password || !bcrypt.compareSync(String(password), dbUser.password)) {
       return res.status(401).json({ error: 'كلمة المرور غير صحيحة' });
     }
     await q.deleteKeyBackup(req.user.id);
     res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ⚠️ لازم يبقى مُعرَّف بعد كل راوتات /api/keys/pin-* فوق (انظر التحذير
+// فوق pin-status) — لأنه :username بارامتر عام بيمسك أي نص، وبيصير
+// يبلعهم لو انحطّ قبلهم.
+app.get('/api/keys/:username', requireAuth, async (req, res) => {
+  try {
+    const user = await q.getUserByUsername(req.params.username);
+    if (!user) return res.status(404).json({ error: 'غير موجود' });
+    res.json({ publicKey: user.public_key || null });
   } catch(e) {
     res.status(500).json({ error: 'خطأ في الخادم' });
   }
