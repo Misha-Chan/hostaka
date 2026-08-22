@@ -111,6 +111,65 @@ function setThemeIcon(html) {
   } catch (e) {}
 })();
 
+/* ================= مزامنة جلسة الدخول مع orbithub (نظام المراسلات) =================
+ * orbithub.hostaka.fun فرع تابع لـ Hostaka وليس منتجاً مستقلاً — ما فيه
+ * تسجيل دخول خاص فيه، لازم يستخدم نفس جلسة Hostaka. نفس مشكلة الثيم أعلاه
+ * بالضبط (localStorage معزول لكل نطاق فرعي)، ونفس الحل: كوكي مشتركة على
+ * Domain=.hostaka.fun، بس هذه المرة لمفاتيح الجلسة (hostaka_token/
+ * hostaka_user/hostaka_role) بدل الثيم.
+ * بما إن هذي المفاتيح تُكتب/تُحذف مباشرة عبر localStorage.setItem/removeItem
+ * بعدة ملفات (login.js، script.js دالة doLogout عبر clearUser...) بدل ما
+ * نلاحق كل مكان، نعترض الدالتين نفسهما مرة وحدة هنا فقط لهذه المفاتيح
+ * الثلاثة تحديداً — أي كود موجود أو مستقبلي يكتب/يحذف hostaka_token بأي
+ * ملف ينعكس تلقائياً على الكوكي المشتركة بدون أي تعديل إضافي.
+ */
+(function () {
+  var SESSION_KEYS = ['hostaka_token', 'hostaka_user', 'hostaka_role'];
+  var COOKIE_DOMAIN = /(^|\.)hostaka\.fun$/.test(location.hostname) ? '.hostaka.fun' : null;
+  var MAX_AGE = 60 * 60 * 24 * 30; // 30 يوم (نفس مدة صلاحية التوكن تقريباً)
+
+  var SECURE = location.protocol === 'https:' ? '; Secure' : '';
+  function writeSessionCookie(name, value) {
+    if (!COOKIE_DOMAIN) return;
+    try {
+      if (value) {
+        document.cookie = name + '=' + encodeURIComponent(value) +
+          '; Max-Age=' + MAX_AGE + '; Path=/; Domain=' + COOKIE_DOMAIN + '; SameSite=Lax' + SECURE;
+      } else {
+        document.cookie = name + '=; Max-Age=0; Path=/; Domain=' + COOKIE_DOMAIN + SECURE;
+      }
+    } catch (e) {}
+  }
+  function readSessionCookie(name) {
+    var m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
+  // عند التحميل: لو فيه جلسة محلية بهذا النطاق ولسا ما انعكست على الكوكي
+  // المشتركة (أول مرة بعد هذا التحديث مثلاً)، صدّرها فوراً.
+  try {
+    SESSION_KEYS.forEach(function (k) {
+      var local = localStorage.getItem(k);
+      if (local && readSessionCookie(k) !== local) writeSessionCookie(k, local);
+    });
+  } catch (e) {}
+
+  // اعتراض الكتابة/الحذف المستقبلية لمفاتيح الجلسة فقط — بقية مفاتيح
+  // localStorage (لغة، ثيم محلي، تفضيلات...) تمر بدون أي تغيير في السلوك.
+  try {
+    var _setItem = localStorage.setItem.bind(localStorage);
+    var _removeItem = localStorage.removeItem.bind(localStorage);
+    localStorage.setItem = function (key, value) {
+      _setItem(key, value);
+      if (SESSION_KEYS.indexOf(key) !== -1) writeSessionCookie(key, value);
+    };
+    localStorage.removeItem = function (key) {
+      _removeItem(key);
+      if (SESSION_KEYS.indexOf(key) !== -1) writeSessionCookie(key, '');
+    };
+  } catch (e) {}
+})();
+
 /* ================= تتبّع الزيارات (لوحة الإدارة) ================= */
 (function () {
   try {
