@@ -164,7 +164,11 @@ body.page-index .hashtag-tag {color:var(--primary);font-weight:700;text-decorati
 body.page-index .hashtag-tag:hover {text-decoration:underline;opacity:0.8;}
 body.page-index .post-opts-wrap {position:relative;}
 body.page-index .post-opts-menu {
-      position:absolute;top:42px;left:0;
+      position:absolute;top:42px;
+      /* نفس إصلاح قائمة الرياكشن: inset-inline-end بدل left الثابت كي تنفتح
+         دايماً باتجاه داخل البطاقة (يمين بالعربي، يسار بالإنجليزي) بدل ما
+         تفيض خارج حافة الشاشة بأحد الاتجاهين */
+      inset-inline-end:0;
       background:var(--modal-bg);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
       border:1px solid var(--border);border-radius:var(--radius-md);min-width:180px;
       opacity:0;visibility:hidden;transform:translateY(-8px) scale(0.96);
@@ -569,7 +573,12 @@ body.page-index .react-main-btn.reacted {background:var(--primary-light);border-
 body.page-index .react-main-btn:active {transform:scale(0.94);}
 body.page-index .react-main-btn svg {width:16px;height:16px;}
 body.page-index .react-menu {
-      position:absolute;bottom:calc(100% + 12px);right:0;
+      position:absolute;bottom:calc(100% + 12px);
+      /* inset-inline-start بدل right الثابت: القائمة أول عنصر بصف التفاعلات،
+         فلازم تنفتح باتجاه المساحة الفاضية (يمين بالعربي RTL، يسار
+         بالإنجليزي LTR) بدل ما تنفتح دايماً لليسار وتطلع خارج الشاشة
+         بالواجهة الإنجليزية */
+      inset-inline-start:0;
       background:var(--modal-bg);
       border:1.5px solid var(--border);
       border-radius:var(--radius-full);
