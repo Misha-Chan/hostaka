@@ -874,7 +874,18 @@ function analyzeWallpaperColors(dataUrl, cb){
       const brightPixels = pixels.filter(p => p.brightness > 120).slice(0, Math.max(1, Math.floor(pixels.length * 0.1)));
       for(const p of brightPixels){ r3+=p.r; g3+=p.g; b3+=p.b; count3++; }
       if(count === 0){
-        for(let i=0;i<data.length;i+=4){ r+=data[i]; g+=data[i+1]; b+=data[i+2]; count++; }
+        // خلفية بلا ألوان مشبعة (رمادي/أبيض وأسود مثلاً) — بدل استخراج رمادي
+        // باهت يصطدم مع باقي الواجهة، نمزج متوسط سطوع الخلفية مع لون هوستاكا
+        // الكهرماني المميز فتبقى الألوان متناسقة مع هوية الموقع دائماً
+        let avgR=0, avgG=0, avgB=0, total=0;
+        for(let i=0;i<data.length;i+=4){ avgR+=data[i]; avgG+=data[i+1]; avgB+=data[i+2]; total++; }
+        avgR/=total; avgG/=total; avgB/=total;
+        const brandR=201, brandG=152, brandB=107; // #C9986B
+        const mix=0.55;
+        r = Math.round(avgR*(1-mix) + brandR*mix);
+        g = Math.round(avgG*(1-mix) + brandG*mix);
+        b = Math.round(avgB*(1-mix) + brandB*mix);
+        count = 1;
       }
       r=Math.round(r/count); g=Math.round(g/count); b=Math.round(b/count);
       r2=count2?Math.round(r2/count2):r; g2=count2?Math.round(g2/count2):g; b2=count2?Math.round(b2/count2):b;
@@ -2433,7 +2444,18 @@ function analyzeWallpaperColors(dataUrl, cb){
       const brightPixels = pixels.filter(p => p.brightness > 120).slice(0, Math.max(1, Math.floor(pixels.length * 0.1)));
       for(const p of brightPixels){ r3+=p.r; g3+=p.g; b3+=p.b; count3++; }
       if(count === 0){
-        for(let i=0;i<data.length;i+=4){ r+=data[i]; g+=data[i+1]; b+=data[i+2]; count++; }
+        // خلفية بلا ألوان مشبعة (رمادي/أبيض وأسود مثلاً) — بدل استخراج رمادي
+        // باهت يصطدم مع باقي الواجهة، نمزج متوسط سطوع الخلفية مع لون هوستاكا
+        // الكهرماني المميز فتبقى الألوان متناسقة مع هوية الموقع دائماً
+        let avgR=0, avgG=0, avgB=0, total=0;
+        for(let i=0;i<data.length;i+=4){ avgR+=data[i]; avgG+=data[i+1]; avgB+=data[i+2]; total++; }
+        avgR/=total; avgG/=total; avgB/=total;
+        const brandR=201, brandG=152, brandB=107; // #C9986B
+        const mix=0.55;
+        r = Math.round(avgR*(1-mix) + brandR*mix);
+        g = Math.round(avgG*(1-mix) + brandG*mix);
+        b = Math.round(avgB*(1-mix) + brandB*mix);
+        count = 1;
       }
       r=Math.round(r/count); g=Math.round(g/count); b=Math.round(b/count);
       r2=count2?Math.round(r2/count2):r; g2=count2?Math.round(g2/count2):g; b2=count2?Math.round(b2/count2):b;
@@ -3892,8 +3914,19 @@ function analyzeWallpaperColors(dataUrl, cb){
       const brightPixels = pixels.filter(p => p.brightness > 120).slice(0, Math.max(1, Math.floor(pixels.length * 0.1)));
       for(const p of brightPixels){ r3+=p.r; g3+=p.g; b3+=p.b; count3++; }
 
-      if(count === 0){ // fallback to average of all
-        for(let i=0;i<data.length;i+=4){ r+=data[i]; g+=data[i+1]; b+=data[i+2]; count++; }
+      if(count === 0){
+        // خلفية بلا ألوان مشبعة (رمادي/أبيض وأسود مثلاً) — بدل استخراج رمادي
+        // باهت يصطدم مع باقي الواجهة، نمزج متوسط سطوع الخلفية مع لون هوستاكا
+        // الكهرماني المميز فتبقى الألوان متناسقة مع هوية الموقع دائماً
+        let avgR=0, avgG=0, avgB=0, total=0;
+        for(let i=0;i<data.length;i+=4){ avgR+=data[i]; avgG+=data[i+1]; avgB+=data[i+2]; total++; }
+        avgR/=total; avgG/=total; avgB/=total;
+        const brandR=201, brandG=152, brandB=107; // #C9986B
+        const mix=0.55;
+        r = Math.round(avgR*(1-mix) + brandR*mix);
+        g = Math.round(avgG*(1-mix) + brandG*mix);
+        b = Math.round(avgB*(1-mix) + brandB*mix);
+        count = 1;
       }
       r=Math.round(r/count); g=Math.round(g/count); b=Math.round(b/count);
       r2=count2?Math.round(r2/count2):r; g2=count2?Math.round(g2/count2):g; b2=count2?Math.round(b2/count2):b;
@@ -7844,7 +7877,18 @@ function analyzeWallpaperColors(dataUrl, cb){
       const brightPixels = pixels.filter(p => p.brightness > 120).slice(0, Math.max(1, Math.floor(pixels.length * 0.1)));
       for(const p of brightPixels){ r3+=p.r; g3+=p.g; b3+=p.b; count3++; }
       if(count === 0){
-        for(let i=0;i<data.length;i+=4){ r+=data[i]; g+=data[i+1]; b+=data[i+2]; count++; }
+        // خلفية بلا ألوان مشبعة (رمادي/أبيض وأسود مثلاً) — بدل استخراج رمادي
+        // باهت يصطدم مع باقي الواجهة، نمزج متوسط سطوع الخلفية مع لون هوستاكا
+        // الكهرماني المميز فتبقى الألوان متناسقة مع هوية الموقع دائماً
+        let avgR=0, avgG=0, avgB=0, total=0;
+        for(let i=0;i<data.length;i+=4){ avgR+=data[i]; avgG+=data[i+1]; avgB+=data[i+2]; total++; }
+        avgR/=total; avgG/=total; avgB/=total;
+        const brandR=201, brandG=152, brandB=107; // #C9986B
+        const mix=0.55;
+        r = Math.round(avgR*(1-mix) + brandR*mix);
+        g = Math.round(avgG*(1-mix) + brandG*mix);
+        b = Math.round(avgB*(1-mix) + brandB*mix);
+        count = 1;
       }
       r=Math.round(r/count); g=Math.round(g/count); b=Math.round(b/count);
       r2=count2?Math.round(r2/count2):r; g2=count2?Math.round(g2/count2):g; b2=count2?Math.round(b2/count2):b;
