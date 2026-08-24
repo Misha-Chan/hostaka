@@ -999,6 +999,7 @@ app.get('/api/user/:username/posts', async (req, res) => {
     res.json(posts.map(p => ({
       ...p,
       publisher_name: u.display_name || u.username,
+      publisher_username: u.username,
       user_avatar: u.avatar || '',
       publisher_verified: u.verified || 0,
       reactions: rMap[p.id] || [],
@@ -1385,10 +1386,19 @@ app.get('/api/pages/:username', async (req, res) => {
   try {
     const page = await q.getPageByUsername(req.params.username);
     if (!page) return res.status(404).json({ error: 'الصفحة غير موجودة' });
-    const [posts, followerCount] = await Promise.all([
+    const [rawPosts, followerCount] = await Promise.all([
       q.getPagePosts(page.id),
       q.getPageFollowerCount(page.id)
     ]);
+    // نحدّث اسم/صورة الصفحة بكل منشوراتها من بيانات الصفحة الحية (بدل الاسم/الصورة
+    // المخزّنة وقت النشر)، بنفس منطق تحديث منشورات المستخدم العادي بالأعلى
+    const posts = rawPosts.map(p => ({
+      ...p,
+      publisher: page.name,
+      publisher_name: page.name,
+      publisher_username: page.username,
+      user_avatar: page.avatar || ''
+    }));
     const u = verifyToken(req);
     let isFollowing = false;
     if (u) isFollowing = !!(await q.isFollowingPage(page.id, u.id));
