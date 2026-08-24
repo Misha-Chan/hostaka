@@ -97,7 +97,7 @@ function vgCardHtml(v){
       <div class="vg-play">${VSVG.playSm}</div>
     </div>
     <div class="vg-meta">
-      <div class="vg-avatar" onclick="event.stopPropagation();goPublisher('${esc(v.publisher)}')">${v.user_avatar?`<img src="${esc(v.user_avatar)}" alt="">`:esc((v.publisher_name||v.publisher||'?').charAt(0).toUpperCase())}</div>
+      <div class="vg-avatar" onclick="event.stopPropagation();goPublisher('${esc(v.publisher_username||v.publisher)}')">${v.user_avatar?`<img src="${esc(v.user_avatar)}" alt="">`:esc((v.publisher_name||v.publisher||'?').charAt(0).toUpperCase())}</div>
       <div class="vg-info">
         <div class="vg-title">${esc(stripHtmlV(v.content)) || t('untitled')}</div>
         <div class="vg-sub">${esc(v.publisher_name||v.publisher)}${v.publisher_verified?verifiedBadge():''}<span class="dot"></span>${fmtDate(v.created_at)}</div>
@@ -141,9 +141,9 @@ function renderWatch(v){
         <div class="video-watch-title">${esc(stripHtmlV(v.content)) || t('untitled')}</div>
         <div class="video-watch-pubrow">
           <div class="video-watch-pub">
-            <div class="video-watch-avatar" onclick="goPublisher('${esc(v.publisher)}')">${v.user_avatar?`<img src="${esc(v.user_avatar)}" alt="">`:esc((v.publisher_name||v.publisher||'?').charAt(0).toUpperCase())}</div>
+            <div class="video-watch-avatar" onclick="goPublisher('${esc(v.publisher_username||v.publisher)}')">${v.user_avatar?`<img src="${esc(v.user_avatar)}" alt="">`:esc((v.publisher_name||v.publisher||'?').charAt(0).toUpperCase())}</div>
             <div>
-              <div class="video-watch-name" onclick="goPublisher('${esc(v.publisher)}')">${esc(v.publisher_name||v.publisher)}${v.publisher_verified?verifiedBadge():''}</div>
+              <div class="video-watch-name" onclick="goPublisher('${esc(v.publisher_username||v.publisher)}')">${esc(v.publisher_name||v.publisher)}${v.publisher_verified?verifiedBadge():''}</div>
               <div class="video-watch-date">${fmtDate(v.created_at)}</div>
             </div>
           </div>
