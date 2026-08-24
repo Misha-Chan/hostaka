@@ -454,6 +454,24 @@ async function initDB() {
   // تعبئة قيمة أولية لآخر ظهور لأي مستخدم لم يُحدَّث عموده بعد (بعد إضافة العمود لأول مرة)
   try { await db.execute("UPDATE users SET last_seen = datetime('now') WHERE last_seen IS NULL OR last_seen = ''"); } catch(e) {}
 
+  // ✅ إصلاح المنشورات القديمة (من قبل إضافة عمود records.user_id): كانت
+  // تُخزَّن باسم/صورة صاحبها وقت النشر فقط (بلا ربط user_id)، فيفشل الـ JOIN
+  // الحي بجدول users ويستمر عرضها بالاسم/الصورة/الرابط القديم حتى لو غيّرها
+  // المستخدم لاحقاً. هنا نربط user_id لأي منشور قديم لسه بلا ربط (best-effort:
+  // أولاً بمطابقة اسم المستخدم الحالي (فريد)، ثم بالاسم المعروض إن لم نجد)
+  // — تنفَّذ مرة كل إقلاع، بس ما تُغيّر شي بعد أول تشغيل ناجح لأنها تستهدف فقط
+  // الصفوف اللي مازالت user_id فيها NULL.
+  try {
+    await db.execute(`
+      UPDATE records SET user_id = (SELECT id FROM users WHERE users.username = records.publisher LIMIT 1)
+      WHERE user_id IS NULL AND EXISTS (SELECT 1 FROM users WHERE users.username = records.publisher)
+    `);
+    await db.execute(`
+      UPDATE records SET user_id = (SELECT id FROM users WHERE users.display_name = records.publisher LIMIT 1)
+      WHERE user_id IS NULL AND EXISTS (SELECT 1 FROM users WHERE users.display_name = records.publisher)
+    `);
+  } catch(e) { /* الأعمدة/الجدول غير موجودة بعد على تركيبات قديمة جداً */ }
+
   // Admin — Hostaka
   // ⚠️ يُنشأ حساب الأدمن من متغيرات البيئة مرة واحدة فقط عند عدم وجود
   // أي حساب أدمن بعد. بعد إنشائه، لا تتم إعادة تعيين بريده/كلمة مروره
@@ -646,6 +664,7 @@ const q = {
     SELECT r.*,
            COALESCE(u.avatar, r.user_avatar, '') as user_avatar,
            COALESCE(u.display_name, u.username, r.publisher, '') as publisher_name,
+           COALESCE(u.username, '') as publisher_username,
            COALESCE(u.verified, 0) as publisher_verified,
            p.username as page_username,
            CASE WHEN f.follower_id IS NOT NULL THEN 1 ELSE 0 END as is_followed_author,
@@ -674,7 +693,8 @@ const q = {
   listRecordsForAdmin: () => db.execute({ sql: `
     SELECT r.*,
            COALESCE(u.avatar, r.user_avatar, '') as user_avatar,
-           COALESCE(u.display_name, u.username, r.publisher, '') as publisher_name
+           COALESCE(u.display_name, u.username, r.publisher, '') as publisher_name,
+           COALESCE(u.username, '') as publisher_username
     FROM records r
     LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND u.username = r.publisher)
     ORDER BY r.created_at DESC
@@ -683,6 +703,7 @@ const q = {
     SELECT r.*,
            COALESCE(u.avatar, r.user_avatar, '') as user_avatar,
            COALESCE(u.display_name, u.username, r.publisher, '') as publisher_name,
+           COALESCE(u.username, '') as publisher_username,
            COALESCE(u.verified, 0) as publisher_verified,
            p.username as page_username
     FROM records r
@@ -753,6 +774,7 @@ const q = {
     SELECT r.*,
            COALESCE(u.avatar, r.user_avatar, '') as user_avatar,
            COALESCE(u.display_name, u.username, r.publisher, '') as publisher_name,
+           COALESCE(u.username, '') as publisher_username,
            COALESCE(u.verified, 0) as publisher_verified,
            1 as is_saved,
            sp.collection_id as collection_id,
@@ -777,6 +799,7 @@ const q = {
     SELECT r.*,
            COALESCE(u.avatar, r.user_avatar, '') as user_avatar,
            COALESCE(u.display_name, u.username, r.publisher, '') as publisher_name,
+           COALESCE(u.username, '') as publisher_username,
            COALESCE(u.verified, 0) as publisher_verified,
            CASE WHEN f.follower_id IS NOT NULL THEN 1 ELSE 0 END as is_followed_author,
            CASE WHEN sp.id IS NOT NULL THEN 1 ELSE 0 END as is_saved
@@ -796,6 +819,7 @@ const q = {
     SELECT r.*,
            COALESCE(u.avatar, r.user_avatar, '') as user_avatar,
            COALESCE(u.display_name, u.username, r.publisher, '') as publisher_name,
+           COALESCE(u.username, '') as publisher_username,
            COALESCE(u.verified, 0) as publisher_verified,
            CASE WHEN f.follower_id IS NOT NULL THEN 1 ELSE 0 END as is_followed_author,
            CASE WHEN sp.id IS NOT NULL THEN 1 ELSE 0 END as is_saved
@@ -847,11 +871,17 @@ const q = {
 
   // ── Comments ──
   getAllComments: () => db.execute(`
-    SELECT rc.*, COALESCE(u.avatar,rc.avatar,'') as avatar, COALESCE(u.display_name,rc.display_name,'') as display_name
+    SELECT rc.*, COALESCE(u.avatar,rc.avatar,'') as avatar, COALESCE(u.display_name,rc.display_name,'') as display_name,
+           COALESCE(u.username, rc.username, '') as username
     FROM record_comments rc LEFT JOIN users u ON u.id=rc.user_id
     ORDER BY rc.record_id ASC, rc.created_at ASC
   `).then(rows),
-  getComments: (rid) => db.execute({ sql:'SELECT * FROM record_comments WHERE record_id=? ORDER BY created_at ASC', args:[rid] }).then(rows),
+  getComments: (rid) => db.execute({ sql: `
+    SELECT rc.*, COALESCE(u.avatar,rc.avatar,'') as avatar, COALESCE(u.display_name,rc.display_name,'') as display_name,
+           COALESCE(u.username, rc.username, '') as username
+    FROM record_comments rc LEFT JOIN users u ON u.id=rc.user_id
+    WHERE rc.record_id=? ORDER BY rc.created_at ASC
+  `, args:[rid] }).then(rows),
   addComment: async (rid,uid,username,display_name,avatar,user_role,content,parentId) => {
     try {
       return await db.execute({ sql:'INSERT INTO record_comments (record_id,user_id,username,display_name,avatar,user_role,content,parent_id) VALUES (?,?,?,?,?,?,?,?)', args:[rid,uid,username,display_name,avatar,user_role,content,parentId||null] });
