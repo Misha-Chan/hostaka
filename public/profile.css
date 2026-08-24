@@ -287,7 +287,8 @@ body.page-profile .react-main-btn.reacted {background:var(--primary-light);borde
 body.page-profile .react-main-btn:active {transform:scale(0.94);}
 body.page-profile .react-main-btn svg {width:16px;height:16px;}
 body.page-profile .react-menu {
-      position:absolute;bottom:calc(100% + 12px);right:0;
+      position:absolute;bottom:calc(100% + 12px);
+      inset-inline-start:0;
       background:var(--modal-bg);
       border:1.5px solid var(--border);
       border-radius:var(--radius-full);
