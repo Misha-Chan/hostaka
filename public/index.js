@@ -1399,7 +1399,7 @@ function renderPost(p){
     <button class="btn-send-comment" onclick="sendComment(${p.id})">${SVG.send}</button>
   </div>` : '';
 
-  return `<div class="post-card" id="post-${p.id}">
+  return `<div class="post-card" id="post-${p.id}" onclick="goPost(event, ${p.id})">
     ${mediaHtml}
     <div class="card-body">
       <div class="pub-row">
@@ -1456,6 +1456,13 @@ function renderPost(p){
 function goProfile(username){ window.location = '/profile?u=' + encodeURIComponent(username); }
 function goPublisher(username, isPage){
   window.location = (isPage ? '/page?u=' : '/profile?u=') + encodeURIComponent(username);
+}
+// أي ضغطة على قالب المنشور (خارج العناصر التفاعلية: أزرار، روابط، الأفاتار
+// والاسم، الوسائط اللي عندها فتح خاص فيها، وقسم التعليقات بالكامل) تودّي
+// مباشرة لرابط المنشور المستقل /post?id=
+function goPost(e, id){
+  if (e.target.closest('a, button, input, textarea, .comments-section, .reel-card, .video-card, .pub-avatar, .pub-name, .link-preview-slot, .post-opts-wrap, .post-opts-menu')) return;
+  window.location = '/post?id=' + id;
 }
 
 async function sharePost(id){
