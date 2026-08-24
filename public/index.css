@@ -459,6 +459,7 @@ body.page-index .story-viewer-nav {position:absolute;inset:0;display:flex;pointe
 body.page-index .story-nav-zone {flex:1;pointer-events:auto;}
 @media(max-width:1239px){ body.page-index .stories-rail {position:static;max-width:820px;} }
 body.page-index .post-card {
+      cursor:pointer;
       background:var(--post-bg);
       border:1px solid var(--border);
       border-radius:var(--radius-lg);
