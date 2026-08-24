@@ -873,23 +873,32 @@ function analyzeWallpaperColors(dataUrl, cb){
       for(const p of secondaryPixels){ r2+=p.r; g2+=p.g; b2+=p.b; count2++; }
       const brightPixels = pixels.filter(p => p.brightness > 120).slice(0, Math.max(1, Math.floor(pixels.length * 0.1)));
       for(const p of brightPixels){ r3+=p.r; g3+=p.g; b3+=p.b; count3++; }
-      if(count === 0){
-        // خلفية بلا ألوان مشبعة (رمادي/أبيض وأسود مثلاً) — بدل استخراج رمادي
-        // باهت يصطدم مع باقي الواجهة، نمزج متوسط سطوع الخلفية مع لون هوستاكا
-        // الكهرماني المميز فتبقى الألوان متناسقة مع هوية الموقع دائماً
-        let avgR=0, avgG=0, avgB=0, total=0;
-        for(let i=0;i<data.length;i+=4){ avgR+=data[i]; avgG+=data[i+1]; avgB+=data[i+2]; total++; }
-        avgR/=total; avgG/=total; avgB/=total;
-        const brandR=201, brandG=152, brandB=107; // #C9986B
-        const mix=0.55;
-        r = Math.round(avgR*(1-mix) + brandR*mix);
-        g = Math.round(avgG*(1-mix) + brandG*mix);
-        b = Math.round(avgB*(1-mix) + brandB*mix);
-        count = 1;
+      if(count === 0){ // لا يوجد أي بكسل مشبع بالخلفية — نحسب متوسط كل الصورة
+        for(let i=0;i<data.length;i+=4){ r+=data[i]; g+=data[i+1]; b+=data[i+2]; count++; }
       }
       r=Math.round(r/count); g=Math.round(g/count); b=Math.round(b/count);
       r2=count2?Math.round(r2/count2):r; g2=count2?Math.round(g2/count2):g; b2=count2?Math.round(b2/count2):b;
       r3=count3?Math.round(r3/count3):r; g3=count3?Math.round(g3/count3):g; b3=count3?Math.round(b3/count3):b;
+
+      // خلفيات قليلة التشبع (رمادي، دخان، رخام، صور أبيض وأسود...) تنتج لونًا
+      // مسطحًا شبه رمادي حتى بعد الحساب أعلاه — نفحص تشبع اللون الناتج فعليًا
+      // (وليس فقط "هل وُجد بكسل مشبع أصلاً") ونمزجه مع كهرماني هوستاكا كلما قلّ
+      // تشبعه، فتبقى الألوان منسجمة مع هوية الموقع بدل رمادي باهت غير متناسق
+      const mixTowardBrand = (rr,gg,bb) => {
+        const mx = Math.max(rr,gg,bb), mn = Math.min(rr,gg,bb);
+        const sat = mx === 0 ? 0 : (mx-mn)/mx;
+        if(sat >= 0.18) return [rr,gg,bb];
+        const brandR=201, brandG=152, brandB=107; // #C9986B
+        const mix = 0.65 - sat;
+        return [
+          Math.round(rr*(1-mix) + brandR*mix),
+          Math.round(gg*(1-mix) + brandG*mix),
+          Math.round(bb*(1-mix) + brandB*mix)
+        ];
+      };
+      [r,g,b] = mixTowardBrand(r,g,b);
+      [r2,g2,b2] = mixTowardBrand(r2,g2,b2);
+      [r3,g3,b3] = mixTowardBrand(r3,g3,b3);
     }catch(e){ cb(null); return; }
     const brightness = (r*299 + g*587 + b*114) / 1000;
     cb({ r, g, b, r2, g2, b2, r3, g3, b3, brightness });
@@ -2443,23 +2452,32 @@ function analyzeWallpaperColors(dataUrl, cb){
       for(const p of secondaryPixels){ r2+=p.r; g2+=p.g; b2+=p.b; count2++; }
       const brightPixels = pixels.filter(p => p.brightness > 120).slice(0, Math.max(1, Math.floor(pixels.length * 0.1)));
       for(const p of brightPixels){ r3+=p.r; g3+=p.g; b3+=p.b; count3++; }
-      if(count === 0){
-        // خلفية بلا ألوان مشبعة (رمادي/أبيض وأسود مثلاً) — بدل استخراج رمادي
-        // باهت يصطدم مع باقي الواجهة، نمزج متوسط سطوع الخلفية مع لون هوستاكا
-        // الكهرماني المميز فتبقى الألوان متناسقة مع هوية الموقع دائماً
-        let avgR=0, avgG=0, avgB=0, total=0;
-        for(let i=0;i<data.length;i+=4){ avgR+=data[i]; avgG+=data[i+1]; avgB+=data[i+2]; total++; }
-        avgR/=total; avgG/=total; avgB/=total;
-        const brandR=201, brandG=152, brandB=107; // #C9986B
-        const mix=0.55;
-        r = Math.round(avgR*(1-mix) + brandR*mix);
-        g = Math.round(avgG*(1-mix) + brandG*mix);
-        b = Math.round(avgB*(1-mix) + brandB*mix);
-        count = 1;
+      if(count === 0){ // لا يوجد أي بكسل مشبع بالخلفية — نحسب متوسط كل الصورة
+        for(let i=0;i<data.length;i+=4){ r+=data[i]; g+=data[i+1]; b+=data[i+2]; count++; }
       }
       r=Math.round(r/count); g=Math.round(g/count); b=Math.round(b/count);
       r2=count2?Math.round(r2/count2):r; g2=count2?Math.round(g2/count2):g; b2=count2?Math.round(b2/count2):b;
       r3=count3?Math.round(r3/count3):r; g3=count3?Math.round(g3/count3):g; b3=count3?Math.round(b3/count3):b;
+
+      // خلفيات قليلة التشبع (رمادي، دخان، رخام، صور أبيض وأسود...) تنتج لونًا
+      // مسطحًا شبه رمادي حتى بعد الحساب أعلاه — نفحص تشبع اللون الناتج فعليًا
+      // (وليس فقط "هل وُجد بكسل مشبع أصلاً") ونمزجه مع كهرماني هوستاكا كلما قلّ
+      // تشبعه، فتبقى الألوان منسجمة مع هوية الموقع بدل رمادي باهت غير متناسق
+      const mixTowardBrand = (rr,gg,bb) => {
+        const mx = Math.max(rr,gg,bb), mn = Math.min(rr,gg,bb);
+        const sat = mx === 0 ? 0 : (mx-mn)/mx;
+        if(sat >= 0.18) return [rr,gg,bb];
+        const brandR=201, brandG=152, brandB=107; // #C9986B
+        const mix = 0.65 - sat;
+        return [
+          Math.round(rr*(1-mix) + brandR*mix),
+          Math.round(gg*(1-mix) + brandG*mix),
+          Math.round(bb*(1-mix) + brandB*mix)
+        ];
+      };
+      [r,g,b] = mixTowardBrand(r,g,b);
+      [r2,g2,b2] = mixTowardBrand(r2,g2,b2);
+      [r3,g3,b3] = mixTowardBrand(r3,g3,b3);
     }catch(e){ cb(null); return; }
     const brightness = (r*299 + g*587 + b*114) / 1000;
     cb({ r, g, b, r2, g2, b2, r3, g3, b3, brightness });
@@ -3914,23 +3932,32 @@ function analyzeWallpaperColors(dataUrl, cb){
       const brightPixels = pixels.filter(p => p.brightness > 120).slice(0, Math.max(1, Math.floor(pixels.length * 0.1)));
       for(const p of brightPixels){ r3+=p.r; g3+=p.g; b3+=p.b; count3++; }
 
-      if(count === 0){
-        // خلفية بلا ألوان مشبعة (رمادي/أبيض وأسود مثلاً) — بدل استخراج رمادي
-        // باهت يصطدم مع باقي الواجهة، نمزج متوسط سطوع الخلفية مع لون هوستاكا
-        // الكهرماني المميز فتبقى الألوان متناسقة مع هوية الموقع دائماً
-        let avgR=0, avgG=0, avgB=0, total=0;
-        for(let i=0;i<data.length;i+=4){ avgR+=data[i]; avgG+=data[i+1]; avgB+=data[i+2]; total++; }
-        avgR/=total; avgG/=total; avgB/=total;
-        const brandR=201, brandG=152, brandB=107; // #C9986B
-        const mix=0.55;
-        r = Math.round(avgR*(1-mix) + brandR*mix);
-        g = Math.round(avgG*(1-mix) + brandG*mix);
-        b = Math.round(avgB*(1-mix) + brandB*mix);
-        count = 1;
+      if(count === 0){ // لا يوجد أي بكسل مشبع بالخلفية — نحسب متوسط كل الصورة
+        for(let i=0;i<data.length;i+=4){ r+=data[i]; g+=data[i+1]; b+=data[i+2]; count++; }
       }
       r=Math.round(r/count); g=Math.round(g/count); b=Math.round(b/count);
       r2=count2?Math.round(r2/count2):r; g2=count2?Math.round(g2/count2):g; b2=count2?Math.round(b2/count2):b;
       r3=count3?Math.round(r3/count3):r; g3=count3?Math.round(g3/count3):g; b3=count3?Math.round(b3/count3):b;
+
+      // خلفيات قليلة التشبع (رمادي، دخان، رخام، صور أبيض وأسود...) تنتج لونًا
+      // مسطحًا شبه رمادي حتى بعد الحساب أعلاه — نفحص تشبع اللون الناتج فعليًا
+      // (وليس فقط "هل وُجد بكسل مشبع أصلاً") ونمزجه مع كهرماني هوستاكا كلما قلّ
+      // تشبعه، فتبقى الألوان منسجمة مع هوية الموقع بدل رمادي باهت غير متناسق
+      const mixTowardBrand = (rr,gg,bb) => {
+        const mx = Math.max(rr,gg,bb), mn = Math.min(rr,gg,bb);
+        const sat = mx === 0 ? 0 : (mx-mn)/mx;
+        if(sat >= 0.18) return [rr,gg,bb];
+        const brandR=201, brandG=152, brandB=107; // #C9986B
+        const mix = 0.65 - sat;
+        return [
+          Math.round(rr*(1-mix) + brandR*mix),
+          Math.round(gg*(1-mix) + brandG*mix),
+          Math.round(bb*(1-mix) + brandB*mix)
+        ];
+      };
+      [r,g,b] = mixTowardBrand(r,g,b);
+      [r2,g2,b2] = mixTowardBrand(r2,g2,b2);
+      [r3,g3,b3] = mixTowardBrand(r3,g3,b3);
     }catch(e){ cb(null); return; }
     const brightness = (r*299 + g*587 + b*114) / 1000;
     cb({ r, g, b, r2, g2, b2, r3, g3, b3, brightness });
@@ -7876,23 +7903,32 @@ function analyzeWallpaperColors(dataUrl, cb){
       for(const p of secondaryPixels){ r2+=p.r; g2+=p.g; b2+=p.b; count2++; }
       const brightPixels = pixels.filter(p => p.brightness > 120).slice(0, Math.max(1, Math.floor(pixels.length * 0.1)));
       for(const p of brightPixels){ r3+=p.r; g3+=p.g; b3+=p.b; count3++; }
-      if(count === 0){
-        // خلفية بلا ألوان مشبعة (رمادي/أبيض وأسود مثلاً) — بدل استخراج رمادي
-        // باهت يصطدم مع باقي الواجهة، نمزج متوسط سطوع الخلفية مع لون هوستاكا
-        // الكهرماني المميز فتبقى الألوان متناسقة مع هوية الموقع دائماً
-        let avgR=0, avgG=0, avgB=0, total=0;
-        for(let i=0;i<data.length;i+=4){ avgR+=data[i]; avgG+=data[i+1]; avgB+=data[i+2]; total++; }
-        avgR/=total; avgG/=total; avgB/=total;
-        const brandR=201, brandG=152, brandB=107; // #C9986B
-        const mix=0.55;
-        r = Math.round(avgR*(1-mix) + brandR*mix);
-        g = Math.round(avgG*(1-mix) + brandG*mix);
-        b = Math.round(avgB*(1-mix) + brandB*mix);
-        count = 1;
+      if(count === 0){ // لا يوجد أي بكسل مشبع بالخلفية — نحسب متوسط كل الصورة
+        for(let i=0;i<data.length;i+=4){ r+=data[i]; g+=data[i+1]; b+=data[i+2]; count++; }
       }
       r=Math.round(r/count); g=Math.round(g/count); b=Math.round(b/count);
       r2=count2?Math.round(r2/count2):r; g2=count2?Math.round(g2/count2):g; b2=count2?Math.round(b2/count2):b;
       r3=count3?Math.round(r3/count3):r; g3=count3?Math.round(g3/count3):g; b3=count3?Math.round(b3/count3):b;
+
+      // خلفيات قليلة التشبع (رمادي، دخان، رخام، صور أبيض وأسود...) تنتج لونًا
+      // مسطحًا شبه رمادي حتى بعد الحساب أعلاه — نفحص تشبع اللون الناتج فعليًا
+      // (وليس فقط "هل وُجد بكسل مشبع أصلاً") ونمزجه مع كهرماني هوستاكا كلما قلّ
+      // تشبعه، فتبقى الألوان منسجمة مع هوية الموقع بدل رمادي باهت غير متناسق
+      const mixTowardBrand = (rr,gg,bb) => {
+        const mx = Math.max(rr,gg,bb), mn = Math.min(rr,gg,bb);
+        const sat = mx === 0 ? 0 : (mx-mn)/mx;
+        if(sat >= 0.18) return [rr,gg,bb];
+        const brandR=201, brandG=152, brandB=107; // #C9986B
+        const mix = 0.65 - sat;
+        return [
+          Math.round(rr*(1-mix) + brandR*mix),
+          Math.round(gg*(1-mix) + brandG*mix),
+          Math.round(bb*(1-mix) + brandB*mix)
+        ];
+      };
+      [r,g,b] = mixTowardBrand(r,g,b);
+      [r2,g2,b2] = mixTowardBrand(r2,g2,b2);
+      [r3,g3,b3] = mixTowardBrand(r3,g3,b3);
     }catch(e){ cb(null); return; }
     const brightness = (r*299 + g*587 + b*114) / 1000;
     cb({ r, g, b, r2, g2, b2, r3, g3, b3, brightness });
