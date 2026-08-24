@@ -470,6 +470,24 @@ async function initDB() {
       UPDATE records SET user_id = (SELECT id FROM users WHERE users.display_name = records.publisher LIMIT 1)
       WHERE user_id IS NULL AND EXISTS (SELECT 1 FROM users WHERE users.display_name = records.publisher)
     `);
+    // محاولة أوسع (غير حساسة لحالة الأحرف ومع تجاهل الفراغات الزائدة) لأي
+    // منشورات لسه بلا ربط — تغطي حالات مثل اختلاف بسيط بالأحرف الكبيرة/الصغيرة
+    await db.execute(`
+      UPDATE records SET user_id = (
+        SELECT id FROM users WHERE TRIM(LOWER(users.username)) = TRIM(LOWER(records.publisher)) LIMIT 1
+      )
+      WHERE user_id IS NULL AND EXISTS (
+        SELECT 1 FROM users WHERE TRIM(LOWER(users.username)) = TRIM(LOWER(records.publisher))
+      )
+    `);
+    await db.execute(`
+      UPDATE records SET user_id = (
+        SELECT id FROM users WHERE TRIM(LOWER(users.display_name)) = TRIM(LOWER(records.publisher)) LIMIT 1
+      )
+      WHERE user_id IS NULL AND EXISTS (
+        SELECT 1 FROM users WHERE TRIM(LOWER(users.display_name)) = TRIM(LOWER(records.publisher))
+      )
+    `);
   } catch(e) { /* الأعمدة/الجدول غير موجودة بعد على تركيبات قديمة جداً */ }
 
   // Admin — Hostaka
@@ -670,7 +688,7 @@ const q = {
            CASE WHEN f.follower_id IS NOT NULL THEN 1 ELSE 0 END as is_followed_author,
            CASE WHEN sp.id IS NOT NULL THEN 1 ELSE 0 END as is_saved
     FROM records r
-    LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND u.username = r.publisher)
+    LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND TRIM(LOWER(u.username)) = TRIM(LOWER(r.publisher)))
     LEFT JOIN pages p ON p.id = r.page_id
     LEFT JOIN follows f ON f.follower_id = ? AND f.followed_id = r.user_id
     LEFT JOIN saved_posts sp ON sp.record_id = r.id AND sp.user_id = ?
@@ -696,7 +714,7 @@ const q = {
            COALESCE(u.display_name, u.username, r.publisher, '') as publisher_name,
            COALESCE(u.username, '') as publisher_username
     FROM records r
-    LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND u.username = r.publisher)
+    LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND TRIM(LOWER(u.username)) = TRIM(LOWER(r.publisher)))
     ORDER BY r.created_at DESC
   `, args: [] }).then(rows),
   getRecordById: (id) => db.execute({ sql: `
@@ -707,7 +725,7 @@ const q = {
            COALESCE(u.verified, 0) as publisher_verified,
            p.username as page_username
     FROM records r
-    LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND u.username = r.publisher)
+    LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND TRIM(LOWER(u.username)) = TRIM(LOWER(r.publisher)))
     LEFT JOIN pages p ON p.id = r.page_id
     WHERE r.id = ?
   `, args: [id] }).then(first),
@@ -781,7 +799,7 @@ const q = {
            sp.created_at as saved_at
     FROM saved_posts sp
     JOIN records r ON r.id = sp.record_id
-    LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND u.username = r.publisher)
+    LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND TRIM(LOWER(u.username)) = TRIM(LOWER(r.publisher)))
     WHERE sp.user_id = ?`;
     const args = [userId];
     if (collectionId === 'uncategorized') {
@@ -804,7 +822,7 @@ const q = {
            CASE WHEN f.follower_id IS NOT NULL THEN 1 ELSE 0 END as is_followed_author,
            CASE WHEN sp.id IS NOT NULL THEN 1 ELSE 0 END as is_saved
     FROM records r
-    LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND u.username = r.publisher)
+    LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND TRIM(LOWER(u.username)) = TRIM(LOWER(r.publisher)))
     LEFT JOIN follows f ON f.follower_id = ? AND f.followed_id = r.user_id
     LEFT JOIN saved_posts sp ON sp.record_id = r.id AND sp.user_id = ?
     WHERE r.video IS NOT NULL AND r.video != '' AND r.is_reel = 1
@@ -824,7 +842,7 @@ const q = {
            CASE WHEN f.follower_id IS NOT NULL THEN 1 ELSE 0 END as is_followed_author,
            CASE WHEN sp.id IS NOT NULL THEN 1 ELSE 0 END as is_saved
     FROM records r
-    LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND u.username = r.publisher)
+    LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND TRIM(LOWER(u.username)) = TRIM(LOWER(r.publisher)))
     LEFT JOIN follows f ON f.follower_id = ? AND f.followed_id = r.user_id
     LEFT JOIN saved_posts sp ON sp.record_id = r.id AND sp.user_id = ?
     WHERE r.video IS NOT NULL AND r.video != '' AND COALESCE(r.is_reel,0) = 0
