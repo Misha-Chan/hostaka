@@ -1404,9 +1404,9 @@ function renderPost(p){
     <div class="card-body">
       <div class="pub-row">
         <div class="pub-info">
-          <div class="pub-avatar" onclick="goPublisher('${p.page_username?esc(p.page_username):esc(p.publisher)}', ${p.page_id?'true':'false'})">${avatarHtml}</div>
+          <div class="pub-avatar" onclick="goPublisher('${p.page_username?esc(p.page_username):esc(p.publisher_username||p.publisher)}', ${p.page_id?'true':'false'})">${avatarHtml}</div>
           <div class="pub-meta">
-            <div class="pub-name" onclick="goPublisher('${p.page_username?esc(p.page_username):esc(p.publisher)}', ${p.page_id?'true':'false'})">
+            <div class="pub-name" onclick="goPublisher('${p.page_username?esc(p.page_username):esc(p.publisher_username||p.publisher)}', ${p.page_id?'true':'false'})">
               <span class="role-badge ${badgeCls}">${p.user_role==='Admin' ? t('adminRole') : (p.user_role==='Page' ? t('pageWord') : t('member'))}</span>
               ${esc(name)}
               ${(p.publisher_verified||p.user_verified) ? verifiedBadge() : ''}
@@ -1417,7 +1417,7 @@ function renderPost(p){
         <div class="pub-actions">
           ${ME ? `<button class="btn-icon save-btn ${p.is_saved?'saved':''}" onclick="toggleSavePost(${p.id})" title="${p.is_saved?t('unsave'):t('save')}">${p.is_saved?SVG.bookmarkFilled:SVG.bookmark}</button>` : ''}
           <button class="btn-icon" onclick="sharePost(${p.id})" title="${t('share')}">${SVG.share}</button>
-          ${ME && p.user_id && p.user_id!=ME?.id ? `<button class="btn-icon" onclick="location.href='/chat?with=${esc(p.publisher)}'" title="${t('message')}">${SVG.comment}</button>` : ''}
+          ${ME && p.user_id && p.user_id!=ME?.id ? `<button class="btn-icon" onclick="location.href='/chat?with=${esc(p.publisher_username||p.publisher)}'" title="${t('message')}">${SVG.comment}</button>` : ''}
           ${canDel ? `<button class="btn-icon" onclick="delPost(${p.id})" title="${t('delete')}">${SVG.delete}</button>` : ''}
           ${ME && p.user_id && p.user_id!=ME?.id ? `
           <div class="post-opts-wrap">
@@ -1425,11 +1425,11 @@ function renderPost(p){
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
             </button>
             <div class="post-opts-menu" id="postOpts-${p.id}">
-              <button onclick="openReportModal('post', ${p.id}, '${esc(p.publisher)}'); closePostOpts(${p.id});">
+              <button onclick="openReportModal('post', ${p.id}, '${esc(p.publisher_username||p.publisher)}'); closePostOpts(${p.id});">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 ${t('reportPostMenu')}
               </button>
-              <button class="danger" onclick="toggleBlockUser('${esc(p.publisher)}'); closePostOpts(${p.id});">
+              <button class="danger" onclick="toggleBlockUser('${esc(p.publisher_username||p.publisher)}'); closePostOpts(${p.id});">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
                 ${t('blockAtUser',{u:esc(p.publisher)})}
               </button>
