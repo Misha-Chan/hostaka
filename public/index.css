@@ -413,7 +413,11 @@ body.page-index .story-plus svg {width:13px;height:13px;}
 body.page-index .story-label {font-size:0.74rem;color:var(--muted);text-align:center;max-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;}
 @media(min-width:1240px){
       body.page-index .stories-rail {
-        position:fixed;top:110px;inset-inline-end:calc(50% - 410px - 100px);
+        position:fixed;top:110px;
+        /* clamp بدل calc خام: على الشاشات الفائقة العرض كانت "Add Story" تنجرف
+           بعيدًا جدًا عن عمود المنشورات؛ الحد الأقصى 400px يبقيها قريبة ومنسجمة
+           مع المحتوى مهما اتسعت الشاشة */
+        inset-inline-end:clamp(24px, calc(50% - 410px - 100px), 400px);
         max-width:92px;margin:0;padding:0;z-index:5;
       }
       body.page-index .stories-track {flex-direction:column;overflow:visible;padding:0;gap:24px;align-items:center;max-height:75vh;overflow-y:auto;}
@@ -932,6 +936,15 @@ body.page-index ::-webkit-scrollbar-thumb:hover {background:var(--muted);}
       body.page-index .pub-row {flex-wrap:wrap;}
       body.page-index .pub-actions {width:100%;justify-content:flex-end;margin-top:8px;}
       body.page-index .sort-btn {font-size:0.74rem;padding:6px 11px;}
+      /* هواتف صغيرة جداً: تصغير إضافي للهيدر والبحث كي لا يشعرا بالازدحام
+         أو يلتصقا بشريط التنقل العلوي على الشاشات الضيقة جداً */
+      body.page-index .page-header {padding:82px 14px 28px;}
+      body.page-index .page-header h1 {font-size:clamp(1.3rem,7.5vw,1.9rem);}
+      body.page-index .page-header p {font-size:0.82rem;max-width:280px;margin-inline:auto;}
+      body.page-index .search-wrap input {padding:11px 16px 11px 42px;font-size:0.85rem;}
+      body.page-index .search-icon {left:16px;}
+      body.page-index .story-item {width:60px;}
+      body.page-index .story-ring {width:54px;height:54px;}
     }
 @media(prefers-reduced-motion:reduce){
       body.page-index, body.page-index *, body.page-index *::before, body.page-index *::after {animation-duration:0.01ms!important;transition-duration:0.01ms!important;}
