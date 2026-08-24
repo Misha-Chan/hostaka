@@ -239,7 +239,7 @@ function renderPostCard(p){
     <div class="card-body">
       <div class="pub-row">
         <div class="pub-info">
-          <div class="pub-name" style="cursor:pointer;" onclick="goPublisher('${esc(p.publisher)}')">
+          <div class="pub-name" style="cursor:pointer;" onclick="goPublisher('${esc(p.publisher_username||p.publisher)}')">
             ${esc(p.publisher_name || p.publisher)}
             ${(p.publisher_verified||p.user_verified) ? verifiedBadge() : ''}
             ${postStatusBadge(p)}
