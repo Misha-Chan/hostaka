@@ -1882,7 +1882,11 @@ html.page-index {
 
     @media(min-width:1240px){
       body.page-index .stories-rail {
-        position:fixed;top:110px;inset-inline-end:calc(50% - 410px - 100px);
+        position:fixed;top:110px;
+        /* clamp بدل calc خام: على الشاشات الفائقة العرض كانت "Add Story" تنجرف
+           بعيدًا جدًا عن عمود المنشورات؛ الحد الأقصى 400px يبقيها قريبة ومنسجمة
+           مع المحتوى مهما اتسعت الشاشة */
+        inset-inline-end:clamp(24px, calc(50% - 410px - 100px), 400px);
         max-width:92px;margin:0;padding:0;z-index:5;
       }
       body.page-index .stories-track {flex-direction:column;overflow:visible;padding:0;gap:24px;align-items:center;max-height:75vh;overflow-y:auto;}
@@ -2398,6 +2402,18 @@ html.page-index {
       body.page-index .role-badge {font-size:0.64rem;padding:2px 8px;}
       body.page-index .btn-icon {padding:7px;}
       body.page-index .btn-icon svg {width:16px;height:16px;}
+    }
+
+    /* هواتف صغيرة جداً (أقل من 380px): تصغير إضافي للهيدر والبحث كي لا يشعرا
+       بالازدحام أو يلتصقا بشريط التنقل العلوي على الشاشات الضيقة جداً */
+    @media(max-width:380px){
+      body.page-index .page-header {padding:82px 14px 28px;}
+      body.page-index .page-header h1 {font-size:clamp(1.3rem,7.5vw,1.9rem);}
+      body.page-index .page-header p {font-size:0.82rem;max-width:280px;}
+      body.page-index .search-wrap input {padding:11px 16px 11px 42px;font-size:0.85rem;}
+      body.page-index .search-icon {left:16px;}
+      body.page-index .story-item {width:60px;}
+      body.page-index .story-ring {width:54px;height:54px;}
       body.page-index .post-text {font-size:0.98rem;line-height:1.95;}
       body.page-index .reactions-row {gap:8px;}
       body.page-index .react-main-btn, body.page-index .react-btn {padding:7px 12px;font-size:0.8rem;}
