@@ -111,7 +111,11 @@ setInterval(() => {
 }, RATE_LIMIT_WINDOW_MS * 5).unref?.();
 
 app.use(express.json({ limit: '25mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+// index: false لأن الصفحة الرئيسية "/" يجب أن تمر عبر app.get('*') بالأسفل
+// (حقن OG tags + سكربت حزمة الإيموجي /emoji.js)، لا أن تُخدَّم كملف ثابت مباشرة
+// من express.static (الذي كان يخدم public/index.html تلقائياً لأي طلب لمسار "/"
+// ويتجاوز تلك الحقنة بالكامل، فكانت حزمة الإيموجي تغيب فقط عن الصفحة الرئيسية).
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 // ============================================================
 // انتظار جاهزية قاعدة البيانات قبل معالجة أي طلب يحتاجها
