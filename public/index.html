@@ -27,6 +27,7 @@
 </div>
 
 <div class="wallpaper-bg" id="wallpaperBg"></div>
+<video class="wallpaper-bg" id="wallpaperVideoBg" style="display:none;object-fit:cover;" autoplay muted loop playsinline></video>
 <div class="wallpaper-overlay" id="wallpaperOverlayEl"></div>
 
 <header class="topbar" id="topbar">
@@ -263,12 +264,13 @@
       <span data-i18n="shiziai.wallpaperTitle">Platform background</span>
     </div>
     <p style="color:var(--muted);font-size:0.82rem;line-height:1.7;margin-bottom:16px;" data-i18n="index.wallpaperDescLong">Choose your own background image — the platform's colors (buttons, interactions, avatars) will automatically adapt to the image's colors for a cohesive visual experience.</p>
+    <p style="color:var(--muted);font-size:0.74rem;line-height:1.6;margin:-10px 0 16px;opacity:0.8;" data-i18n="index.wallpaperVideoNote">You can also choose a background video (MP4/WebM, up to 20MB). It's cached only on this device/browser and isn't uploaded anywhere.</p>
 
     <div id="wallpaperPreviewBox" style="width:100%;height:120px;border-radius:16px;border:1px solid var(--border);background:var(--input-bg);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.8rem;margin-bottom:16px;overflow:hidden;">
       <span id="wallpaperPreviewEmpty" data-i18n="shiziai.noWallpaper">No background set</span>
     </div>
 
-    <input type="file" id="wallpaperFile" accept="image/*" style="display:none;" onchange="onWallpaperFile(event)">
+    <input type="file" id="wallpaperFile" accept="image/*,video/mp4,video/webm" style="display:none;" onchange="onWallpaperFile(event)">
     <button class="btn-post" style="width:100%;justify-content:center;margin-bottom:10px;" onclick="document.getElementById('wallpaperFile').click()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       <span data-i18n="shiziai.uploadWallpaper">Upload background image</span>
