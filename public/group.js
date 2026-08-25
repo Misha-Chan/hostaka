@@ -597,7 +597,7 @@ function renderMembers(){
   const list = document.getElementById('memberList');
   if (!list || !members.length){ if(list) list.innerHTML = ''; return; }
   list.innerHTML = members.map(m => {
-    const av = m.avatar ? `<img src="${esc(m.avatar)}" alt="">` : (m.display_name||m.username||'?').charAt(0).toUpperCase();
+    const av = m.avatar ? `<img src="${esc(m.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
     const isMe = m.user_id == ME?.id;
     const roleLabel = m.role === 'admin' ? t('admin') : t('member');
     const canManage = (myRole !== 'member') && !isMe && !(m.role === 'admin' && myRole !== 'admin');
@@ -825,7 +825,7 @@ function openAddMember(){
       <label class="member-check">
         <input type="checkbox" value="${u.id}">
         <div class="m-av" style="width:28px;height:28px;font-size:0.78rem;">
-          ${u.avatar ? `<img src="${esc(u.avatar)}" alt="">` : ((u.display_name||u.username||'?').charAt(0).toUpperCase())}
+          ${u.avatar ? `<img src="${esc(u.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`}
         </div>
         <span>${esc(u.display_name || u.username)}</span>
       </label>`).join('');
@@ -999,7 +999,7 @@ function renderMsgs(msgs, scroll = true){
     }
     const next = msgs[i+1];
     const isLast = !next || next.user_id != m.user_id;
-    const av = m.from_avatar ? `<img src="${esc(m.from_avatar)}" alt="">` : (m.from_name||'?').charAt(0).toUpperCase();
+    const av = m.from_avatar ? `<img src="${esc(m.from_avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
     const rc = msgReactions[m.id] || { reactions: [], userReaction: null };
     const totalReacts = rc.reactions && rc.reactions.length ? rc.reactions.reduce((s,r)=> s+Number(r.count||0), 0) : 0;
     const reactionHtml = totalReacts > 0 ?
@@ -1033,7 +1033,7 @@ function renderMsgs(msgs, scroll = true){
         </div>` : ''}
         ${reactionHtml}
         <div class="msg-time">${fmtTime(m.created_at)}${Number(m.edited)===1 ? ' · <span class="msg-edited-tag">'+esc(t('msgEdited'))+'</span>' : ''}</div>
-        ${receiptsByMsgId[m.id] ? `<div class="seen-receipt" title="${t('seenBy')}: ${receiptsByMsgId[m.id].map(x=>esc(x.nickname||x.display_name||x.username)).join('، ')}">${receiptsByMsgId[m.id].slice(0,3).map(x => `<div class="seen-av">${x.avatar ? `<img src="${esc(x.avatar)}" alt="">` : (x.display_name||x.username||'?').charAt(0).toUpperCase()}</div>`).join('')}</div>` : ''}
+        ${receiptsByMsgId[m.id] ? `<div class="seen-receipt" title="${t('seenBy')}: ${receiptsByMsgId[m.id].map(x=>esc(x.nickname||x.display_name||x.username)).join('، ')}">${receiptsByMsgId[m.id].slice(0,3).map(x => `<div class="seen-av">${x.avatar ? `<img src="${esc(x.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`}</div>`).join('')}</div>` : ''}
       </div>
       ${isMine ? `<div class="msg-av ${isLast?'':'invisible'}">${av}</div>` : ''}
     </div>`;

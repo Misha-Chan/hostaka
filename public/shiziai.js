@@ -343,7 +343,7 @@ function renderMsgs(){
   messages.forEach(m => {
     const isMine = m.role === 'user';
     html += `<div class="msg-row ${isMine ? 'mine' : 'theirs'}">
-      <div class="msg-av ${isMine ? 'user' : 'shizi'}">${isMine ? (ME?.username||'?').charAt(0).toUpperCase() : '<img src="shizi-icon.png" alt="Shizi AI">'}</div>
+      <div class="msg-av ${isMine ? 'user' : 'shizi'}">${isMine ? (ME?.avatar ? `<img src="${esc(ME.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`) : '<img src="shizi-icon.png" alt="Shizi AI">'}</div>
       <div class="bubble-wrap">
         <div class="bubble">${esc(m.content)}</div>
         ${m.created_at ? `<div class="msg-time">${fmtTime(m.created_at)}</div>` : ''}
