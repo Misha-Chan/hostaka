@@ -63,6 +63,7 @@
     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
   </div>
   <img id="coverImg" class="cover-img" style="display:none;" alt="">
+  <video id="coverVideo" class="cover-img" style="display:none;" autoplay muted loop playsinline></video>
   <button class="cover-edit-btn" id="coverEditBtn" onclick="document.getElementById('coverFile').click()">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
     <span id="coverEditText" data-i18n="page.changeCover">Change cover</span>
@@ -74,7 +75,7 @@
 </div>
 
 <input type="file" id="avFile" accept="image/*" style="display:none;" onchange="onAvatar(event)">
-<input type="file" id="coverFile" accept=".jpg,.jpeg,image/jpeg" style="display:none;" onchange="onCover(event)">
+<input type="file" id="coverFile" accept=".jpg,.jpeg,image/jpeg,video/mp4,video/webm" style="display:none;" onchange="onCover(event)">
 
 <!-- Modal for followers/following -->
 <div class="modal-bd" id="userListModal">
