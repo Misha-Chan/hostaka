@@ -119,6 +119,7 @@
     "searchPosts": "Search posts...",
     "tagline": "An open social platform for everyone",
     "wallpaperDescLong": "Choose your own background image — the platform's colors (buttons, interactions, avatars) will automatically adapt to the image's colors for a cohesive visual experience.",
+    "wallpaperVideoNote": "You can also choose a background video (MP4/WebM, up to 20MB). It's cached only on this device/browser and isn't uploaded anywhere.",
     "writeCaption": "Write a caption (optional)..."
   },
   "login": {
