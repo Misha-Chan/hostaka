@@ -25,6 +25,7 @@ async function initDB() {
       game_id      TEXT DEFAULT '',
       display_name TEXT DEFAULT '',
       cover        TEXT DEFAULT '',
+      cover_type   TEXT DEFAULT 'image',
       verified     INTEGER DEFAULT 0,
       suspended       INTEGER DEFAULT 0,
       suspend_reason  TEXT DEFAULT '',
@@ -345,6 +346,7 @@ async function initDB() {
     "ALTER TABLE users ADD COLUMN game_id      TEXT DEFAULT ''",
     "ALTER TABLE users ADD COLUMN display_name TEXT DEFAULT ''",
     "ALTER TABLE users ADD COLUMN cover        TEXT DEFAULT ''",
+    "ALTER TABLE users ADD COLUMN cover_type   TEXT DEFAULT 'image'",
     "ALTER TABLE users ADD COLUMN verified     INTEGER DEFAULT 0",
     "ALTER TABLE users ADD COLUMN suspended      INTEGER DEFAULT 0",
     "ALTER TABLE users ADD COLUMN suspend_reason TEXT DEFAULT ''",
@@ -541,7 +543,7 @@ const WIKI_POST_SELECT = `
 const q = {
   // ── Users ──
   getUserByEmail:   (email)    => db.execute({ sql:'SELECT * FROM users WHERE email=?', args:[email] }).then(first),
-  getUserById:      (id)       => db.execute({ sql:'SELECT id,username,email,role,avatar,bio,game_id,display_name,cover,verified,suspended,suspend_reason,birth_date,totp_enabled,is_private,message_privacy,country,favorite_song,school,certificates,last_seen,read_receipts,created_at FROM users WHERE id=?', args:[id] }).then(first),
+  getUserById:      (id)       => db.execute({ sql:'SELECT id,username,email,role,avatar,bio,game_id,display_name,cover,cover_type,verified,suspended,suspend_reason,birth_date,totp_enabled,is_private,message_privacy,country,favorite_song,school,certificates,last_seen,read_receipts,created_at FROM users WHERE id=?', args:[id] }).then(first),
   getUserByIdFull:  (id)       => db.execute({ sql:'SELECT * FROM users WHERE id=?', args:[id] }).then(first),
   touchLastSeen: (id) => db.execute({ sql:"UPDATE users SET last_seen=datetime('now') WHERE id=?", args:[id] }).catch(()=>{}),
   getUserStatus: async (username) => {
@@ -553,7 +555,7 @@ const q = {
     return db.execute({ 
       sql: `
         SELECT 
-          u.id, u.username, u.display_name, u.avatar, u.bio, u.game_id, u.role, u.verified, u.cover, u.created_at,
+          u.id, u.username, u.display_name, u.avatar, u.bio, u.game_id, u.role, u.verified, u.cover, u.cover_type, u.created_at,
           u.is_private, u.message_privacy, u.country, u.favorite_song, u.school, u.certificates, u.read_receipts,
           (SELECT COUNT(*) FROM follows WHERE followed_id = u.id) AS followers_count,
           (SELECT COUNT(*) FROM follows WHERE follower_id = u.id) AS following_count,
@@ -596,7 +598,7 @@ const q = {
     args: [userId]
   }),
   updateUserPasswordByEmail: (email, passwordHash) => db.execute({ sql:'UPDATE users SET password=? WHERE email=?', args:[passwordHash, email] }),
-  updateProfile:    (display_name,bio,game_id,avatar,cover,id,country,favorite_song,school,certificates) => db.execute({ sql:'UPDATE users SET display_name=?,bio=?,game_id=?,avatar=?,cover=?,country=?,favorite_song=?,school=?,certificates=? WHERE id=?', args:[display_name,bio,game_id,avatar,cover,country||'',favorite_song||'',school||'',certificates||'',id] }),
+  updateProfile:    (display_name,bio,game_id,avatar,cover,id,country,favorite_song,school,certificates,cover_type) => db.execute({ sql:'UPDATE users SET display_name=?,bio=?,game_id=?,avatar=?,cover=?,cover_type=?,country=?,favorite_song=?,school=?,certificates=? WHERE id=?', args:[display_name,bio,game_id,avatar,cover,cover_type||'image',country||'',favorite_song||'',school||'',certificates||'',id] }),
   updatePrivacy:        (id, isPrivate) => db.execute({ sql:'UPDATE users SET is_private=? WHERE id=?', args:[isPrivate?1:0, id] }),
   updateMessagePrivacy: (id, pref) => db.execute({ sql:'UPDATE users SET message_privacy=? WHERE id=?', args:[pref, id] }),
 
