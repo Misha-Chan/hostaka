@@ -685,7 +685,7 @@ function renderSidebar() {
 }
 
 function userItemHtml(u, conv) {
-  const av = u.avatar ? `<img src="${esc(u.avatar)}" alt="">` : (u.display_name || u.username || '?').charAt(0).toUpperCase();
+  const av = u.avatar ? `<img src="${esc(u.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
   const lastMsg = conv ? (conv.from_id == ME?.id ? t('you') + ': ' : '') + esc((conv.content || '').slice(0, 30)) : t('startChat');
   const active = currentPeer === u.username ? 'active' : '';
   const role = u.role === 'admin' ? `<span class="u-badge">${SVG.like}${t('admin')}</span>` : '';
@@ -702,7 +702,7 @@ let currentPeerObj = null;
 let currentDmNickname = '';
 function updateTopbarPeer(peer) {
   currentPeerObj = peer;
-  const av = peer.avatar ? `<img src="${esc(peer.avatar)}" alt="">` : (peer.display_name || peer.username || '?').charAt(0).toUpperCase();
+  const av = peer.avatar ? `<img src="${esc(peer.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
   const role = peer.role === 'admin' ? t('admin') : t('member');
   const shownName = currentDmNickname || peer.display_name || peer.username;
   document.getElementById('topbarTitle').innerHTML = `
@@ -827,7 +827,7 @@ function openChatSettings(){
   const box = document.getElementById('chatSettingsBody');
   if (!box) return;
   const p = currentPeerObj;
-  const av = p.avatar ? `<img src="${esc(p.avatar)}" alt="">` : (p.display_name || p.username || '?').charAt(0).toUpperCase();
+  const av = p.avatar ? `<img src="${esc(p.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
   box.innerHTML = `
     <div class="cs-head" onclick="viewPeerProfile()">
       <div class="cs-av">${av}</div>
@@ -1032,7 +1032,7 @@ function renderTypingRow(show){
   let row = document.getElementById('typingRow');
   if (show) {
     if (!row) {
-      const av = currentPeerObj?.avatar ? `<img src="${esc(currentPeerObj.avatar)}" alt="">` : (currentPeerObj?.display_name || currentPeerObj?.username || '?').charAt(0).toUpperCase();
+      const av = currentPeerObj?.avatar ? `<img src="${esc(currentPeerObj.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
       const wasAtBottom = area.scrollTop + area.clientHeight >= area.scrollHeight - 40;
       const div = document.createElement('div');
       div.id = 'typingRow';
@@ -1139,7 +1139,7 @@ function renderMsgs(msgs, scroll = true) {
     }
     const next = msgs[i + 1];
     const isLast = !next || next.from_id != m.from_id;
-    const av = m.from_avatar ? `<img src="${esc(m.from_avatar)}" alt="">` : (m.from_name || '?').charAt(0).toUpperCase();
+    const av = m.from_avatar ? `<img src="${esc(m.from_avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
     const rc = msgReactions[m.id] || { reactions: [], userReaction: null };
     const totalReacts = rc.reactions && rc.reactions.length ? rc.reactions.reduce((s, r) => s + Number(r.count || 0), 0) : 0;
     const reactionHtml = totalReacts > 0 ?
@@ -1173,7 +1173,7 @@ function renderMsgs(msgs, scroll = true) {
         </div>` : ''}
         ${reactionHtml}
         <div class="msg-time">${fmtTime(m.created_at)}${Number(m.edited) === 1 ? ' · <span class="msg-edited-tag">' + esc(t('msgEdited')) + '</span>' : ''}</div>
-        ${(showReceipts && isMine && m.id === lastReadMineId) ? `<div class="seen-receipt" title="${t('seenAt')} ${fmtTime(m.read_at || m.created_at)}"><div class="seen-av">${currentPeerObj?.avatar ? `<img src="${esc(currentPeerObj.avatar)}" alt="">` : (currentPeerObj?.display_name||currentPeerObj?.username||'?').charAt(0).toUpperCase()}</div></div>` : ''}
+        ${(showReceipts && isMine && m.id === lastReadMineId) ? `<div class="seen-receipt" title="${t('seenAt')} ${fmtTime(m.read_at || m.created_at)}"><div class="seen-av">${currentPeerObj?.avatar ? `<img src="${esc(currentPeerObj.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`}</div></div>` : ''}
       </div>
       ${isMine ? `<div class="msg-av ${isLast ? '' : 'invisible'}">${av}</div>` : ''}
     </div>`;
@@ -1378,7 +1378,7 @@ async function openCreateGroup() {
     <label class="member-check">
       <input type="checkbox" value="${u.id}">
       <div class="u-av" style="width:28px;height:28px;font-size:0.78rem;flex-shrink:0;">
-        ${u.avatar ? `<img src="${esc(u.avatar)}" alt="">` : ((u.display_name || u.username || '?').charAt(0).toUpperCase())}
+        ${u.avatar ? `<img src="${esc(u.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`}
       </div>
       <span>${esc(u.display_name || u.username)}</span>
     </label>`).join('');

@@ -512,7 +512,7 @@ function roleBadge(role) {
 }
 
 function avatarInner(user) {
-  return user.avatar ? `<img src="${esc(user.avatar)}" alt="">` : (esc((user.display_name || user.username || '?').charAt(0).toUpperCase()));
+  return user.avatar ? `<img src="${esc(user.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
 }
 
 // Variable for the current follow state of the displayed user
@@ -806,7 +806,7 @@ async function renderCloseFriendsList(){
     if(!list.length){ box.innerHTML = `<div class="post-empty" style="padding:20px;">${t('listEmpty')}</div>`; return; }
     box.innerHTML = list.map(f => `
       <div class="session-row">
-        <div class="session-icon">${f.avatar?`<img src="${esc(f.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`:esc((f.display_name||f.username||'?').charAt(0).toUpperCase())}</div>
+        <div class="session-icon">${f.avatar?`<img src="${esc(f.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`:`<img src="/default-avatar.jpg" alt="">`}</div>
         <div class="session-info"><div class="session-name">${esc(f.display_name||f.username)}</div><div class="session-meta">@${esc(f.username)}</div></div>
         <button class="btn-outline-danger" style="padding:6px 12px;font-size:0.76rem;" onclick="removeCloseFriend('${esc(f.username)}')">${t('remove')}</button>
       </div>
@@ -883,7 +883,7 @@ function renderOnePost(p){
   const topComments = allComments.filter(c => !c.parent_id);
   function repliesOf(cid){ return allComments.filter(c => Number(c.parent_id) === Number(cid)); }
   function oneCommentHtml(c, postId){
-    const ca = c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : esc((c.display_name||c.username||'?').charAt(0).toUpperCase());
+    const ca = c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
     const canDelC = ME && (ME.role==='admin' || c.user_id==ME?.id);
     const cleanContent = linkifyContent(esc(c.content));
     const replies = repliesOf(c.id);
@@ -1377,7 +1377,7 @@ function renderUserList(container, users, emptyMsg) {
   }
   container.innerHTML = users.map(u => `
     <div class="modal-user-item" onclick="window.location='/profile?u=${encodeURIComponent(u.username)}'">
-      <div class="u-av">${u.avatar ? `<img src="${esc(u.avatar)}" alt="">` : esc((u.display_name || u.username || '?').charAt(0).toUpperCase())}</div>
+      <div class="u-av">${u.avatar ? `<img src="${esc(u.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`}</div>
       <div class="u-info">
         <div class="u-name">${esc(u.display_name || u.username)} ${u.verified ? verifiedBadge() : ''}</div>
         <div class="u-un">@${esc(u.username)}</div>

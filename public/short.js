@@ -74,7 +74,7 @@ function reactCount(reel){ return (reel.reactions||[]).reduce((s,r)=>s+(r.count|
 
 function reelSlideHtml(r){
   const name = r.publisher_name || r.publisher || '?';
-  const avatarHtml = r.user_avatar ? `<img src="${esc(r.user_avatar)}" alt="">` : esc(name.charAt(0).toUpperCase());
+  const avatarHtml = r.user_avatar ? `<img src="${esc(r.user_avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
   const liked = r.userReaction === 'like';
   return `
   <div class="reel-slide" id="reel-${r.id}" data-id="${r.id}">
@@ -226,7 +226,7 @@ async function renderComments(){
   function row(c){
     const replies = repliesOf(c.id);
     return `<div class="comment-row">
-      <div class="comment-avatar">${c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : esc((c.display_name||c.username||'?').charAt(0).toUpperCase())}</div>
+      <div class="comment-avatar">${c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`}</div>
       <div style="flex:1;">
         <div class="comment-name">${esc(c.display_name || c.username)}
           ${ME ? `<button class="reply-btn" onclick="startReplyTo(${c.id}, '${esc(c.username||'')}')">${t('replyWord')}</button>` : ''}
