@@ -973,6 +973,10 @@ function rerenderPost(id){
   }
 }
 
+// توجيه لتسجيل الدخول عند محاولة تفاعل بدون حساب — نفس سلوك openAuth
+// بالصفحة الرئيسية، معرّفة هنا محلياً لأن profile.js ملف منفصل لا يحمّل index.js
+function openAuth(){ location.href = '/login'; }
+
 function toggleReactMenu(id){
   const menu = document.getElementById('rmenu-'+id);
   if (!menu) return;
@@ -984,7 +988,7 @@ document.addEventListener('click', e => {
 });
 
 async function toggleReact(id, emoji){
-  if(!ME){ openAuth?.(); return; }
+  if(!ME){ openAuth(); return; }
   document.querySelectorAll('.react-menu.show').forEach(m => m.classList.remove('show'));
   const d = await apiFetch('/api/records/'+id+'/react', 'POST', { emoji });
   if(!d.success) return;
