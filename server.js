@@ -2332,4 +2332,1846 @@ app.post('/api/account/change/request', requireAuth, async (req, res) => {
     await sendAccountChangeEmail(targetEmail, fullUser.display_name || fullUser.username, code, purpose);
     await q.upsertAccountChange(req.user.id, purpose, JSON.stringify(payload), targetEmail, code, expiresAt);
 
-   
+    res.json({ success:true, message:'تم إرسال كود التأكيد إلى البريد الإلكتروني', maskedEmail: maskEmail(targetEmail) });
+  } catch(e) {
+    console.error('❌ account/change/request error:', e);
+    res.status(500).json({ error: 'تعذر إرسال كود التأكيد' });
+  }
+});
+
+// إعادة إرسال كود التأكيد لطلب تعديل قائم
+app.post('/api/account/change/resend', requireAuth, async (req, res) => {
+  try {
+    const { purpose } = req.body || {};
+    if (!ACCOUNT_CHANGE_PURPOSES.includes(purpose)) return res.status(400).json({ error:'نوع الطلب غير صحيح' });
+
+    const rec = await q.getAccountChange(req.user.id, purpose);
+    if (!rec) return res.status(404).json({ error:'لا يوجد طلب تعديل سابق، ابدأ من جديد' });
+
+    const secsSinceLastSend = (Date.now() - parseSqliteUTC(rec.last_sent_at).getTime()) / 1000;
+    if (secsSinceLastSend < RESEND_COOLDOWN_S) {
+      return res.status(429).json({ error:`الرجاء الانتظار ${Math.ceil(RESEND_COOLDOWN_S - secsSinceLastSend)} ثانية قبل طلب كود جديد` });
+    }
+
+    const fullUser = await q.getUserByUsername(req.user.username);
+    const code = generateCode();
+    const expiresAt = new Date(Date.now() + CODE_TTL_MINUTES*60000).toISOString().replace('T',' ').slice(0,19);
+    await sendAccountChangeEmail(rec.target_email, fullUser?.display_name || fullUser?.username, code, purpose);
+    await q.bumpAccountChangeCode(req.user.id, purpose, code, expiresAt);
+
+    res.json({ success:true, message:'تم إرسال كود جديد إلى بريدك الإلكتروني' });
+  } catch(e) {
+    console.error('❌ account/change/resend error:', e);
+    res.status(500).json({ error: 'تعذر إعادة إرسال الكود' });
+  }
+});
+
+// إلغاء طلب تعديل قائم
+app.delete('/api/account/change/:purpose', requireAuth, async (req, res) => {
+  try {
+    await q.deleteAccountChange(req.user.id, req.params.purpose);
+    res.json({ success:true });
+  } catch(e) {
+    res.status(500).json({ error:'خطأ في الخادم' });
+  }
+});
+
+// الخطوة 2: تأكيد الكود وتنفيذ التعديل فعلياً
+app.post('/api/account/change/verify', requireAuth, async (req, res) => {
+  try {
+    const { purpose, code } = req.body || {};
+    if (!ACCOUNT_CHANGE_PURPOSES.includes(purpose)) return res.status(400).json({ error:'نوع الطلب غير صحيح' });
+    const inputCode = String(code || '').trim();
+    if (!inputCode) return res.status(400).json({ error:'كود التأكيد مطلوب' });
+
+    const rec = await q.getAccountChange(req.user.id, purpose);
+    if (!rec) return res.status(404).json({ error:'لا يوجد طلب تعديل، ابدأ من جديد' });
+
+    if (parseSqliteUTC(rec.expires_at).getTime() < Date.now()) {
+      await q.deleteAccountChange(req.user.id, purpose);
+      return res.status(410).json({ error:'انتهت صلاحية الكود، الرجاء طلب كود جديد', expired:true });
+    }
+    if (rec.attempts >= MAX_CODE_ATTEMPTS) {
+      await q.deleteAccountChange(req.user.id, purpose);
+      return res.status(429).json({ error:'تم تجاوز عدد المحاولات المسموحة، الرجاء البدء من جديد', expired:true });
+    }
+    if (rec.code !== inputCode) {
+      await q.incrementAccountChangeAttempts(req.user.id, purpose);
+      return res.status(400).json({ error:'كود التأكيد غير صحيح' });
+    }
+
+    let payload = {};
+    try { payload = JSON.parse(rec.payload || '{}'); } catch(e) { payload = {}; }
+
+    if (purpose === 'username') {
+      try { await q.updateUsername(req.user.id, payload.newUsername); }
+      catch(e) {
+        if (e.message?.includes('UNIQUE')) return res.status(400).json({ error:'اسم المستخدم أصبح مستخدماً، حاول باسم آخر' });
+        throw e;
+      }
+      await q.logSecurityEvent(req.user.id, 'username_changed', `تم تغيير اسم المستخدم إلى @${payload.newUsername}`, getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
+    } else if (purpose === 'email') {
+      try { await q.updateEmail(req.user.id, payload.newEmail); }
+      catch(e) {
+        if (e.message?.includes('UNIQUE')) return res.status(400).json({ error:'البريد الإلكتروني أصبح مستخدماً' });
+        throw e;
+      }
+      await q.logSecurityEvent(req.user.id, 'email_changed', `تم تغيير البريد الإلكتروني إلى ${maskEmail(payload.newEmail)}`, getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
+    } else if (purpose === 'password') {
+      await q.updateUserPassword(req.user.id, payload.newPasswordHash);
+      await q.logSecurityEvent(req.user.id, 'password_changed', 'تم تغيير كلمة المرور', getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
+    } else if (purpose === 'delete') {
+      await q.deleteAccountChange(req.user.id, purpose);
+      await q.deleteUser(req.user.id);
+      return res.json({ success:true, deleted:true });
+    }
+
+    await q.deleteAccountChange(req.user.id, purpose);
+
+    const updatedUser = await q.getUserById(req.user.id);
+    res.json({
+      success:true,
+      token: signToken(updatedUser, req.user.jti),
+      id: updatedUser.id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      avatar: updatedUser.avatar || ''
+    });
+  } catch(e) {
+    console.error('❌ account/change/verify error:', e);
+    res.status(500).json({ error: 'تعذر تأكيد التعديل' });
+  }
+});
+
+// ============================================================
+// المصادقة الثنائية (2FA/TOTP) — إعدادات الحساب /manager
+// ============================================================
+
+// الخطوة 1: توليد سر جديد + رمز QR لمسحه بتطبيق المصادقة (لم يُفعّل بعد)
+app.post('/api/account/2fa/setup', requireAuth, async (req, res) => {
+  try {
+    const fullUser = await q.getUserByIdFull(req.user.id);
+    if (!fullUser) return res.status(404).json({ error:'المستخدم غير موجود' });
+    if (Number(fullUser.totp_enabled) === 1) return res.status(400).json({ error:'المصادقة الثنائية مفعّلة بالفعل' });
+
+    const secret = authenticator.generateSecret();
+    const otpauth = authenticator.keyuri(fullUser.email, 'Hostaka', secret);
+    const qrDataUrl = await QRCode.toDataURL(otpauth);
+    await q.setTotpSecretPending(req.user.id, secret);
+
+    res.json({ success:true, secret, qrCode: qrDataUrl });
+  } catch(e) {
+    console.error('❌ 2fa/setup error:', e);
+    res.status(500).json({ error:'تعذر إعداد المصادقة الثنائية' });
+  }
+});
+
+// الخطوة 2: تأكيد الكود من التطبيق لتفعيل المصادقة الثنائية فعلياً — يعيد أكواد الاسترجاع مرة واحدة فقط
+app.post('/api/account/2fa/enable', requireAuth, async (req, res) => {
+  try {
+    const { code } = req.body || {};
+    const fullUser = await q.getUserByIdFull(req.user.id);
+    if (!fullUser) return res.status(404).json({ error:'المستخدم غير موجود' });
+    if (!fullUser.totp_secret) return res.status(400).json({ error:'لا يوجد سر معلّق بعد — اضغط "تفعيل" من جديد لتوليد رمز QR جديد ثم امسحه وأدخل الكود مباشرة', code:'NO_PENDING_SECRET' });
+    if (Number(fullUser.totp_enabled) === 1) return res.status(400).json({ error:'المصادقة الثنائية مفعّلة بالفعل' });
+
+    const cleanCode = String(code||'').trim();
+    if (!/^\d{6}$/.test(cleanCode)) return res.status(400).json({ error:`الكود يجب أن يكون 6 أرقام فقط (استلمت: "${cleanCode}")`, code:'BAD_FORMAT' });
+
+    const ok = authenticator.verify({ token: cleanCode, secret: fullUser.totp_secret });
+    if (!ok) {
+      const expected = authenticator.generate(fullUser.totp_secret);
+      console.error(`❌ 2FA verify mismatch — user:${req.user.id} received:${cleanCode} serverExpected:${expected} secretPrefix:${fullUser.totp_secret.slice(0,4)}... serverTime:${new Date().toISOString()}`);
+      return res.status(400).json({ error:'الكود غير صحيح، تأكد من التطبيق وحاول مجدداً', code:'MISMATCH' });
+    }
+
+    const backupCodes = generateBackupCodes(5);
+    const hashedCodes = backupCodes.map(c => bcrypt.hashSync(c, 10));
+    await q.enableTotp(req.user.id, JSON.stringify(hashedCodes));
+    await q.logSecurityEvent(req.user.id, '2fa_enabled', 'تم تفعيل المصادقة الثنائية', getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
+
+    res.json({ success:true, backupCodes });
+  } catch(e) {
+    console.error('❌ 2fa/enable error:', e);
+    res.status(500).json({ error:'تعذر تفعيل المصادقة الثنائية' });
+  }
+});
+
+// إلغاء تفعيل المصادقة الثنائية — يتطلب كلمة المرور + كود صالح (تطبيق أو احتياطي)
+app.post('/api/account/2fa/disable', requireAuth, async (req, res) => {
+  try {
+    const { password, code } = req.body || {};
+    const fullUser = await q.getUserByIdFull(req.user.id);
+    if (!fullUser) return res.status(404).json({ error:'المستخدم غير موجود' });
+    if (Number(fullUser.totp_enabled) !== 1) return res.status(400).json({ error:'المصادقة الثنائية غير مفعّلة أصلاً' });
+    if (!password || !bcrypt.compareSync(password, fullUser.password)) return res.status(401).json({ error:'كلمة المرور غير صحيحة' });
+
+    const inputCode = String(code||'').trim().toUpperCase();
+    let ok = false;
+    if (/^[0-9]{6}$/.test(inputCode)) {
+      ok = authenticator.verify({ token: inputCode, secret: fullUser.totp_secret });
+    } else {
+      let backupCodes = [];
+      try { backupCodes = JSON.parse(fullUser.totp_backup_codes || '[]'); } catch(e) {}
+      ok = backupCodes.some(h => bcrypt.compareSync(inputCode, h));
+    }
+    if (!ok) return res.status(400).json({ error:'كود المصادقة غير صحيح' });
+
+    await q.disableTotp(req.user.id);
+    await q.logSecurityEvent(req.user.id, '2fa_disabled', 'تم إلغاء تفعيل المصادقة الثنائية', getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
+    res.json({ success:true });
+  } catch(e) {
+    console.error('❌ 2fa/disable error:', e);
+    res.status(500).json({ error:'تعذر إلغاء تفعيل المصادقة الثنائية' });
+  }
+});
+
+// تعديل تاريخ الميلاد (لا يتطلب تأكيد بريد لأنه ليس حقلاً حساساً أمنياً)
+app.put('/api/account/birthdate', requireAuth, async (req, res) => {
+  try {
+    const { birth_date } = req.body || {};
+    const val = String(birth_date || '').trim();
+    if (val) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(val)) return res.status(400).json({ error:'صيغة التاريخ غير صحيحة' });
+      const d = new Date(val + 'T00:00:00Z');
+      if (isNaN(d.getTime())) return res.status(400).json({ error:'تاريخ غير صحيح' });
+      const ageYears = (Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000);
+      if (ageYears < 13) return res.status(400).json({ error:'يجب أن يكون عمرك 13 سنة على الأقل لاستخدام المنصة' });
+      if (ageYears > 120) return res.status(400).json({ error:'تاريخ الميلاد غير صحيح' });
+    }
+    await q.updateBirthDate(req.user.id, val);
+    res.json({ success:true });
+  } catch(e) {
+    res.status(500).json({ error:'خطأ في الخادم' });
+  }
+});
+
+// ============================================================
+// الجلسات والأجهزة — /manager
+// ============================================================
+
+function timeAgoAr(dateStr) {
+  if (!dateStr) return 'غير معروف';
+  const t = parseSqliteUTC(dateStr).getTime();
+  if (Number.isNaN(t)) return 'غير معروف';
+  const ms = Date.now() - t;
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return 'الآن';
+  if (mins < 60) return `منذ ${mins} دقيقة`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `منذ ${hrs} ساعة`;
+  const days = Math.floor(hrs / 24);
+  return `منذ ${days} يوم`;
+}
+
+// عرض كل الجلسات النشطة للمستخدم مع تمييز الجلسة الحالية
+app.get('/api/account/sessions', requireAuth, async (req, res) => {
+  try {
+    const sessions = await q.getUserSessions(req.user.id);
+    res.json(sessions.map(s => ({
+      id: s.id,
+      device: s.device,
+      browser: s.browser,
+      os: s.os,
+      ip: s.ip,
+      location: s.location || 'غير معروف',
+      created_at: s.created_at,
+      last_active: s.last_active,
+      last_active_text: timeAgoAr(s.last_active),
+      is_current: s.jti === req.user.jti
+    })));
+  } catch(e) {
+    res.status(500).json({ error:'خطأ في الخادم' });
+  }
+});
+
+// إنهاء جلسة واحدة محددة
+app.post('/api/account/sessions/:id/revoke', requireAuth, async (req, res) => {
+  try {
+    await q.revokeSession(req.user.id, Number(req.params.id));
+    await q.logSecurityEvent(req.user.id, 'session_revoked', 'تم إنهاء جلسة تسجيل دخول من جهاز آخر', getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
+    res.json({ success:true });
+  } catch(e) {
+    console.error('❌ sessions/:id/revoke error:', e.message || e);
+    res.status(500).json({ error:'خطأ في الخادم' });
+  }
+});
+
+// إنهاء كل الجلسات الأخرى (عدا الجلسة الحالية)
+app.post('/api/account/sessions/revoke-all', requireAuth, async (req, res) => {
+  try {
+    await q.revokeAllSessions(req.user.id, req.user.jti || '');
+    await q.logSecurityEvent(req.user.id, 'sessions_revoked_all', 'تم تسجيل الخروج من جميع الأجهزة الأخرى', getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
+    res.json({ success:true });
+  } catch(e) {
+    console.error('❌ sessions/revoke-all error:', e.message || e);
+    res.status(500).json({ error:'خطأ في الخادم' });
+  }
+});
+
+// ============================================================
+// تنبيهات الأمان — /manager
+// ============================================================
+const SECURITY_EVENT_LABELS = {
+  login: { title:'تسجيل دخول جديد', icon:'login' },
+  username_changed: { title:'تغيير اسم المستخدم', icon:'edit' },
+  email_changed: { title:'تغيير البريد الإلكتروني', icon:'mail' },
+  password_changed: { title:'تغيير كلمة المرور', icon:'lock' },
+  '2fa_enabled': { title:'تفعيل المصادقة الثنائية', icon:'shield' },
+  '2fa_disabled': { title:'إلغاء تفعيل المصادقة الثنائية', icon:'shield' },
+  session_revoked: { title:'إنهاء جلسة', icon:'logout' },
+  sessions_revoked_all: { title:'تسجيل خروج من كل الأجهزة', icon:'logout' },
+};
+
+app.get('/api/account/security-events', requireAuth, async (req, res) => {
+  try {
+    const events = await q.getSecurityEvents(req.user.id, 40);
+    res.json(events.map(e => ({
+      id: e.id,
+      type: e.type,
+      title: (SECURITY_EVENT_LABELS[e.type]?.title) || e.type,
+      icon: (SECURITY_EVENT_LABELS[e.type]?.icon) || 'bell',
+      description: e.description,
+      ip: e.ip,
+      device: e.device,
+      created_at: e.created_at,
+      time_text: timeAgoAr(e.created_at)
+    })));
+  } catch(e) {
+    res.status(500).json({ error:'خطأ في الخادم' });
+  }
+});
+
+// ============================================================
+// النسخ الاحتياطي وتنزيل البيانات — /manager
+// ============================================================
+
+// تنزيل نسخة كاملة من بيانات المستخدم بصيغة JSON
+app.get('/api/account/backup', requireAuth, async (req, res) => {
+  try {
+    const user = await q.getUserById(req.user.id);
+    if (!user) return res.status(404).json({ error:'المستخدم غير موجود' });
+    const [posts, savedPosts] = await Promise.all([
+      q.getUserPosts(req.user.id, req.user.id),
+      q.getSavedPosts(req.user.id)
+    ]);
+    const backup = {
+      exported_at: new Date().toISOString(),
+      profile: user,
+      posts,
+      saved_posts: savedPosts,
+    };
+    res.setHeader('Content-Disposition', `attachment; filename="hostaka-backup-${user.username}.json"`);
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.send(JSON.stringify(backup, null, 2));
+  } catch(e) {
+    console.error('❌ account/backup error:', e);
+    res.status(500).json({ error:'تعذر إنشاء النسخة الاحتياطية' });
+  }
+});
+
+// ── ربط Google Drive ورفع النسخة الاحتياطية إليه ──
+// يتطلب متغيرات البيئة: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || '';
+
+app.get('/api/account/backup/drive/status', requireAuth, (req, res) => {
+  res.json({ configured: !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REDIRECT_URI) });
+});
+
+// الخطوة 1: توجيه المستخدم لصفحة موافقة Google (يحمل معه توكن قصير الأجل لتحديد هويته عند العودة)
+app.get('/api/account/backup/drive/connect', requireAuth, (req, res) => {
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_REDIRECT_URI) {
+    return res.status(400).json({ error:'ميزة ربط Google Drive غير مُفعّلة على الخادم بعد' });
+  }
+  const state = jwt.sign({ id: req.user.id, purpose:'drive_backup' }, JWT_SECRET, { expiresIn:'10m' });
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: GOOGLE_REDIRECT_URI,
+    response_type: 'code',
+    scope: 'https://www.googleapis.com/auth/drive.file',
+    access_type: 'online',
+    prompt: 'consent',
+    state,
+  });
+  res.json({ url: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}` });
+});
+
+// الخطوة 2: استقبال كود Google، تبديله بتوكن وصول، ثم رفع النسخة الاحتياطية مباشرة إلى Drive
+app.get('/api/account/backup/drive/callback', async (req, res) => {
+  try {
+    const { code, state } = req.query;
+    let decoded;
+    try { decoded = jwt.verify(state, JWT_SECRET); } catch(e) { return res.status(400).send('انتهت صلاحية الطلب، حاول من جديد'); }
+    if (decoded.purpose !== 'drive_backup') return res.status(400).send('طلب غير صالح');
+
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code, client_id:GOOGLE_CLIENT_ID, client_secret:GOOGLE_CLIENT_SECRET,
+        redirect_uri:GOOGLE_REDIRECT_URI, grant_type:'authorization_code'
+      })
+    });
+    const tokenData = await tokenRes.json();
+    if (!tokenRes.ok || !tokenData.access_token) {
+      console.error('❌ Google token exchange failed:', tokenData);
+      return res.status(400).send('تعذر إتمام الربط مع Google');
+    }
+
+    const user = await q.getUserById(decoded.id);
+    const [posts, savedPosts] = await Promise.all([
+      q.getUserPosts(decoded.id, decoded.id),
+      q.getSavedPosts(decoded.id)
+    ]);
+    const backupJson = JSON.stringify({ exported_at:new Date().toISOString(), profile:user, posts, saved_posts:savedPosts }, null, 2);
+    const fileName = `hostaka-backup-${user.username}-${Date.now()}.json`;
+
+    const boundary = 'hostakaboundary' + Date.now();
+    const metadata = JSON.stringify({ name: fileName, mimeType:'application/json' });
+    const multipartBody =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n` +
+      `--${boundary}\r\nContent-Type: application/json\r\n\r\n${backupJson}\r\n--${boundary}--`;
+
+    const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      method:'POST',
+      headers:{ 'Authorization':`Bearer ${tokenData.access_token}`, 'Content-Type':`multipart/related; boundary=${boundary}` },
+      body: multipartBody
+    });
+    const uploadData = await uploadRes.json();
+    if (!uploadRes.ok) {
+      console.error('❌ Drive upload failed:', uploadData);
+      return res.status(400).send('تعذر رفع النسخة الاحتياطية إلى Drive');
+    }
+
+    await q.logSecurityEvent(decoded.id, 'drive_backup', 'تم رفع نسخة احتياطية إلى Google Drive', getClientIp(req), '');
+    res.send(`<html dir="rtl"><body style="font-family:sans-serif;text-align:center;padding:60px;"><h2>تم رفع النسخة الاحتياطية إلى Google Drive بنجاح ✅</h2><p>يمكنك إغلاق هذه الصفحة والعودة إلى المنصة.</p></body></html>`);
+  } catch(e) {
+    console.error('❌ drive/callback error:', e);
+    res.status(500).send('خطأ في الخادم');
+  }
+});
+
+// ============================================================
+// FOLLOW SYSTEM
+// ============================================================
+app.post('/api/follow/:username', requireAuth, async (req, res) => {
+  try {
+    const followed = await q.getPublicProfile(req.params.username);
+    if (!followed) return res.status(404).json({ error: 'المستخدم غير موجود' });
+    if (followed.id === req.user.id) {
+      return res.status(400).json({ error: 'لا يمكنك متابعة نفسك' });
+    }
+    await q.followUser(req.user.id, followed.id);
+    res.json({ success: true, following: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.delete('/api/follow/:username', requireAuth, async (req, res) => {
+  try {
+    const followed = await q.getPublicProfile(req.params.username);
+    if (!followed) return res.status(404).json({ error: 'المستخدم غير موجود' });
+    await q.unfollowUser(req.user.id, followed.id);
+    res.json({ success: true, following: false });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.get('/api/follow/status/:username', async (req, res) => {
+  try {
+    const token = (req.headers['authorization'] || '').replace('Bearer ', '').trim();
+    let viewerId = null;
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        viewerId = decoded.id;
+      } catch (e) { /* تجاهل */ }
+    }
+    const user = await q.getPublicProfile(req.params.username, viewerId);
+    if (!user) return res.status(404).json({ error: 'المستخدم غير موجود' });
+    res.json({
+      following: user.is_following || false,
+      followers_count: user.followers_count || 0,
+      following_count: user.following_count || 0
+    });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.get('/api/followers/:username', async (req, res) => {
+  try {
+    const user = await q.getPublicProfile(req.params.username);
+    if (!user) return res.status(404).json({ error: 'المستخدم غير موجود' });
+    const followers = await q.getFollowers(user.id);
+    res.json(followers);
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.get('/api/following/:username', async (req, res) => {
+  try {
+    const user = await q.getPublicProfile(req.params.username);
+    if (!user) return res.status(404).json({ error: 'المستخدم غير موجود' });
+    const following = await q.getFollowing(user.id);
+    res.json(following);
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ============================================================
+// Blocks
+// ============================================================
+app.post('/api/block/:username', requireAuth, async (req, res) => {
+  try {
+    const target = await q.getPublicProfile(req.params.username);
+    if (!target) return res.status(404).json({ error: 'المستخدم غير موجود' });
+    if (target.id === req.user.id) return res.status(400).json({ error: 'لا يمكنك حظر نفسك' });
+    await q.blockUser(req.user.id, target.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.delete('/api/block/:username', requireAuth, async (req, res) => {
+  try {
+    const target = await q.getPublicProfile(req.params.username);
+    if (!target) return res.status(404).json({ error: 'المستخدم غير موجود' });
+    await q.unblockUser(req.user.id, target.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.get('/api/block/list', requireAuth, async (req, res) => {
+  try {
+    res.json(await q.getBlockedUsers(req.user.id));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.get('/api/block/status/:username', requireAuth, async (req, res) => {
+  try {
+    const target = await q.getPublicProfile(req.params.username);
+    if (!target) return res.status(404).json({ error: 'المستخدم غير موجود' });
+    const iBlocked = await q.isBlocked(req.user.id, target.id);
+    const blockedMe = await q.isBlocked(target.id, req.user.id);
+    res.json({ blocked: iBlocked, blockedMe });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ============================================================
+// Reports & Support (البلاغات وطلبات الدعم)
+// ============================================================
+app.post('/api/reports', requireAuth, async (req, res) => {
+  try {
+    const { type, target_id, target_owner_username, subject, reason } = req.body || {};
+    if (!reason?.trim()) return res.status(400).json({ error: 'الرجاء كتابة تفاصيل البلاغ' });
+    const me = await q.getUserById(req.user.id);
+    let ownerId = null, ownerName = '';
+    if (target_owner_username) {
+      const owner = await q.getPublicProfile(target_owner_username);
+      if (owner) { ownerId = owner.id; ownerName = owner.display_name || owner.username; }
+    }
+    await q.createReport(
+      me.id, me.display_name || me.username,
+      type || 'general', target_id || null, ownerId, ownerName,
+      subject?.trim() || '', reason.trim()
+    );
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.get('/api/reports/mine', requireAuth, async (req, res) => {
+  try {
+    res.json(await q.getReportsByUser(req.user.id));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.get('/api/admin/reports', requireModerator, async (req, res) => {
+  try {
+    res.json(await q.getReportsByStatus(req.query.status));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.put('/api/admin/reports/:id', requireModerator, async (req, res) => {
+  try {
+    const { status, admin_reply } = req.body || {};
+    const report = await q.getReportById(req.params.id);
+    if (!report) return res.status(404).json({ error: 'البلاغ غير موجود' });
+    await q.updateReport(req.params.id, status || report.status, admin_reply ?? report.admin_reply);
+    if (admin_reply?.trim() && report.reporter_id) {
+      const admin = await q.getUserById(req.user.id);
+      await q.createNotification(
+        report.reporter_id, 'report_reply', admin.id,
+        admin.display_name || admin.username, admin.avatar || '',
+        null, null, admin_reply.trim().slice(0, 140), '/support'
+      );
+    }
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ============================================================
+// Messages
+// ============================================================
+app.get('/api/messages/unread', requireAuth, async (req, res) => {
+  try {
+    res.json(await q.unreadCount(req.user.id));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.get('/api/messages/conversations', requireAuth, async (req, res) => {
+  try {
+    res.json(await q.getConversations(req.user.id));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.get('/api/messages/:username', requireAuth, async (req, res) => {
+  try {
+    const other = await q.getPublicProfile(req.params.username);
+    if (!other) return res.status(404).json({ error: 'غير موجود' });
+    await q.markRead(other.id, req.user.id);
+    res.json(await q.getMessages(req.user.id, other.id));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// حذف المحادثة بالكامل
+app.delete('/api/messages/:username', requireAuth, async (req, res) => {
+  try {
+    const other = await q.getPublicProfile(req.params.username);
+    if (!other) return res.status(404).json({ error: 'غير موجود' });
+    await q.deleteConversation(req.user.id, other.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// وسائط المحادثة (الصور المتبادلة)
+app.get('/api/messages/:username/media', requireAuth, async (req, res) => {
+  try {
+    const other = await q.getPublicProfile(req.params.username);
+    if (!other) return res.status(404).json({ error: 'غير موجود' });
+    res.json(await q.getConversationMedia(req.user.id, other.id));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// الكنية الخاصة (اسم يظهر لك فقط بدلاً من اسم الحساب)
+app.get('/api/messages/:username/nickname', requireAuth, async (req, res) => {
+  try {
+    const other = await q.getPublicProfile(req.params.username);
+    if (!other) return res.status(404).json({ error: 'غير موجود' });
+    const row = await q.getDmNickname(req.user.id, other.id);
+    res.json({ nickname: row?.nickname || '' });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.put('/api/messages/:username/nickname', requireAuth, async (req, res) => {
+  try {
+    const other = await q.getPublicProfile(req.params.username);
+    if (!other) return res.status(404).json({ error: 'غير موجود' });
+    await q.setDmNickname(req.user.id, other.id, (req.body?.nickname || '').trim().slice(0, 40));
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// تفعيل/تعطيل مؤشر قراءة الرسائل (خاص وعام)
+app.get('/api/settings/read-receipts', requireAuth, async (req, res) => {
+  try {
+    const user = await q.getUserById(req.user.id);
+    res.json({ enabled: user?.read_receipts !== 0 });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.put('/api/settings/read-receipts', requireAuth, async (req, res) => {
+  try {
+    await q.setReadReceipts(req.user.id, !!req.body?.enabled);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// مؤشر الكتابة "يكتب..." (خاص بالدردشة الفردية والجماعية معاً عبر chat_key)
+app.post('/api/typing', requireAuth, async (req, res) => {
+  try {
+    const chatKey = (req.body?.chat_key || '').trim();
+    if (!chatKey) return res.status(400).json({ error: 'chat_key مطلوب' });
+    if (req.body?.stop) await q.clearTyping(chatKey, req.user.id);
+    else await q.setTyping(chatKey, req.user.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.get('/api/typing/:chatKey', requireAuth, async (req, res) => {
+  try {
+    const users = await q.getTypingUsers(req.params.chatKey, req.user.id);
+    res.json({ typing: users });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+// ===== E2E encryption — public key exchange =====
+// المفتاح العام لا يمثل أي خطورة إن اطّلع عليه أي شخص (هذا طبيعة التشفير
+// اللامتماثل)، لذا يكفي أن يكون المستخدم مسجلاً دخوله لتسجيل/جلب المفاتيح.
+app.post('/api/keys/register', requireAuth, async (req, res) => {
+  try {
+    const { publicKey } = req.body || {};
+    if (!publicKey || typeof publicKey !== 'string' || publicKey.length > 2000) {
+      return res.status(400).json({ error: 'مفتاح غير صالح' });
+    }
+    await q.setUserPublicKey(req.user.id, publicKey);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ===== E2E encryption — نسخة PIN الاحتياطية لمفتاح التشفير =====
+// السيرفر لا يرى الرمز (PIN) ولا المفتاح الخاص بصيغة قابلة للقراءة أبداً؛
+// كل شيء يُشفَّر/يُفكّ من طرف المتصفح فقط. دور السيرفر هنا:
+//  1) تخزين البيانات المشفّرة (salt/iv/wrapped_key) كما هي.
+//  2) التحقق من "verifier" (بصمة أحادية الاتجاه) قبل ما يرجّع wrapped_key،
+//     وتطبيق قفل مؤقت بعد عدة محاولات خاطئة — هذا يحمي من تخمين الرمز عبر
+//     الـ API (مثلاً لو انسرق توكن الدخول)، لكنه لا يحمي من تسريب كامل
+//     لقاعدة البيانات (انظر الملاحظة أعلى الملف).
+//
+// ⚠️ مهم: هذه الراوتات لازم تُعرَّف *قبل* GET /api/keys/:username تحت —
+// إكسبريس يطابق الراوتات بترتيب تعريفها بالكود، و:username بارامتر عام
+// بيطابق أي نص، فلو صارت بعده، أي طلب لـ GET /api/keys/pin-status كان
+// رح يوصل لراوت :username (يفهمها كأنها اسم مستخدم "pin-status" ويرجع
+// 404) وأبداً ما توصل لهاندلر الـ PIN الحقيقي تحت.
+function keyBackupIsLocked(backup) {
+  if (!backup || !backup.locked_until) return false;
+  return parseSqliteUTC(backup.locked_until).getTime() > Date.now();
+}
+
+app.get('/api/keys/pin-status', requireAuth, async (req, res) => {
+  try {
+    const backup = await q.getKeyBackup(req.user.id);
+    if (!backup) return res.json({ hasBackup: false });
+    const locked = keyBackupIsLocked(backup);
+    res.json({
+      hasBackup: true,
+      locked,
+      lockedUntil: locked ? backup.locked_until : null,
+      attemptsRemaining: locked ? 0 : Math.max(0, PIN_MAX_ATTEMPTS - (backup.failed_attempts || 0)),
+      salt: backup.salt,
+      iterations: backup.iterations,
+    });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.post('/api/keys/pin-setup', requireAuth, async (req, res) => {
+  try {
+    const { salt, iv, wrappedKey, verifier, iterations } = req.body || {};
+    if (!salt || !iv || !wrappedKey || !verifier) {
+      return res.status(400).json({ error: 'بيانات غير مكتملة' });
+    }
+    const iters = Number(iterations) || 0;
+    if (iters < 200000 || iters > 2000000) {
+      return res.status(400).json({ error: 'عدد تكرارات KDF غير مقبول' });
+    }
+    if (String(wrappedKey).length > 20000 || String(salt).length > 500 || String(iv).length > 500 || String(verifier).length > 500) {
+      return res.status(400).json({ error: 'بيانات كبيرة بشكل غير متوقع' });
+    }
+    await q.upsertKeyBackup(req.user.id, { salt, iv, wrappedKey, verifier, iterations: iters });
+    res.json({ success: true });
+  } catch(e) {
+    console.error('❌ pin-setup error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.post('/api/keys/pin-unlock', requireAuth, async (req, res) => {
+  try {
+    const { verifier } = req.body || {};
+    if (!verifier || typeof verifier !== 'string') {
+      return res.status(400).json({ error: 'verifier مطلوب' });
+    }
+    const backup = await q.getKeyBackup(req.user.id);
+    if (!backup) return res.status(404).json({ error: 'لا يوجد نسخة احتياطية' });
+
+    if (keyBackupIsLocked(backup)) {
+      return res.status(429).json({
+        error: `تم تجاوز عدد المحاولات، حاول بعد ${PIN_LOCKOUT_MINUTES} دقيقة`,
+        lockedUntil: backup.locked_until,
+      });
+    }
+
+    // مقارنة بوقت ثابت (constant-time) لتفادي تسريب معلومة عن الفرق عبر توقيت الاستجابة
+    const a = Buffer.from(String(verifier));
+    const b = Buffer.from(String(backup.verifier));
+    const match = a.length === b.length && crypto.timingSafeEqual(a, b);
+
+    if (!match) {
+      const attempts = (backup.failed_attempts || 0) + 1;
+      await q.incrementKeyBackupFailedAttempts(req.user.id);
+      if (attempts >= PIN_MAX_ATTEMPTS) {
+        const lockedUntil = new Date(Date.now() + PIN_LOCKOUT_MINUTES * 60000).toISOString().replace('T', ' ').slice(0, 19);
+        await q.lockKeyBackup(req.user.id, lockedUntil);
+        return res.status(429).json({
+          error: `تم تجاوز عدد المحاولات، حاول بعد ${PIN_LOCKOUT_MINUTES} دقيقة`,
+          lockedUntil,
+        });
+      }
+      return res.status(401).json({
+        error: 'رمز PIN غير صحيح',
+        attemptsRemaining: Math.max(0, PIN_MAX_ATTEMPTS - attempts),
+      });
+    }
+
+    await q.resetKeyBackupFailedAttempts(req.user.id);
+    res.json({ wrappedKey: backup.wrapped_key, iv: backup.iv });
+  } catch(e) {
+    console.error('❌ pin-unlock error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// إلغاء النسخة الاحتياطية (مثلاً قبل إعادة تعيينها برمز جديد من صفحة الإعدادات)
+// يتطلب كلمة مرور الحساب الحالية كحماية إضافية — وليس اعتماداً على التوكن فقط.
+app.delete('/api/keys/pin', requireAuth, async (req, res) => {
+  try {
+    const { password } = req.body || {};
+    const dbUser = await q.getUserByIdFull(req.user.id);
+    if (!dbUser || !password || !bcrypt.compareSync(String(password), dbUser.password)) {
+      return res.status(401).json({ error: 'كلمة المرور غير صحيحة' });
+    }
+    await q.deleteKeyBackup(req.user.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ⚠️ لازم يبقى مُعرَّف بعد كل راوتات /api/keys/pin-* فوق (انظر التحذير
+// فوق pin-status) — لأنه :username بارامتر عام بيمسك أي نص، وبيصير
+// يبلعهم لو انحطّ قبلهم.
+app.get('/api/keys/:username', requireAuth, async (req, res) => {
+  try {
+    const user = await q.getUserByUsername(req.params.username);
+    if (!user) return res.status(404).json({ error: 'غير موجود' });
+    res.json({ publicKey: user.public_key || null });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.post('/api/messages/:username', requireAuth, async (req, res) => {
+  try {
+    const { content, image, reply_to, iv, encrypted } = req.body || {};
+    if (!content?.trim() && !image) return res.status(400).json({ error: 'فارغة' });
+    const other = await q.getPublicProfile(req.params.username);
+    if (!other) return res.status(404).json({ error: 'غير موجود' });
+    if (await q.isBlockedEitherWay(req.user.id, other.id)) {
+      return res.status(403).json({ error: 'لا يمكن إرسال رسالة، يوجد حظر بينكما' });
+    }
+    if (Number(other.id) !== Number(req.user.id)) {
+      if (other.message_privacy === 'none') {
+        return res.status(403).json({ error: 'هذا المستخدم لا يسمح لأحد بمراسلته' });
+      }
+      if (other.message_privacy === 'followers') {
+        const iFollowThem = await q.isFollowing(req.user.id, other.id); // هل أنا (المرسل) أتابع الطرف الآخر
+        if (!iFollowThem) return res.status(403).json({ error: 'هذا المستخدم يسمح فقط لمتابعيه بمراسلته' });
+      }
+    }
+    const me = await q.getUserById(req.user.id);
+    await q.sendMessage(
+      me.id,
+      other.id,
+      me.display_name || me.username,
+      other.display_name || other.username,
+      content?.trim() || '',
+      image || '',
+      reply_to ? Number(reply_to) : null,
+      iv || '',
+      !!encrypted
+    );
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.put('/api/messages/:id', requireAuth, async (req, res) => {
+  try {
+    const msg = await q.getMessage(req.params.id);
+    if (!msg) return res.status(404).json({ error: 'غير موجود' });
+    if (msg.from_id != req.user.id) return res.status(403).json({ error: 'غير مسموح' });
+    const { content, iv } = req.body || {};
+    if (!content?.trim()) return res.status(400).json({ error: 'الرسالة فارغة' });
+    await q.updateMessage(req.params.id, content.trim(), iv || '');
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.delete('/api/messages/:id', requireAuth, async (req, res) => {
+  try {
+    const msg = await q.getMessage(req.params.id);
+    if (!msg) return res.status(404).json({ error: 'غير موجود' });
+    const me = await q.getUserById(req.user.id);
+    if (msg.from_id != req.user.id && me?.role !== 'admin') {
+      return res.status(403).json({ error: 'غير مسموح' });
+    }
+    await q.deleteMessage(req.params.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.post('/api/messages/react/:id', requireAuth, async (req, res) => {
+  try {
+    const { emoji } = req.body || {};
+    const ex = await q.getUserMsgReaction(req.params.id, req.user.id);
+    if (ex && ex.emoji === emoji) {
+      await q.removeMsgReaction(req.params.id, req.user.id);
+    } else {
+      await q.addMsgReaction(req.params.id, req.user.id, emoji || 'heart');
+    }
+    const reactions = await q.getMsgReactions(req.params.id);
+    const userReaction = (await q.getUserMsgReaction(req.params.id, req.user.id))?.emoji || null;
+    res.json({ success: true, reactions, userReaction });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.get('/api/messages/reactions', requireAuth, async (req, res) => {
+  try {
+    const ids = (req.query.ids || '').split(',').map(Number).filter(Boolean);
+    if (!ids.length) return res.json({});
+    const result = {};
+    for (const mid of ids) {
+      const reactions = await q.getMsgReactions(mid);
+      const userReaction = (await q.getUserMsgReaction(mid, req.user.id))?.emoji || null;
+      if (reactions.length || userReaction) {
+        result[mid] = { reactions, userReaction };
+      }
+    }
+    res.json(result);
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ============================================================
+// Groups
+// ============================================================
+app.get('/api/groups', requireAuth, async (req, res) => {
+  try {
+    res.json(await q.getUserGroups(req.user.id));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.post('/api/groups', requireAuth, async (req, res) => {
+  try {
+    const { name, description, avatar, theme, background, members } = req.body || {};
+    if (!name?.trim()) return res.status(400).json({ error: 'الاسم مطلوب' });
+    const result = await q.createGroup(
+      name.trim(),
+      description || '',
+      avatar || '',
+      theme || 'default',
+      background || 'default',
+      req.user.id
+    );
+    const gid = Number(result.lastInsertRowid);
+    await q.addGroupMember(gid, req.user.id, 'admin');
+    if (Array.isArray(members)) {
+      for (const uid of members) {
+        if (uid != req.user.id) await q.addGroupMember(gid, uid, 'member');
+      }
+    }
+    res.json({ success: true, id: gid });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.get('/api/groups/:id', requireAuth, async (req, res) => {
+  try {
+    const m = await q.isMember(req.params.id, req.user.id);
+    if (!m) return res.status(403).json({ error: 'لست عضواً' });
+    const [group, members] = await Promise.all([
+      q.getGroup(req.params.id),
+      q.getGroupMembers(req.params.id)
+    ]);
+    res.json({ ...group, members });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.put('/api/groups/:id', requireAuth, async (req, res) => {
+  try {
+    const m = await q.isMember(req.params.id, req.user.id);
+    if (!m || m.role === 'member') return res.status(403).json({ error: 'غير مسموح' });
+    const { name, description, avatar, theme, background } = req.body || {};
+    await q.updateGroup(
+      req.params.id,
+      name || '',
+      description || '',
+      avatar || '',
+      theme || 'default',
+      background || 'default'
+    );
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.delete('/api/groups/:id', requireAuth, async (req, res) => {
+  try {
+    const m = await q.isMember(req.params.id, req.user.id);
+    if (!m || m.role !== 'admin') return res.status(403).json({ error: 'فقط admin' });
+    await q.deleteGroup(req.params.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.post('/api/groups/:id/members', requireAuth, async (req, res) => {
+  try {
+    const m = await q.isMember(req.params.id, req.user.id);
+    if (!m || m.role === 'member') return res.status(403).json({ error: 'غير مسموح' });
+    const { user_id, role } = req.body || {};
+    await q.addGroupMember(req.params.id, user_id, role || 'member');
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.delete('/api/groups/:id/members/:uid', requireAuth, async (req, res) => {
+  try {
+    const m = await q.isMember(req.params.id, req.user.id);
+    const isSelf = parseInt(req.params.uid) === req.user.id;
+    if (!isSelf && (!m || m.role === 'member')) {
+      return res.status(403).json({ error: 'غير مسموح' });
+    }
+    await q.removeGroupMember(req.params.id, req.params.uid);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.put('/api/groups/:id/members/:uid/role', requireAuth, async (req, res) => {
+  try {
+    const m = await q.isMember(req.params.id, req.user.id);
+    if (!m || m.role !== 'admin') return res.status(403).json({ error: 'فقط admin' });
+    await q.updateMemberRole(req.params.id, req.params.uid, req.body?.role || 'member');
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.put('/api/groups/:id/members/:uid/nickname', requireAuth, async (req, res) => {
+  try {
+    const m = await q.isMember(req.params.id, req.user.id);
+    if (!m) return res.status(403).json({ error: 'لست عضواً' });
+    await q.updateMemberNick(req.params.id, req.params.uid, req.body?.nickname || '');
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.get('/api/groups/:id/messages', requireAuth, async (req, res) => {
+  try {
+    const m = await q.isMember(req.params.id, req.user.id);
+    if (!m) return res.status(403).json({ error: 'لست عضواً' });
+    res.json(await q.getGroupMessages(req.params.id));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// وسائط المجموعة
+app.get('/api/groups/:id/media', requireAuth, async (req, res) => {
+  try {
+    const m = await q.isMember(req.params.id, req.user.id);
+    if (!m) return res.status(403).json({ error: 'لست عضواً' });
+    res.json(await q.getGroupMedia(req.params.id));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// تعليم آخر رسالة مقروءة في المجموعة (لمؤشر القراءة الجماعي)
+app.post('/api/groups/:id/read', requireAuth, async (req, res) => {
+  try {
+    const m = await q.isMember(req.params.id, req.user.id);
+    if (!m) return res.status(403).json({ error: 'لست عضواً' });
+    const msgId = Number(req.body?.message_id) || 0;
+    if (msgId > 0) await q.markGroupRead(req.params.id, req.user.id, msgId);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.post('/api/groups/:id/messages', requireAuth, async (req, res) => {
+  try {
+    const m = await q.isMember(req.params.id, req.user.id);
+    if (!m) return res.status(403).json({ error: 'لست عضواً' });
+    const { content, image, reply_to } = req.body || {};
+    if (!content?.trim() && !image) return res.status(400).json({ error: 'فارغة' });
+    const user = await q.getUserById(req.user.id);
+    await q.sendGroupMessage(
+      req.params.id,
+      user.id,
+      user.display_name || user.username,
+      user.avatar || '',
+      content?.trim() || '',
+      image || '',
+      reply_to ? Number(reply_to) : null
+    );
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.put('/api/groups/:id/messages/:mid', requireAuth, async (req, res) => {
+  try {
+    const msg = await q.getGroupMessage(req.params.mid);
+    if (!msg || Number(msg.group_id) !== Number(req.params.id)) return res.status(404).json({ error: 'غير موجود' });
+    if (msg.user_id != req.user.id) return res.status(403).json({ error: 'غير مسموح' });
+    const { content } = req.body || {};
+    if (!content?.trim()) return res.status(400).json({ error: 'الرسالة فارغة' });
+    await q.updateGroupMessage(req.params.mid, content.trim());
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.delete('/api/groups/:id/messages/:mid', requireAuth, async (req, res) => {
+  try {
+    const msg = await q.getGroupMessage(req.params.mid);
+    if (!msg || Number(msg.group_id) !== Number(req.params.id)) return res.status(404).json({ error: 'غير موجود' });
+    const m = await q.isMember(req.params.id, req.user.id);
+    const me = await q.getUserById(req.user.id);
+    const isOwnerOfMsg = msg.user_id == req.user.id;
+    const isGroupPriv = m && m.role !== 'member';
+    const isSiteAdmin = me?.role === 'admin';
+    if (!isOwnerOfMsg && !isGroupPriv && !isSiteAdmin) {
+      return res.status(403).json({ error: 'غير مسموح' });
+    }
+    await q.deleteGroupMessage(req.params.mid);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.post('/api/groups/:gid/messages/:mid/react', requireAuth, async (req, res) => {
+  try {
+    const { emoji } = req.body || {};
+    const ex = await q.getUserGroupMsgReaction(req.params.mid, req.user.id);
+    if (ex && ex.emoji === emoji) {
+      await q.removeGroupMsgReaction(req.params.mid, req.user.id);
+    } else {
+      await q.addGroupMsgReaction(req.params.mid, req.user.id, emoji || 'heart');
+    }
+    const reactions = await q.getGroupMsgReactions(req.params.mid);
+    const userReaction = (await q.getUserGroupMsgReaction(req.params.mid, req.user.id))?.emoji || null;
+    res.json({ success: true, reactions, userReaction });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.get('/api/groups/:id/messages/reactions', requireAuth, async (req, res) => {
+  try {
+    const m = await q.isMember(req.params.id, req.user.id);
+    if (!m) return res.status(403).json({ error: 'لست عضواً' });
+    const ids = (req.query.ids || '').split(',').map(Number).filter(Boolean);
+    if (!ids.length) return res.json({});
+    const result = {};
+    for (const mid of ids) {
+      const reactions = await q.getGroupMsgReactions(mid);
+      const userReaction = (await q.getUserGroupMsgReaction(mid, req.user.id))?.emoji || null;
+      if (reactions.length || userReaction) {
+        result[mid] = { reactions, userReaction };
+      }
+    }
+    res.json(result);
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ============================================================
+// Shizi AI (Gemini)
+// ============================================================
+app.get('/api/shizi/history', requireAuth, async (req, res) => {
+  try {
+    res.json(await q.getShiziMessages(req.user.id));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.delete('/api/shizi/history', requireAuth, async (req, res) => {
+  try {
+    await q.clearShiziMessages(req.user.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// دالة مخصصة لإرسال الطلب لـ Gemini مع آلية إعادة المحاولة عند حدوث الأخطاء المؤقتة (429 و 503)
+async function fetchGeminiWithRetry(apiKey, bodyData, retries = 3, delayTime = 5000) {
+  for (let i = 0; i < retries; i++) {
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
+        body: JSON.stringify(bodyData),
+      }
+    );
+
+    const data = await r.json();
+
+    if (r.ok) {
+      return { ok: true, data };
+    }
+
+    // إذا كان الخطأ بسبب تخطي المعدل (429) أو عدم توفر الخدمة مؤقتاً (503)
+    if (r.status === 429 || r.status === 503 || data.error?.code === 429 || data.error?.code === 503) {
+      console.warn(`⚠️ Gemini API واجه خطأ ${r.status}. محاولة ${i + 1} من أصل ${retries}. جاري الانتظار...`);
+      // ننتظر المدة المحددة (مثلاً 5 ثوانٍ) قبل إعادة المحاولة
+      await delay(delayTime);
+      continue;
+    }
+
+    // إذا كان خطأ آخر غير قابل للإصلاح تلقائياً (مثل مفتاح خطأ أو بارامترات خاطئة)
+    return { ok: false, data };
+  }
+  
+  return { ok: false, data: { error: { message: 'تم تجاوز الحد الأقصى لمحاولات الاتصال بـ Gemini API بسبب الضغط العالي.' } } };
+}
+
+app.post('/api/shizi/chat', requireAuth, async (req, res) => {
+  try {
+    const { message } = req.body || {};
+    if (!message?.trim()) return res.status(400).json({ error: 'الرسالة فارغة' });
+    if (message.length > 4000) return res.status(400).json({ error: 'الرسالة طويلة جداً (الحد الأقصى 4000 حرف)' });
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error('❌ GEMINI_API_KEY غير موجود في البيئة');
+      return res.status(500).json({ error: 'GEMINI_API_KEY غير مُعدّ على الخادم' });
+    }
+
+    // ===== حد الرسائل اليومي =====
+    const usedToday = await q.countShiziUserMessagesLast24h(req.user.id);
+    if (usedToday >= SHIZI_DAILY_LIMIT) {
+      return res.status(429).json({
+        error: `وصلت للحد الأقصى من الرسائل اليومية (${SHIZI_DAILY_LIMIT} رسالة). حاول مرة أخرى بعد مرور 24 ساعة.`,
+      });
+    }
+
+    await q.addShiziMessage(req.user.id, 'user', message.trim());
+
+    const history = await q.getShiziMessages(req.user.id);
+    const recent = history.slice(-20);
+
+    const contents = recent.map(m => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    }));
+
+    const bodyData = {
+      system_instruction: { parts: [{ text: SHIZI_SYSTEM_PROMPT }] },
+      contents,
+      generationConfig: { temperature: 0.7, maxOutputTokens: 1200 },
+    };
+
+    // استدعاء الدالة الذكية المحدثة 
+    const result = await fetchGeminiWithRetry(apiKey, bodyData, 4, 20000);
+
+    if (!result.ok) {
+      console.error('❌ Gemini API error:', result.data);
+      return res.status(500).json({ error: result.data.error?.message || 'فشل الاتصال بـ Shizi AI' });
+    }
+
+    const reply = result.data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '...';
+    await q.addShiziMessage(req.user.id, 'assistant', reply);
+    res.json({ success: true, reply, remaining: SHIZI_DAILY_LIMIT - (usedToday + 1) });
+  } catch(e) {
+    console.error('❌ Shizi chat error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ============================================================
+// Admin
+// ============================================================
+// ============================================================
+// Analytics — تتبّع الزيارات (يُستدعى تلقائياً من كل صفحة)
+// ============================================================
+app.post('/api/track', (req, res) => {
+  // لا يجب أن يُعطّل هذا أي شيء بالموقع أبداً — نرد فوراً وننفذ التسجيل بالخلفية
+  res.json({ ok: true });
+  try {
+    const { path: p, sid, ref } = req.body || {};
+    if (!sid) return;
+    const u = verifyToken(req);
+    q.trackPageView(String(p||'/').slice(0,200), String(sid).slice(0,64), u ? u.id : null, String(ref||'').slice(0,300), String(req.get('user-agent')||'').slice(0,300)).catch(()=>{});
+    q.heartbeatPing(String(sid).slice(0,64), String(p||'/').slice(0,200)).catch(()=>{});
+    if (Math.random() < 0.01) q.pruneAnalyticsData().catch(()=>{}); // تنظيف دوري خفيف بدون الحاجة لـ cron
+  } catch(e) { /* التتبع لا يجب أن يكسر أي شيء */ }
+});
+
+app.post('/api/track/ping', (req, res) => {
+  res.json({ ok: true });
+  try {
+    const { sid, path: p } = req.body || {};
+    if (!sid) return;
+    q.heartbeatPing(String(sid).slice(0,64), String(p||'/').slice(0,200)).catch(()=>{});
+  } catch(e) { /* لا يكسر أي شيء */ }
+});
+
+// ============================================================
+// Admin
+// ============================================================
+app.get('/api/admin/analytics/overview', requireAdmin, async (req, res) => {
+  try {
+    const data = await q.getAnalyticsOverview();
+    res.json(data);
+  } catch(e) {
+    console.error('Analytics overview error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.get('/api/admin/logs', requireAdmin, async (req, res) => {
+  try {
+    const level = (req.query.level || '').trim();
+    const limit = Math.min(Number(req.query.limit) || 150, 500);
+    const logs = await q.getServerLogs(level || null, limit);
+    res.json(logs);
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.delete('/api/admin/logs', requireAdmin, async (req, res) => {
+  try {
+    await q.clearServerLogs();
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.get('/api/admin/users', requireModerator, async (req, res) => {
+  try {
+    res.json(await q.listUsers());
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// إدارة المنشورات (تشمل المعلَّقة) — يشوفها admin وmoderator
+app.get('/api/admin/posts', requireModerator, async (req, res) => {
+  try {
+    res.json(await q.listRecordsForAdmin());
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.put('/api/admin/posts/:id/suspend', requireModerator, async (req, res) => {
+  try {
+    const { reason } = req.body || {};
+    await q.suspendRecord(req.params.id, reason || '');
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.put('/api/admin/posts/:id/unsuspend', requireModerator, async (req, res) => {
+  try {
+    await q.unsuspendRecord(req.params.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.put('/api/admin/users/:id/role', requireAdmin, async (req, res) => {
+  try {
+    const { role } = req.body || {};
+    if (!['user', 'admin', 'moderator'].includes(role)) {
+      return res.status(400).json({ error: 'role غير صحيح' });
+    }
+    await q.updateUserRole(role, req.params.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.delete('/api/admin/users/:id', requireAdmin, async (req, res) => {
+  try {
+    await q.deleteUser(req.params.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.put('/api/admin/users/:id/suspend', requireModerator, async (req, res) => {
+  try {
+    const { reason } = req.body || {};
+    await q.suspendUser(req.params.id, reason || '');
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+app.put('/api/admin/users/:id/unsuspend', requireModerator, async (req, res) => {
+  try {
+    await q.unsuspendUser(req.params.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// إنقاذ طارئ: إلغاء تفعيل المصادقة الثنائية لمستخدم محظور دخوله بسبب مشكلة بكودها
+app.put('/api/admin/users/:id/2fa/disable', requireAdmin, async (req, res) => {
+  try {
+    await q.disableTotp(req.params.id);
+    await q.logSecurityEvent(req.params.id, '2fa_disabled', 'قام أحد المشرفين بإلغاء تفعيل المصادقة الثنائية لحسابك (إنقاذ طارئ)', getClientIp(req), '');
+    res.json({ success:true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// أداة إرسال إشعارات للأعضاء من لوحة الإدارة
+app.post('/api/admin/notifications', requireAdmin, async (req, res) => {
+  try {
+    const { content, link, target } = req.body || {};
+    if (!content?.trim()) return res.status(400).json({ error: 'محتوى الإشعار مطلوب' });
+    const admin = await q.getUserById(req.user.id);
+    let userIds;
+    if (target && target.trim() && target.trim() !== 'all') {
+      const uid = await q.getUserIdByUsername(target.trim().replace(/^@/, ''));
+      if (!uid) return res.status(404).json({ error: 'المستخدم غير موجود' });
+      userIds = [uid];
+    } else {
+      userIds = await q.listAllUserIds();
+    }
+    await q.createNotificationsBulk(
+      userIds, 'admin', admin.id,
+      admin.display_name || admin.username, admin.avatar || '',
+      content.trim(), link?.trim() || ''
+    );
+    res.json({ success: true, count: userIds.length });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ============================================================
+// Pages
+// ============================================================
+// صفحات خاصة/إدارية: لا فائدة من ظهورها بنتائج البحث، بل قد تكشف تفاصيل
+// حساسة لغير المخوّلين، لذا نمنع فهرستها صراحة (noindex)
+function privateMeta(req, title) {
+  const m = baseMeta(req, title);
+  m.robots = 'noindex, nofollow';
+  return m;
+}
+app.get('/login',   (req, res) => sendOG(req, res, 'login.html', privateMeta(req, 'تسجيل الدخول')));
+
+// ============================================================
+// صفحات انتقلت لمستودعات/نطاقات مستقلة (orbithub، console...). بدل حذف كل
+// الروابط الداخلية المتناثرة بالكود (window.location='/chat'، '/group?g='،
+// '/admin'...)، نُبقي هذي المسارات كصفحات تحويل خفيفة: تقرأ توكن الدخول من
+// localStorage (لأنه لا يُشارَك تلقائياً بين النطاقات الفرعية) وتُرفقه مع
+// أي query string موجودة، ثم تحوّل المستخدم فوراً للنطاق الجديد.
+function sendSubdomainRedirect(req, res, base, path) {
+  res.set('Content-Type', 'text/html; charset=utf-8').send(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="robots" content="noindex, nofollow">
+<title>هوستاكا</title></head><body>
+<script>
+(function () {
+  var token = localStorage.getItem('hostaka_token') || '';
+  var qs = new URLSearchParams(window.location.search);
+  if (token) qs.set('token', token);
+  var q = qs.toString();
+  window.location.replace('${base}${path}' + (q ? '?' + q : ''));
+})();
+</script>
+</body></html>`);
+}
+
+// الدردشة والمجموعات → orbithub.hostaka.fun
+const ORBITHUB_BASE = process.env.ORBITHUB_BASE || 'https://orbithub.hostaka.fun';
+app.get('/chat',    (req, res) => sendSubdomainRedirect(req, res, ORBITHUB_BASE, '/chat'));
+app.get('/group',   (req, res) => sendSubdomainRedirect(req, res, ORBITHUB_BASE, '/group'));
+
+// لوحة التحكم (بالكامل، بدون زر أو صفحة على المنصة الرئيسية بعد اليوم) →
+// console.hostaka.fun/user/console. التفاصيل والصلاحيات نفسها لم تتغيّر —
+// كل /api/admin/* بقيت هنا بالسيرفر الرئيسي كما هي تماماً، بس الواجهة انتقلت.
+const CONSOLE_BASE = process.env.CONSOLE_BASE || 'https://console.hostaka.fun';
+app.get('/admin', (req, res) => sendSubdomainRedirect(req, res, CONSOLE_BASE, '/user/console'));
+
+app.get('/shiziai', (req, res) => sendOG(req, res, 'shiziai.html', privateMeta(req, 'شيزي الذكاء الاصطناعي')));
+app.get('/support', (req, res) => sendOG(req, res, 'support.html', privateMeta(req, 'الدعم الفني')));
+app.get('/manager', (req, res) => sendOG(req, res, 'manager.html', privateMeta(req, 'إدارة الحساب')));
+app.get('/save', (req, res) => sendOG(req, res, 'save.html', privateMeta(req, 'المحفوظات')));
+app.get('/post', (req, res) => sendOG(req, res, 'post.html', baseMeta(req, 'منشور')));
+
+app.get('/profile', async (req, res) => {
+  const meta = baseMeta(req, 'الملف الشخصي');
+  const uname = (req.query.u || '').trim();
+  if (uname) {
+    try {
+      const user = await q.getUserByUsername(uname);
+      if (user && !user.suspended) {
+        meta.title = `${user.display_name || user.username} (@${user.username}) | ${SITE_NAME}`;
+        meta.description = ogTruncate(user.bio) || DEFAULT_DESC;
+        meta.image = absUrl(req, user.avatar || DEFAULT_IMG);
+        meta.type = 'profile';
+        meta.jsonld = {
+          '@context': 'https://schema.org',
+          '@type': 'ProfilePage',
+          dateCreated: user.created_at || undefined,
+          mainEntity: {
+            '@type': 'Person',
+            name: user.display_name || user.username,
+            alternateName: user.username,
+            image: meta.image,
+            description: ogTruncate(user.bio) || undefined
+          }
+        };
+      }
+    } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
+  }
+  sendOG(req, res, 'profile.html', meta);
+});
+
+app.get('/page', async (req, res) => {
+  const meta = baseMeta(req, 'صفحة');
+  const uname = (req.query.u || '').trim();
+  if (uname) {
+    try {
+      const page = await q.getPageByUsername(uname);
+      if (page) {
+        meta.title = `${page.name} | ${SITE_NAME}`;
+        meta.description = ogTruncate(page.bio) || DEFAULT_DESC;
+        meta.image = absUrl(req, page.avatar || DEFAULT_IMG);
+      }
+    } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
+  }
+  sendOG(req, res, 'page.html', meta);
+});
+
+// ============================================================
+// الفيديو والريلز انتقلا لمستودع/نطاق مستقل: aethercast.hostaka.fun
+// نفس فكرة /chat و/group: نُبقي المسارين هنا كصفحتي تحويل، لكن بفارق
+// مهم — الفيديو محتوى عام يُشارَك على مواقع التواصل، فلازم نحافظ على
+// وسوم Open Graph (العنوان/الوصف/الصورة المصغّرة/الفيديو) عشان روابط
+// المشاركة تطلع بمعاينة صحيحة على واتساب/تويتر/ديسكورد. لذلك:
+// 1) نبني نفس بيانات الميتا كما كان (بالاستعلام عن السجل من قاعدة البيانات)
+// 2) نحقنها بصفحة HTML خفيفة عبر injectOG (بوتات المعاينة تقرأ الـ <head>
+//    فقط، ما تنفّذ جافاسكريبت، فتشوف الميتا الصحيحة)
+// 3) جسم الصفحة يحوّل الزائر الحقيقي (متصفح ينفّذ JS) لـ aethercast مع
+//    توكن الدخول، لأن localStorage ما ينشارك بين النطاقين الفرعيين
+const AETHERCAST_BASE = process.env.AETHERCAST_BASE || 'https://aethercast.hostaka.fun';
+function sendAethercastRedirect(req, res, path, meta) {
+  const baseHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
+<script>
+(function () {
+  var token = localStorage.getItem('hostaka_token') || '';
+  var qs = new URLSearchParams(window.location.search);
+  if (token) qs.set('token', token);
+  var q = qs.toString();
+  window.location.replace('${AETHERCAST_BASE}${path}' + (q ? '?' + q : ''));
+})();
+</script>
+</body></html>`;
+  res.set('Content-Type', 'text/html; charset=utf-8').send(injectOG(baseHtml, meta || {}));
+}
+
+app.get('/short', async (req, res) => {
+  const meta = baseMeta(req, 'ريلز');
+  meta.type = 'video.other';
+  const id = (req.query.id || '').trim();
+  if (id) {
+    try {
+      const rec = await q.getRecordById(id);
+      if (rec) {
+        const who = rec.publisher_name || rec.publisher;
+        meta.title = `${who} على ${SITE_NAME}`;
+        meta.description = ogTruncate(rec.content) || DEFAULT_DESC;
+        if (rec.image) meta.image = absUrl(req, rec.image);
+        if (rec.video) meta.video = absUrl(req, rec.video);
+      }
+    } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
+  }
+  sendAethercastRedirect(req, res, '/short', meta);
+});
+
+app.get('/video', async (req, res) => {
+  const meta = baseMeta(req, 'aethercast');
+  meta.type = 'video.other';
+  const id = (req.query.id || '').trim();
+  if (id) {
+    try {
+      const rec = await q.getRecordById(id);
+      if (rec) {
+        const who = rec.publisher_name || rec.publisher;
+        meta.title = `${who} على aethercast`;
+        meta.description = ogTruncate(rec.content) || DEFAULT_DESC;
+        if (rec.image) meta.image = absUrl(req, rec.image);
+        if (rec.video) meta.video = absUrl(req, rec.video);
+      }
+    } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
+  }
+  sendAethercastRedirect(req, res, '/video', meta);
+});
+
+// ============================================================
+// تطبيقات هوستاكا (Hostaka Apps) انتقلت لمستودع/نطاق مستقل: apps.hostaka.fun
+// نفس فكرة /video بالضبط — صفحة تحويل خفيفة، لكن مع وسوم Open Graph
+// صحيحة لصفحة التطبيق الفردي (/app/:token) عشان روابط المشاركة تطلع
+// بمعاينة صحيحة (اسم التطبيق + وصفه + أيقونته).
+const APPS_BASE = process.env.APPS_BASE || 'https://apps.hostaka.fun';
+function sendAppsRedirect(req, res, path, meta) {
+  const baseHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
+<script>
+(function () {
+  var token = localStorage.getItem('hostaka_token') || '';
+  var qs = new URLSearchParams(window.location.search);
+  if (token) qs.set('token', token);
+  var q = qs.toString();
+  window.location.replace('${APPS_BASE}${path}' + (q ? '?' + q : ''));
+})();
+</script>
+</body></html>`;
+  res.set('Content-Type', 'text/html; charset=utf-8').send(injectOG(baseHtml, meta || {}));
+}
+
+app.get('/apps', (req, res) => {
+  const meta = baseMeta(req, 'Hostaka Apps');
+  sendAppsRedirect(req, res, '/', meta);
+});
+app.get('/apps/submit', (req, res) => {
+  sendAppsRedirect(req, res, '/submit', privateMeta(req, 'نشر تطبيق'));
+});
+app.get('/app/:token', async (req, res) => {
+  const meta = baseMeta(req, 'apps');
+  const tok = (req.params.token || '').trim();
+  if (tok) {
+    try {
+      const app_ = await q.getAppByToken(tok);
+      if (app_ && app_.status === 'approved') {
+        meta.title = `${app_.name} · Hostaka Apps`;
+        meta.description = ogTruncate(app_.description) || DEFAULT_DESC;
+        if (app_.icon) meta.image = absUrl(req, app_.icon);
+      }
+    } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
+  }
+  sendAppsRedirect(req, res, '/app?id=' + encodeURIComponent(tok), meta);
+});
+
+// ============================================================
+// wiki.hostaka.fun — Hostaka Wiki (نفس أسلوب /apps بالضبط)
+// ============================================================
+const WIKI_BASE = process.env.WIKI_BASE || 'https://wiki.hostaka.fun';
+function sendWikiRedirect(req, res, path, meta) {
+  const baseHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
+<script>
+(function () {
+  var token = localStorage.getItem('hostaka_token') || '';
+  var qs = new URLSearchParams(window.location.search);
+  if (token) qs.set('token', token);
+  var q = qs.toString();
+  window.location.replace('${WIKI_BASE}${path}' + (q ? '?' + q : ''));
+})();
+</script>
+</body></html>`;
+  res.set('Content-Type', 'text/html; charset=utf-8').send(injectOG(baseHtml, meta || {}));
+}
+
+app.get('/wiki', (req, res) => {
+  sendWikiRedirect(req, res, '/', baseMeta(req, 'Hostaka Wiki'));
+});
+// نموذج منشور جديد — خاص (يتطلب تسجيل دخول)، بدون فهرسة؛ ?ext= (لو موجود)
+// ينمرّر تلقائياً مع باقي الـ query string عبر sendWikiRedirect
+app.get('/wiki/new', (req, res) => {
+  sendWikiRedirect(req, res, '/new', privateMeta(req, 'منشور جديد بالويكي'));
+});
+// صفحة امتداد (موضوع) — قائمة كل المنشورات الأصلية تحته
+app.get('/wiki/:extension', (req, res) => {
+  const ext = (req.params.extension || '').trim();
+  const meta = baseMeta(req, `${ext} · Hostaka Wiki`);
+  sendWikiRedirect(req, res, '/' + encodeURIComponent(ext), meta);
+});
+// منشور فردي (أصلي أو تعليق/رد — كلهم بنفس الشكل وتوكن مستقل)
+app.get('/wiki/:extension/:token', async (req, res) => {
+  const ext = (req.params.extension || '').trim();
+  const tok = (req.params.token || '').trim();
+  const meta = baseMeta(req, `${ext} · Hostaka Wiki`);
+  if (tok) {
+    try {
+      const post = await q.getWikiPostByToken(tok);
+      if (post) {
+        meta.title = post.title ? `${post.title} · Hostaka Wiki` : `رد من @${post.author_username} · Hostaka Wiki`;
+        meta.description = ogTruncate(post.body) || DEFAULT_DESC;
+        if (post.image) meta.image = absUrl(req, post.image);
+      }
+    } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
+  }
+  sendWikiRedirect(req, res, '/' + encodeURIComponent(ext) + '/' + encodeURIComponent(tok), meta);
+});
+
+// ============================================================
+// robots.txt — يوجّه عناكب البحث (بما فيها Googlebot) لملف الـ sitemap
+// ويمنع الزحف على المسارات الخاصة/الإدارية وواجهة الـ API
+// ============================================================
+app.get('/robots.txt', (req, res) => {
+  const origin = `${req.protocol}://${req.get('host')}`;
+  res.type('text/plain').send(
+`User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin
+Disallow: /manager
+Disallow: /chat
+Disallow: /group
+Disallow: /save
+Disallow: /shiziai
+Disallow: /support
+Disallow: /login
+
+Sitemap: ${origin}/sitemap.xml
+`);
+});
+
+// ============================================================
+// sitemap.xml — خريطة موقع ديناميكية (مُولَّدة من قاعدة البيانات مباشرة)
+// تضم: الصفحة الرئيسية + الحسابات العامة (غير الخاصة) + صفحات الأعمال
+// + آخر المنشورات العامة. هذا يساعد Google على اكتشاف وأرشفة الموقع
+// بسرعة أكبر بدل انتظار الزحف العشوائي.
+// بعد رفع الموقع، يُفضّل أيضاً إضافته يدوياً على:
+// https://search.google.com/search-console (إضافة الموقع ثم "خرائط الموقع")
+// ============================================================
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const origin = `${req.protocol}://${req.get('host')}`;
+    const urls = [];
+    const addUrl = (loc, lastmod, priority) => {
+      urls.push(`  <url><loc>${ogEscape(loc)}</loc>${lastmod ? `<lastmod>${new Date(lastmod).toISOString()}</lastmod>` : ''}<priority>${priority}</priority></url>`);
+    };
+
+    addUrl(`${origin}/`, null, '1.0');
+
+    try {
+      const users = await q.listPublicUsernames();
+      for (const u of users) addUrl(`${origin}/profile?u=${encodeURIComponent(u.username)}`, u.created_at, '0.7');
+    } catch (e) { console.warn('sitemap: تعذر جلب المستخدمين', e.message); }
+
+    try {
+      const pages = await q.listAllPages();
+      for (const p of pages) addUrl(`${origin}/page?u=${encodeURIComponent(p.username)}`, p.created_at, '0.6');
+    } catch (e) { console.warn('sitemap: تعذر جلب الصفحات', e.message); }
+
+    try {
+      const posts = await q.listPublicPostIds();
+      for (const r of posts) addUrl(`${origin}/post?p=${r.id}`, r.created_at, '0.5');
+    } catch (e) { console.warn('sitemap: تعذر جلب المنشورات', e.message); }
+
+    res.type('application/xml').send(
+`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.join('\n')}
+</urlset>`);
+  } catch (e) {
+    console.error('❌ sitemap generation failed:', e);
+    res.status(500).type('text/plain').send('sitemap generation failed');
+  }
+});
+
+app.get('*', async (req, res) => {
+  const meta = baseMeta(req, SITE_NAME);
+  meta.title = SITE_NAME;
+  meta.jsonld = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE_NAME,
+    url: `${req.protocol}://${req.get('host')}/`
+  };
+  const pid = (req.query.p || '').trim();
+  if (pid) {
+    try {
+      const rec = await q.getRecordById(pid);
+      if (rec) {
+        const who = rec.publisher_name || rec.publisher;
+        meta.title = `منشور ${who} | ${SITE_NAME}`;
+        meta.description = ogTruncate(rec.content) || DEFAULT_DESC;
+        if (rec.image) meta.image = absUrl(req, rec.image);
+        meta.type = 'article';
+        delete meta.jsonld;
+      }
+    } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
+  }
+  sendOG(req, res, 'index.html', meta);
+});
+
+// ============================================================
+// Start
+// ============================================================
+const PORT = process.env.PORT || 3000;
+const isServerless = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+if (!isServerless) {
+  // استضافة تقليدية (سيرفر دائم): ابدأ الاستماع بعد جاهزية القاعدة،
+  // وإن فشل الاتصال نهائياً أعد المحاولة بدل إنهاء العملية فوراً
+  (async function startLocal() {
+    while (true) {
+      try { await ensureDbReady(); break; }
+      catch(e) { console.error('DB init failed, retrying in 3s...'); await new Promise(r => setTimeout(r, 3000)); }
+    }
+    app.listen(PORT, () => console.log(`Hostaka running on port ${PORT}`));
+  })();
+}
+// على Vercel/serverless: لا حاجة لـ app.listen أو أي منطق بدء تشغيل هنا؛
+// كل طلب يستدعي ensureDbReady() من تلقاء نفسه عبر الـ middleware أعلاه.
+
+module.exports = app;
