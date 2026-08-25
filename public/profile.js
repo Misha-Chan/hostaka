@@ -23,7 +23,7 @@ const LANG = {
     pleaseLogin: 'يجب تسجيل الدخول لعرض ملفك الشخصي',
     home: 'الرئيسية', shareLink: 'مشاركة الرابط', linkCopied: 'تم نسخ الرابط',
     saveSuccess: 'تم الحفظ بنجاح', saveError: 'فشل الحفظ',
-    connectionError: 'تعذر الاتصال', coverJpg: 'يُقبل JPG/JPEG فقط للغلاف',
+    connectionError: 'تعذر الاتصال', coverJpg: 'يُقبل JPG/JPEG فقط للغلاف', coverVideoTooLarge: 'حجم فيديو الغلاف يجب ألا يتجاوز 5 ميغابايت', coverVideoUploadFail: 'تعذر رفع فيديو الغلاف',
     followers: 'متابعون', following: 'يتابع', follow: 'متابعة', unfollow: 'إلغاء المتابعة',
     followError: 'حدث خطأ أثناء المتابعة', followersList: 'المتابعون', followingList: 'المتابَعين',
     noFollowers: 'لا يوجد متابعون', noFollowing: 'لا يتابع أحداً',
@@ -70,7 +70,7 @@ const LANG = {
     pleaseLogin: 'Please login to view your profile',
     home: 'Home', shareLink: 'Share link', linkCopied: 'Link copied',
     saveSuccess: 'Saved successfully', saveError: 'Save failed',
-    connectionError: 'Connection error', coverJpg: 'JPG/JPEG only for cover',
+    connectionError: 'Connection error', coverJpg: 'JPG/JPEG only for cover', coverVideoTooLarge: 'Cover video must be under 5MB', coverVideoUploadFail: 'Failed to upload cover video',
     followers: 'Followers', following: 'Following', follow: 'Follow', unfollow: 'Unfollow',
     followError: 'Error while following', followersList: 'Followers', followingList: 'Following',
     noFollowers: 'No followers yet', noFollowing: 'Not following anyone',
@@ -117,7 +117,7 @@ const LANG = {
     pleaseLogin: 'Connectez-vous pour voir votre profil',
     home: 'Accueil', shareLink: 'Partager le lien', linkCopied: 'Lien copié',
     saveSuccess: 'Enregistré', saveError: 'Échec',
-    connectionError: 'Erreur de connexion', coverJpg: 'JPG/JPEG uniquement',
+    connectionError: 'Erreur de connexion', coverJpg: 'JPG/JPEG uniquement', coverVideoTooLarge: 'La vidéo de couverture doit faire moins de 5 Mo', coverVideoUploadFail: "Échec de l'envoi de la vidéo de couverture",
     followers: 'Abonnés', following: 'Abonnements', follow: 'Suivre', unfollow: 'Ne plus suivre',
     followError: 'Erreur lors du suivi', followersList: 'Abonnés', followingList: 'Abonnements',
     noFollowers: 'Aucun abonné', noFollowing: 'Aucun abonnement',
@@ -132,7 +132,7 @@ const LANG = {
     pleaseLogin: 'Войдите, чтобы просмотреть профиль',
     home: 'Главная', shareLink: 'Поделиться ссылкой', linkCopied: 'Ссылка скопирована',
     saveSuccess: 'Сохранено', saveError: 'Ошибка',
-    connectionError: 'Ошибка соединения', coverJpg: 'Только JPG/JPEG',
+    connectionError: 'Ошибка соединения', coverJpg: 'Только JPG/JPEG', coverVideoTooLarge: 'Видео обложки должно быть менее 5 МБ', coverVideoUploadFail: 'Не удалось загрузить видео обложки',
     followers: 'Подписчики', following: 'Подписки', follow: 'Подписаться', unfollow: 'Отписаться',
     followError: 'Ошибка при подписке', followersList: 'Подписчики', followingList: 'Подписки',
     noFollowers: 'Нет подписчиков', noFollowing: 'Нет подписок',
@@ -147,7 +147,7 @@ const LANG = {
     pleaseLogin: '请登录查看您的个人资料',
     home: '首页', shareLink: '分享链接', linkCopied: '链接已复制',
     saveSuccess: '保存成功', saveError: '保存失败',
-    connectionError: '连接错误', coverJpg: '仅支持 JPG/JPEG',
+    connectionError: '连接错误', coverJpg: '仅支持 JPG/JPEG', coverVideoTooLarge: '封面视频不能超过 5MB', coverVideoUploadFail: '封面视频上传失败',
     followers: '关注者', following: '正在关注', follow: '关注', unfollow: '取消关注',
     followError: '关注出错', followersList: '关注者', followingList: '正在关注',
     noFollowers: '暂无关注者', noFollowing: '未关注任何人',
@@ -162,7 +162,7 @@ const LANG = {
     pleaseLogin: 'ログインしてプロフィールを表示',
     home: 'ホーム', shareLink: 'リンクを共有', linkCopied: 'リンクをコピーしました',
     saveSuccess: '保存しました', saveError: '保存に失敗しました',
-    connectionError: '接続エラー', coverJpg: 'JPG/JPEGのみ対応',
+    connectionError: '接続エラー', coverJpg: 'JPG/JPEGのみ対応', coverVideoTooLarge: 'カバー動画は5MB未満にしてください', coverVideoUploadFail: 'カバー動画のアップロードに失敗しました',
     followers: 'フォロワー', following: 'フォロー中', follow: 'フォロー', unfollow: 'フォロー解除',
     followError: 'フォロー中にエラーが発生しました', followersList: 'フォロワー', followingList: 'フォロー中',
     noFollowers: 'フォロワーはいません', noFollowing: 'フォローしている人はいません',
@@ -182,6 +182,8 @@ const viewUsername = urlParams.get('u');
 let ME = null;
 let newAvBase64 = '';
 let newCoverBase64 = '';
+let newCoverVideoFile = null; // ملف فيديو الغلاف الجديد (يُرفع فعلياً عند الحفظ)
+let newCoverType = null; // 'image' | 'video' | null (بلا تغيير)
 let currentTab = 'posts';
 let userPosts = [];
 
@@ -438,7 +440,7 @@ async function loadPublicProfile(username) {
     if (pr.error) { renderNotFound(); return; }
     const ps = await fetch('/api/user/' + encodeURIComponent(username) + '/posts').then(r => r.json());
     document.getElementById('topbarTitle').textContent = pr.display_name || pr.username;
-    renderCover(pr.cover || '', false);
+    renderCover(pr.cover || '', false, pr.cover_type || 'image');
     
     // Use the data from pr directly (since the server returns is_following when a token is passed)
     const followStatus = {
@@ -464,7 +466,7 @@ async function loadMyProfile() {
     ]);
     if (full && !full.error) {
       ME = full;
-      renderCover(full.cover || '', true);
+      renderCover(full.cover || '', true, full.cover_type || 'image');
       renderMyProfile(full, Array.isArray(posts) ? posts : []);
     } else {
       renderMyProfile(ME, Array.isArray(posts) ? posts : []);
@@ -474,12 +476,26 @@ async function loadMyProfile() {
   }
 }
 
-function renderCover(url, editable) {
+function renderCover(url, editable, type) {
   const img = document.getElementById('coverImg');
+  const vid = document.getElementById('coverVideo');
   const ph = document.getElementById('coverPlaceholder');
   const btn = document.getElementById('coverEditBtn');
-  if (url) { img.src = url; img.style.display = 'block'; ph.style.display = 'none'; }
-  else { img.style.display = 'none'; ph.style.display = 'flex'; }
+  const isVideo = type === 'video';
+  if (url) {
+    if (isVideo) {
+      vid.src = url; vid.style.display = 'block';
+      img.style.display = 'none'; img.removeAttribute('src');
+    } else {
+      img.src = url; img.style.display = 'block';
+      vid.style.display = 'none'; vid.removeAttribute('src');
+    }
+    ph.style.display = 'none';
+  } else {
+    img.style.display = 'none'; img.removeAttribute('src');
+    vid.style.display = 'none'; vid.removeAttribute('src');
+    ph.style.display = 'flex';
+  }
   if (editable) btn.style.display = 'flex';
 }
 
@@ -1404,9 +1420,24 @@ function onAvatar(e) {
 function onCover(e) {
   const f = e.target.files[0];
   if (!f) return;
-  if (!f.type.match('image/jpeg')) { showToast(t('coverJpg'), 'error'); return; }
+  const isVideo = f.type.startsWith('video/');
+  if (isVideo) {
+    if (!f.type.match('video/mp4') && !f.type.match('video/webm')) { showToast(t('coverJpg'), 'error'); e.target.value=''; return; }
+    if (f.size > 5 * 1024 * 1024) { showToast(t('coverVideoTooLarge'), 'error'); e.target.value=''; return; }
+    newCoverVideoFile = f;
+    newCoverBase64 = '';
+    newCoverType = 'video';
+    // معاينة محلية فورية عبر object URL (بدون رفع فعلي — الرفع فقط عند الحفظ)
+    const localUrl = URL.createObjectURL(f);
+    renderCover(localUrl, true, 'video');
+    e.target.value = '';
+    return;
+  }
+  if (!f.type.match('image/jpeg')) { showToast(t('coverJpg'), 'error'); e.target.value=''; return; }
+  newCoverVideoFile = null;
+  newCoverType = 'image';
   const r = new FileReader();
-  r.onload = ev => { newCoverBase64 = ev.target.result; renderCover(newCoverBase64, true); };
+  r.onload = ev => { newCoverBase64 = ev.target.result; renderCover(newCoverBase64, true, 'image'); };
   r.readAsDataURL(f);
   e.target.value = '';
 }
@@ -1427,6 +1458,7 @@ async function save() {
   try {
     let avatarUrl = ME?.avatar || '';
     let coverUrl = ME?.cover || '';
+    let coverType = ME?.cover_type || 'image';
     if (newAvBase64) {
       const up = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ image: newAvBase64 }) });
       const ud = await up.json();
@@ -1435,9 +1467,34 @@ async function save() {
     if (newCoverBase64) {
       const up = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ image: newCoverBase64 }) });
       const ud = await up.json();
-      if (ud.url) coverUrl = ud.url;
+      if (ud.url) { coverUrl = ud.url; coverType = 'image'; }
+    } else if (newCoverVideoFile) {
+      // فيديو الغلاف: نفس أسلوب رفع فيديو المنشورات (توقيع من عندنا ثم رفع
+      // مباشر من المتصفح لـ Cloudinary)، تم التأكد من الحجم (5 ميغا) عند الاختيار
+      try {
+        const sig = await fetch('/api/upload/video/signature', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: '{}' }).then(r => r.json());
+        if (!sig.signature) throw new Error(sig.error || 'no signature');
+        const fd = new FormData();
+        fd.append('file', newCoverVideoFile);
+        fd.append('api_key', sig.apiKey);
+        fd.append('timestamp', sig.timestamp);
+        fd.append('folder', sig.folder);
+        fd.append('signature', sig.signature);
+        const vRes = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/video/upload`, { method: 'POST', body: fd });
+        const vData = await vRes.json();
+        if (!vRes.ok || !vData.secure_url) throw new Error(vData.error?.message || 'upload failed');
+        coverUrl = vData.secure_url;
+        coverType = 'video';
+      } catch (upErr) {
+        reportClientError('cover_video_upload', upErr?.message || upErr);
+        errEl.textContent = t('coverVideoUploadFail');
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = t('save');
+        return;
+      }
     }
-    const r = await fetch('/api/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ display_name, bio, avatar: avatarUrl, cover: coverUrl, country, school, favorite_song, certificates }) });
+    const r = await fetch('/api/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ display_name, bio, avatar: avatarUrl, cover: coverUrl, cover_type: coverType, country, school, favorite_song, certificates }) });
     const d = await r.json();
     if (d.success) {
       try { const u = JSON.parse(localStorage.getItem('hostaka_user') || '{}'); u.avatar = avatarUrl; u.display_name = display_name; localStorage.setItem('hostaka_user', JSON.stringify(u)); } catch (e) {}
@@ -1445,6 +1502,8 @@ async function save() {
       okEl.style.display = 'block';
       newAvBase64 = '';
       newCoverBase64 = '';
+      newCoverVideoFile = null;
+      newCoverType = null;
       showToast(t('saveSuccess'));
       window.location.reload();
     } else {
