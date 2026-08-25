@@ -214,7 +214,7 @@ function pickSplashGreeting(name){
 
 function showSplashLoggedIn(user){
   const avatarEl = document.getElementById('splashAvatar');
-  if (avatarEl) avatarEl.innerHTML = user.avatar ? `<img src="${esc(user.avatar)}" alt="">` : esc((user.username||'?').charAt(0).toUpperCase());
+  if (avatarEl) avatarEl.innerHTML = user.avatar ? `<img src="${esc(user.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
   const gEl = document.getElementById('splashGreeting');
   if (gEl) {
     const g = pickSplashGreeting(user.username || '');
@@ -762,7 +762,7 @@ function setLoggedInUI(user){
   document.getElementById('userBadgeWrap').style.display = 'block';
   document.getElementById('dropName').textContent = user.username;
   const el = document.getElementById('userBadgeEl');
-  el.innerHTML = user.avatar ? `<img src="${esc(user.avatar)}" alt="">` : user.username.charAt(0).toUpperCase();
+  el.innerHTML = user.avatar ? `<img src="${esc(user.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
   const ab = document.getElementById('adminBtn');
   if(ab) ab.style.display = user.role==='admin' ? 'flex' : 'none';
   checkVerifyStatus();
@@ -836,7 +836,7 @@ function renderAccountSwitcher(){
   wrap.style.display = 'flex';
   wrap.innerHTML = list.map(a => {
     const isCurrent = ME && a.username === ME.username;
-    const av = a.avatar ? `<img src="${esc(a.avatar)}" alt="">` : esc((a.display_name || a.username || '?').charAt(0).toUpperCase());
+    const av = a.avatar ? `<img src="${esc(a.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
     return `<div class="acc-item ${isCurrent?'current':''}" onclick="${isCurrent?'':'switchAccount(\''+esc(a.username)+'\')'}">
       ${!isCurrent ? `<span class="acc-remove" onclick="removeAccountFromSwitcher(event,'${esc(a.username)}')">${SVG.close}</span>` : ''}
       <div class="acc-av">${av}</div>
@@ -1035,7 +1035,7 @@ async function loadNotifications(){
     }
     list.innerHTML = notifCache.map(n => `
       <div class="notif-item ${n.read?'':'unread'}" onclick="onNotifClick(${n.id}, ${n.record_id||'null'}, '${esc(n.link||'')}')">
-        <div class="notif-avatar">${n.actor_avatar ? `<img src="${esc(n.actor_avatar)}" alt="">` : esc((n.actor_name||'?').charAt(0).toUpperCase())}</div>
+        <div class="notif-avatar">${n.actor_avatar ? `<img src="${esc(n.actor_avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`}</div>
         <div class="notif-body">
           <div class="notif-text">${notifMessage(n)}</div>
           <div class="notif-time">${timeAgo(n.created_at)}</div>
@@ -1327,7 +1327,7 @@ function renderFeed(posts){
 
 function renderPost(p){
   const name       = p.publisher_name || p.publisher || '?';
-  const avatarHtml = p.user_avatar ? `<img src="${esc(p.user_avatar)}" alt="">` : esc(name.charAt(0).toUpperCase());
+  const avatarHtml = p.user_avatar ? `<img src="${esc(p.user_avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
   const badgeCls   = p.user_role==='Admin' ? 'badge-admin' : 'badge-member';
   const canDel     = ME && (ME.role==='admin' || p.user_id==ME?.id);
   
@@ -1368,7 +1368,7 @@ function renderPost(p){
   const topComments = allComments.filter(c => !c.parent_id);
   function repliesOf(cid){ return allComments.filter(c => Number(c.parent_id) === Number(cid)); }
   function oneCommentHtml(c, postId){
-    const ca = c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : esc((c.display_name||c.username||'?').charAt(0).toUpperCase());
+    const ca = c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
     const cBadge = c.user_role==='Admin' ? `<span class="role-badge badge-admin">${t('adminRole')}</span>` : '';
     const canDelC = ME && (ME.role==='admin' || c.user_id==ME?.id);
     const cleanContent = linkifyContent(esc(c.content));
@@ -1731,7 +1731,7 @@ async function loadStories(){
 
 function storyItemHtml(g, isMine){
   const label = isMine ? t('yourStory') : (g.display_name || g.username || '?');
-  const avatarHtml = g.avatar ? `<img src="${esc(g.avatar)}" alt="">` : esc((label).charAt(0).toUpperCase());
+  const avatarHtml = g.avatar ? `<img src="${esc(g.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
   const plusBadge = isMine ? `<span class="story-plus" onclick="event.stopPropagation();openStoryCreate()">${SVG.plus}</span>` : '';
   return `<div class="story-item" onclick="openStoryViewer(${g.user_id})">
     <div class="story-ring ${g.allViewed ? 'seen' : ''}">
@@ -1757,7 +1757,7 @@ function renderStoriesBar(){
       html += `<div class="story-item" onclick="openStoryCreate()">
         <div class="story-ring story-ring-create">
           <div class="story-avatar story-avatar-create">
-            ${ME.avatar ? `<img src="${esc(ME.avatar)}" alt="">` : esc((ME.username||'?').charAt(0).toUpperCase())}
+            ${ME.avatar ? `<img src="${esc(ME.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`}
             <span class="story-plus">${SVG.plus}</span>
           </div>
         </div>
@@ -1884,7 +1884,7 @@ function showStorySlide(){
 
   document.getElementById('storyViewerAvatar').innerHTML = group.avatar
     ? `<img src="${esc(group.avatar)}" alt="">`
-    : esc((group.display_name || group.username || '?').charAt(0).toUpperCase());
+    : `<img src="/default-avatar.jpg" alt="">`;
   document.getElementById('storyViewerName').textContent = group.display_name || group.username;
   document.getElementById('storyViewerTime').textContent = fmtStoryTime(story.created_at);
   document.getElementById('storyViewerCaption').textContent = story.caption || '';
