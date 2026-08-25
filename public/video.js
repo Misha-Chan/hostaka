@@ -97,7 +97,7 @@ function vgCardHtml(v){
       <div class="vg-play">${VSVG.playSm}</div>
     </div>
     <div class="vg-meta">
-      <div class="vg-avatar" onclick="event.stopPropagation();goPublisher('${esc(v.publisher_username||v.publisher)}')">${v.user_avatar?`<img src="${esc(v.user_avatar)}" alt="">`:esc((v.publisher_name||v.publisher||'?').charAt(0).toUpperCase())}</div>
+      <div class="vg-avatar" onclick="event.stopPropagation();goPublisher('${esc(v.publisher_username||v.publisher)}')">${v.user_avatar?`<img src="${esc(v.user_avatar)}" alt="">`:`<img src="/default-avatar.jpg" alt="">`}</div>
       <div class="vg-info">
         <div class="vg-title">${esc(stripHtmlV(v.content)) || t('untitled')}</div>
         <div class="vg-sub">${esc(v.publisher_name||v.publisher)}${v.publisher_verified?verifiedBadge():''}<span class="dot"></span>${fmtDate(v.created_at)}</div>
@@ -141,7 +141,7 @@ function renderWatch(v){
         <div class="video-watch-title">${esc(stripHtmlV(v.content)) || t('untitled')}</div>
         <div class="video-watch-pubrow">
           <div class="video-watch-pub">
-            <div class="video-watch-avatar" onclick="goPublisher('${esc(v.publisher_username||v.publisher)}')">${v.user_avatar?`<img src="${esc(v.user_avatar)}" alt="">`:esc((v.publisher_name||v.publisher||'?').charAt(0).toUpperCase())}</div>
+            <div class="video-watch-avatar" onclick="goPublisher('${esc(v.publisher_username||v.publisher)}')">${v.user_avatar?`<img src="${esc(v.user_avatar)}" alt="">`:`<img src="/default-avatar.jpg" alt="">`}</div>
             <div>
               <div class="video-watch-name" onclick="goPublisher('${esc(v.publisher_username||v.publisher)}')">${esc(v.publisher_name||v.publisher)}${v.publisher_verified?verifiedBadge():''}</div>
               <div class="video-watch-date">${fmtDate(v.created_at)}</div>
@@ -179,7 +179,7 @@ function renderVideoComments(comments, videoId){
   const top = comments.filter(c => !c.parent_id);
   function repliesOf(cid){ return comments.filter(c => Number(c.parent_id) === Number(cid)); }
   function oneComment(c){
-    const ca = c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : esc((c.display_name||c.username||'?').charAt(0).toUpperCase());
+    const ca = c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
     const canDelC = ME && (ME.role==='admin' || c.user_id==ME?.id);
     const replies = repliesOf(c.id);
     return `<div class="comment" id="vcmt-${c.id}" style="display:flex;gap:10px;margin-bottom:14px;">
