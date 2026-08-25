@@ -217,7 +217,7 @@ function renderSavedCard(p){
   const topComments = allComments.filter(c => !c.parent_id);
   function repliesOf(cid){ return allComments.filter(c => Number(c.parent_id) === Number(cid)); }
   function oneCommentHtml(c, postId){
-    const ca = c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : esc((c.display_name||c.username||'?').charAt(0).toUpperCase());
+    const ca = c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
     const canDelC = ME && (ME.role==='admin' || c.user_id==ME?.id);
     const cleanContent = linkifyContent(esc(c.content));
     const replies = repliesOf(c.id);
