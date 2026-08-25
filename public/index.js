@@ -2003,4 +2003,365 @@ async function submitStory(){
     const d = await apiFetch('/api/stories', 'POST', { media: mediaUrl, media_type: storyMediaType, caption });
     if (d.success) { closeModal('storyCreateModal'); await loadStories(); showToast(t('storyPublish')); }
     else { errEl.textContent = d.error || t('postFail'); errEl.style.display = 'block'; }
-  } catch(e) { errEl.textContent = e.
+  } catch(e) { errEl.textContent = e.message || t('cantConnect'); errEl.style.display = 'block'; }
+  finally { btn.disabled = false; }
+}
+
+// ----- عارض القصص -----
+function openStoryViewer(userId){
+  const idx = storyViewOrder.findIndex(g => g.user_id === userId);
+  if (idx === -1) return;
+  currentGroupIdx = idx;
+  storySlideIndex = 0;
+  document.getElementById('storyViewer').classList.add('show');
+  showStorySlide();
+}
+
+function currentStoryGroup(){ return storyViewOrder[currentGroupIdx]; }
+
+function showStorySlide(){
+  clearTimeout(storyTimer);
+  const group = currentStoryGroup();
+  if (!group) { closeStoryViewer(); return; }
+  const story = group.stories[storySlideIndex];
+  if (!story) {
+    if (currentGroupIdx < storyViewOrder.length - 1) { currentGroupIdx++; storySlideIndex = 0; showStorySlide(); }
+    else closeStoryViewer();
+    return;
+  }
+
+  document.getElementById('storyViewerAvatar').innerHTML = group.avatar
+    ? `<img src="${esc(group.avatar)}" alt="">`
+    : `<img src="/default-avatar.jpg" alt="">`;
+  document.getElementById('storyViewerName').textContent = group.display_name || group.username;
+  document.getElementById('storyViewerTime').textContent = fmtStoryTime(story.created_at);
+  document.getElementById('storyViewerCaption').textContent = story.caption || '';
+  document.getElementById('storyViewerDelete').style.display = (ME && Number(ME.id) === Number(group.user_id)) ? 'flex' : 'none';
+
+  const wrap = document.getElementById('storyProgressWrap');
+  wrap.innerHTML = group.stories.map((s,i) =>
+    `<div class="story-progress-bar ${i < storySlideIndex ? 'done' : ''}"><div class="story-progress-fill" id="spf-${i}"></div></div>`
+  ).join('');
+
+  const mediaEl = document.getElementById('storyViewerMedia');
+  if (story.media_type === 'video') {
+    mediaEl.innerHTML = `<video id="storyVideoEl" src="${esc(story.media)}" autoplay playsinline></video>`;
+    const v = document.getElementById('storyVideoEl');
+    v.onloadedmetadata = () => animateStoryProgress(Math.min((v.duration || 5) * 1000, 60000));
+    v.onended = () => advanceStory();
+  } else {
+    mediaEl.innerHTML = `<img src="${esc(story.media)}" alt="">`;
+    animateStoryProgress(5000);
+  }
+
+  if (ME) { apiFetch('/api/stories/' + story.id + '/view', 'POST').catch(()=>{}); story.viewed = true; }
+}
+
+function animateStoryProgress(duration){
+  const fill = document.getElementById('spf-' + storySlideIndex);
+  if (fill) {
+    fill.style.transition = 'none'; fill.style.width = '0%';
+    requestAnimationFrame(() => { fill.style.transition = 'width ' + duration + 'ms linear'; fill.style.width = '100%'; });
+  }
+  storyTimer = setTimeout(advanceStory, duration);
+}
+
+function advanceStory(){ storySlideIndex++; showStorySlide(); }
+function nextStory(){ clearTimeout(storyTimer); advanceStory(); }
+function prevStory(){
+  clearTimeout(storyTimer);
+  if (storySlideIndex > 0) { storySlideIndex--; showStorySlide(); }
+  else if (currentGroupIdx > 0) { currentGroupIdx--; storySlideIndex = Math.max(0, currentStoryGroup().stories.length - 1); showStorySlide(); }
+  else showStorySlide();
+}
+
+function closeStoryViewer(){
+  clearTimeout(storyTimer);
+  document.getElementById('storyViewer').classList.remove('show');
+  document.getElementById('storyViewerMedia').innerHTML = '';
+  renderStoriesBar();
+}
+
+async function deleteCurrentStory(){
+  clearTimeout(storyTimer); // أوقف التقدم التلقائي فوراً لمنع تسابق يفسد الحذف
+  const group = currentStoryGroup();
+  const story = group?.stories[storySlideIndex];
+  if (!story) return;
+  if (!await hostakaConfirm(t('storyDeleteConfirm'))) { showStorySlide(); return; } // نعيد المؤقت إذا ألغى المستخدم
+  const targetStoryId = story.id;
+  const targetUserId = group.user_id;
+  try {
+    const d = await apiFetch('/api/stories/' + targetStoryId, 'DELETE');
+    if (d && d.error) { showToast(d.error, 'error'); showStorySlide(); return; }
+  } catch(e) { showToast(t('cantDeleteStory'), 'error'); showStorySlide(); return; }
+
+  // نعيد إيجاد المجموعة/الفهرس بالاعتماد على المعرّفات لا الفهارس (تحسباً لأي تغيير أثناء الانتظار)
+  const gIdx = storyViewOrder.findIndex(g => g.user_id === targetUserId);
+  if (gIdx === -1) { closeStoryViewer(); return; }
+  const g = storyViewOrder[gIdx];
+  const sIdx = g.stories.findIndex(s => s.id === targetStoryId);
+  if (sIdx !== -1) g.stories.splice(sIdx, 1);
+  storiesData = storiesData.filter(sg => sg.user_id !== g.user_id || g.stories.length > 0);
+
+  if (!g.stories.length) {
+    storyViewOrder.splice(gIdx, 1);
+    currentGroupIdx = Math.min(gIdx, storyViewOrder.length - 1);
+    storySlideIndex = 0;
+    if (!storyViewOrder.length) { closeStoryViewer(); return; }
+    showStorySlide();
+  } else {
+    currentGroupIdx = gIdx;
+    storySlideIndex = Math.min(sIdx, g.stories.length - 1);
+    showStorySlide();
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('storyViewer')?.classList.contains('show')) return;
+  if (e.key === 'Escape') closeStoryViewer();
+  else if (e.key === 'ArrowLeft') (currentLang === 'ar' ? nextStory() : prevStory());
+  else if (e.key === 'ArrowRight') (currentLang === 'ar' ? prevStory() : nextStory());
+});
+
+function toggleReactMenu(postId){
+  if(!ME){openAuth();return;}
+  const menu = document.getElementById('rmenu-'+postId);
+  if(!menu) return;
+  document.querySelectorAll('.react-menu.show').forEach(m=>{ if(m!==menu) m.classList.remove('show'); });
+  menu.classList.toggle('show');
+}
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.react-wrap')) document.querySelectorAll('.react-menu.show').forEach(m=>m.classList.remove('show'));
+});
+
+async function toggleReact(postId, emoji){
+  if(!ME){openAuth();return;}
+  document.querySelectorAll('.react-menu.show').forEach(m=>m.classList.remove('show'));
+  const d=await apiFetch('/api/records/'+postId+'/react','POST',{emoji});
+  if(!d.success) return;
+  const post=allPosts.find(p=>p.id===postId);
+  if(post){ post.reactions=d.reactions; post.userReaction=d.userReaction; }
+  const card=document.getElementById('post-'+postId);
+  if(card){ const newCard=document.createElement('div'); newCard.innerHTML=renderPost(post); card.replaceWith(newCard.firstChild); }
+}
+
+function toggleComments(id){
+  const sec=document.getElementById('cmtSec-'+id);
+  const toggle=document.getElementById('cmtToggle-'+id);
+  if(sec){
+    const showing = sec.style.display==='none';
+    sec.style.display = showing ? 'block' : 'none';
+    if(toggle) toggle.classList.toggle('expanded', showing);
+  }
+}
+
+function toggleReplyInput(postId, commentId){
+  const row = document.getElementById('replyRow-'+commentId);
+  if(!row) return;
+  const showing = row.style.display === 'none';
+  row.style.display = showing ? 'flex' : 'none';
+  if(showing) document.getElementById('ri-'+commentId)?.focus();
+}
+
+async function sendComment(postId, parentId){
+  if(!ME){openAuth();return;}
+  const input = parentId ? document.getElementById('ri-'+parentId) : document.getElementById('ci-'+postId);
+  if(!input||!input.value.trim()) return;
+  const content=input.value.trim(); input.value='';
+  const d=await apiFetch('/api/records/'+postId+'/comments','POST',{content, parent_id: parentId||null});
+  if(!d.success) return;
+  const comments=await apiFetch('/api/records/'+postId+'/comments');
+  const post=allPosts.find(p=>p.id===postId);
+  if(post){ post.comments=comments; }
+  const card=document.getElementById('post-'+postId);
+  if(card){ const newCard=document.createElement('div'); newCard.innerHTML=renderPost(post); card.replaceWith(newCard.firstChild); document.getElementById('cmtSec-'+postId).style.display='block'; document.getElementById('cmtToggle-'+postId)?.classList.add('expanded'); }
+}
+
+async function delComment(commentId, postId){
+  if(!await hostakaConfirm(t('deleteComment'))) return;
+  await apiFetch('/api/comments/'+commentId,'DELETE');
+  document.getElementById('cmt-'+commentId)?.remove();
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+(async function init() {
+  if (currentTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    setThemeIcon(THEME_ICON_DARK);
+  }
+
+  loadWallpaperState();
+  applyWallpaper();
+
+  window.addEventListener('scroll',()=>{
+    document.getElementById('topbar').classList.toggle('scrolled', window.scrollY > 10);
+  });
+
+  applyLang();
+
+  if (TOKEN) {
+    try {
+      const r = await fetch('/api/auth/me', { headers:{'Authorization':'Bearer '+TOKEN} });
+      if (r.ok) {
+        const u = await r.json();
+        if (u && !u.error) {
+          ME = { username: u.username, role: u.role, avatar: u.avatar||'', id: u.id };
+          localStorage.setItem('hostaka_user', JSON.stringify(ME));
+          setLoggedInUI(ME);
+          fetch('/api/me', { headers:{'Authorization':'Bearer '+TOKEN} })
+            .then(r=>r.ok?r.json():null)
+            .then(full=>{ if(full&&!full.error&&full.avatar){ ME.avatar=full.avatar; setLoggedInUI(ME); } })
+            .catch(()=>{});
+        } else {
+          localStorage.removeItem('hostaka_token');
+          localStorage.removeItem('hostaka_user');
+          ME = null;
+        }
+      }
+    } catch(e) { if (ME) setLoggedInUI(ME); }
+  }
+
+  if (!document.documentElement.classList.contains('splash-seen')) {
+    if (ME) showSplashLoggedIn(ME); else showSplashGuest();
+  }
+
+  if (ME && TOKEN) await loadBlockedSet();
+  await loadPosts();
+  loadStories();
+  if (ME && TOKEN) {
+    loadUnread();
+    loadNotifCount();
+    setInterval(()=>{ loadUnread(); loadNotifCount(); }, 30000);
+  }
+
+  const urlPostId = new URLSearchParams(location.search).get('p');
+  if(urlPostId){
+    setTimeout(()=>{
+      const el=document.getElementById('post-'+urlPostId);
+      if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.border='1px solid var(--primary)'; setTimeout(()=>el.style.border='',4000); }
+    },700);
+  }
+
+  document.getElementById('lPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  document.getElementById('lEmail').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+})();
+
+/* expose top-level functions for inline onclick handlers */
+try { window.splashPeriodIcon = splashPeriodIcon; } catch(e) {}
+try { window.pickSplashGreeting = pickSplashGreeting; } catch(e) {}
+try { window.showSplashLoggedIn = showSplashLoggedIn; } catch(e) {}
+try { window.showSplashGuest = showSplashGuest; } catch(e) {}
+try { window.splashOpenAuth = splashOpenAuth; } catch(e) {}
+try { window.splashClickToDismiss = splashClickToDismiss; } catch(e) {}
+try { window.dismissSplash = dismissSplash; } catch(e) {}
+try { window.readVideoDimensions = readVideoDimensions; } catch(e) {}
+try { window.t = t; } catch(e) {}
+try { window.applyLang = applyLang; } catch(e) {}
+try { window.getEmptySvg = getEmptySvg; } catch(e) {}
+try { window.setTheme = setTheme; } catch(e) {}
+try { window.toggleTheme = toggleTheme; } catch(e) {}
+try { window.loadWallpaperState = loadWallpaperState; } catch(e) {}
+try { window.saveWallpaperState = saveWallpaperState; } catch(e) {}
+try { window.openWallpaperModal = openWallpaperModal; } catch(e) {}
+try { window.onWallpaperFile = onWallpaperFile; } catch(e) {}
+try { window.updateWallpaperTuning = updateWallpaperTuning; } catch(e) {}
+try { window.removeWallpaper = removeWallpaper; } catch(e) {}
+try { window.analyzeWallpaperColors = analyzeWallpaperColors; } catch(e) {}
+try { window.applyWallpaper = applyWallpaper; } catch(e) {}
+try { window.toggleLangMenu = toggleLangMenu; } catch(e) {}
+try { window.setLang = setLang; } catch(e) {}
+try { window.verifiedBadge = verifiedBadge; } catch(e) {}
+try { window.sortPosts = sortPosts; } catch(e) {}
+try { window.setSort = setSort; } catch(e) {}
+try { window.esc = esc; } catch(e) {}
+try { window.toUTCDate = toUTCDate; } catch(e) {}
+try { window.fmtDate = fmtDate; } catch(e) {}
+try { window.stripEmojis = stripEmojis; } catch(e) {}
+try { window.apiFetch = apiFetch; } catch(e) {}
+try { window.handleSuspended = handleSuspended; } catch(e) {}
+try { window.setLoggedInUI = setLoggedInUI; } catch(e) {}
+try { window.clearUser = clearUser; } catch(e) {}
+try { window.getSavedAccounts = getSavedAccounts; } catch(e) {}
+try { window.setSavedAccounts = setSavedAccounts; } catch(e) {}
+try { window.saveAccountToSwitcher = saveAccountToSwitcher; } catch(e) {}
+try { window.renderAccountSwitcher = renderAccountSwitcher; } catch(e) {}
+try { window.switchAccount = switchAccount; } catch(e) {}
+try { window.removeAccountFromSwitcher = removeAccountFromSwitcher; } catch(e) {}
+try { window.toggleDrop = toggleDrop; } catch(e) {}
+try { window.openAuth = openAuth; } catch(e) {}
+try { window.closeModal = closeModal; } catch(e) {}
+try { window.switchTab = switchTab; } catch(e) {}
+try { window.showToast = showToast; } catch(e) {}
+try { window.getToken = getToken; } catch(e) {}
+try { window.doLogin = doLogin; } catch(e) {}
+try { window.submit2FALogin = submit2FALogin; } catch(e) {}
+try { window.show2FAStep = show2FAStep; } catch(e) {}
+try { window.doRegister = doRegister; } catch(e) {}
+try { window.doLogout = doLogout; } catch(e) {}
+try { window.loadUnread = loadUnread; } catch(e) {}
+try { window.timeAgo = timeAgo; } catch(e) {}
+try { window.notifMessage = notifMessage; } catch(e) {}
+try { window.loadNotifCount = loadNotifCount; } catch(e) {}
+try { window.loadNotifications = loadNotifications; } catch(e) {}
+try { window.toggleNotifDrop = toggleNotifDrop; } catch(e) {}
+try { window.markAllNotifRead = markAllNotifRead; } catch(e) {}
+try { window.delNotif = delNotif; } catch(e) {}
+try { window.onNotifClick = onNotifClick; } catch(e) {}
+try { window.linkifyContent = linkifyContent; } catch(e) {}
+try { window.extractFirstUrl = extractFirstUrl; } catch(e) {}
+try { window.fetchLinkPreview = fetchLinkPreview; } catch(e) {}
+try { window.linkPreviewCardHtml = linkPreviewCardHtml; } catch(e) {}
+try { window.loadLinkPreviews = loadLinkPreviews; } catch(e) {}
+try { window.filterByHashtag = filterByHashtag; } catch(e) {}
+try { window.loadBlockedSet = loadBlockedSet; } catch(e) {}
+try { window.togglePostOpts = togglePostOpts; } catch(e) {}
+try { window.closePostOpts = closePostOpts; } catch(e) {}
+try { window.openReportModal = openReportModal; } catch(e) {}
+try { window.submitReport = submitReport; } catch(e) {}
+try { window.toggleBlockUser = toggleBlockUser; } catch(e) {}
+try { window.checkVerifyStatus = checkVerifyStatus; } catch(e) {}
+try { window.requestVerify = requestVerify; } catch(e) {}
+try { window.loadPosts = loadPosts; } catch(e) {}
+try { window.renderFeedDone = renderFeedDone; } catch(e) {}
+try { window.renderFeed = renderFeed; } catch(e) {}
+try { window.renderPost = renderPost; } catch(e) {}
+try { window.goProfile = goProfile; } catch(e) {}
+try { window.goPublisher = goPublisher; } catch(e) {}
+try { window.sharePost = sharePost; } catch(e) {}
+try { window.openPostModal = openPostModal; } catch(e) {}
+try { window.loadPostAsOptions = loadPostAsOptions; } catch(e) {}
+try { window.onPostMedia = onPostMedia; } catch(e) {}
+try { window.removePostMedia = removePostMedia; } catch(e) {}
+try { window.fmt = fmt; } catch(e) {}
+try { window.fmtBlock = fmtBlock; } catch(e) {}
+try { window.fmtList = fmtList; } catch(e) {}
+try { window.fmtLine = fmtLine; } catch(e) {}
+try { window.fmtQuote = fmtQuote; } catch(e) {}
+try { window.submitPost = submitPost; } catch(e) {}
+try { window.openEditPost = openEditPost; } catch(e) {}
+try { window.delPost = delPost; } catch(e) {}
+try { window.toggleSavePost = toggleSavePost; } catch(e) {}
+try { window.loadStories = loadStories; } catch(e) {}
+try { window.storyItemHtml = storyItemHtml; } catch(e) {}
+try { window.renderStoriesBar = renderStoriesBar; } catch(e) {}
+try { window.fmtStoryTime = fmtStoryTime; } catch(e) {}
+try { window.openStoryCreate = openStoryCreate; } catch(e) {}
+try { window.onStoryMedia = onStoryMedia; } catch(e) {}
+try { window.submitStory = submitStory; } catch(e) {}
+try { window.openStoryViewer = openStoryViewer; } catch(e) {}
+try { window.currentStoryGroup = currentStoryGroup; } catch(e) {}
+try { window.showStorySlide = showStorySlide; } catch(e) {}
+try { window.animateStoryProgress = animateStoryProgress; } catch(e) {}
+try { window.advanceStory = advanceStory; } catch(e) {}
+try { window.nextStory = nextStory; } catch(e) {}
+try { window.prevStory = prevStory; } catch(e) {}
+try { window.closeStoryViewer = closeStoryViewer; } catch(e) {}
+try { window.deleteCurrentStory = deleteCurrentStory; } catch(e) {}
+try { window.toggleReactMenu = toggleReactMenu; } catch(e) {}
+try { window.toggleReact = toggleReact; } catch(e) {}
+try { window.toggleComments = toggleComments; } catch(e) {}
+try { window.sendComment = sendComment; } catch(e) {}
+try { window.toggleReplyInput = toggleReplyInput; } catch(e) {}
+try { window.delComment = delComment; } catch(e) {}
