@@ -436,6 +436,15 @@ async function loadPublicProfile(username) {
   try {
     const token = getToken();
     const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+    // نجيب حساب الزائر الحالي (لو مسجّل دخول) حتى لو الصفحة اللي يزورها بروفايل
+    // شخص ثاني — بدونها يضل ME فاضي طول الوقت هنا فتفتكر الصفحة إن الزائر مو
+    // مسجّل دخول أصلاً وتحاول ترجّعه لصفحة تسجيل الدخول عند أي تفاعل (رياكشن...)
+    if (token) {
+      try {
+        const meRes = await fetch('/api/auth/me', { headers });
+        if (meRes.ok) { const me = await meRes.json(); if (me && !me.error) ME = me; }
+      } catch (e) { /* لو فشل، نكمل عرض البروفايل العام بس بدون ME — سلوك آمن */ }
+    }
     const pr = await fetch('/api/profile/' + encodeURIComponent(username), { headers }).then(r => r.json());
     if (pr.error) { renderNotFound(); return; }
     const ps = await fetch('/api/user/' + encodeURIComponent(username) + '/posts').then(r => r.json());
