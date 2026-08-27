@@ -26,18 +26,19 @@
 
   function injectStyles() {
     var css = `
-#ecoSwitchBtn{position:fixed;bottom:20px;inset-inline-end:20px;z-index:99998;width:44px;height:44px;
-  border-radius:50%;border:1px solid rgba(255,255,255,0.14);background:rgba(30,30,34,0.85);
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;
-  justify-content:center;cursor:pointer;transition:transform .15s ease,background .15s ease;padding:0;
-  box-shadow:0 6px 20px rgba(0,0,0,0.35);}
-#ecoSwitchBtn:hover{transform:scale(1.06);background:rgba(45,45,50,0.92);}
-#ecoSwitchBtn:active{transform:scale(0.94);}
+#ecoSwitchBtn{position:fixed;top:50%;transform:translateY(-50%);inset-inline-end:14px;z-index:99998;
+  width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,0.14);
+  background:rgba(30,30,34,0.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:transform .15s ease,background .15s ease;padding:0;box-shadow:0 6px 20px rgba(0,0,0,0.35);}
+#ecoSwitchBtn:hover{transform:translateY(-50%) scale(1.06);background:rgba(45,45,50,0.92);}
+#ecoSwitchBtn:active{transform:translateY(-50%) scale(0.94);}
 #ecoSwitchBtn svg{width:20px;height:20px;color:#fff;}
-#ecoSwitchPanel{position:fixed;bottom:72px;inset-inline-end:20px;z-index:99999;width:300px;
-  background:rgba(24,24,28,0.98);border:1px solid rgba(255,255,255,0.1);border-radius:16px;
-  box-shadow:0 14px 40px rgba(0,0,0,0.45);padding:14px;display:none;grid-template-columns:repeat(4,1fr);
-  gap:10px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+#ecoSwitchPanel{position:fixed;top:50%;transform:translateY(-50%);inset-inline-end:70px;z-index:99999;
+  width:300px;max-height:80vh;overflow-y:auto;background:rgba(24,24,28,0.98);
+  border:1px solid rgba(255,255,255,0.1);border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,0.45);
+  padding:14px;display:none;grid-template-columns:repeat(4,1fr);gap:10px;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
 #ecoSwitchPanel.show{display:grid;}
 #ecoSwitchPanel a{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;
   padding:8px 4px;border-radius:10px;transition:background .12s ease;}
@@ -49,8 +50,8 @@
 #ecoSwitchOverlay{position:fixed;inset:0;z-index:99997;display:none;}
 #ecoSwitchOverlay.show{display:block;}
 @media (max-width:480px){
-  #ecoSwitchPanel{width:260px;inset-inline-end:14px;bottom:66px;grid-template-columns:repeat(3,1fr);}
-  #ecoSwitchBtn{inset-inline-end:14px;bottom:16px;width:40px;height:40px;}
+  #ecoSwitchPanel{width:250px;inset-inline-end:60px;grid-template-columns:repeat(3,1fr);}
+  #ecoSwitchBtn{inset-inline-end:10px;width:40px;height:40px;}
 }
 `;
     var style = document.createElement('style');
@@ -79,8 +80,18 @@
     return panel;
   }
 
+  // صفحة الريلز (page-short) واجهة ملء الشاشة، وأزرار الإعجاب/التعليق/
+  // المشاركة موجودة بنفس الزاوية بالضبط (أسفل يمين) — فما نعرض الزر فيها
+  // إطلاقاً، بحال ما تسوّي منصات الريلز الأخرى (تيك توك، إنستغرام...).
+  // صفحة Shizi AI (page-shiziai) نفس القصة — صندوق كتابة الرسالة ثابت
+  // بنفس الزاوية.
+  function shouldSkip() {
+    return document.body && (document.body.classList.contains('page-short') || document.body.classList.contains('page-shiziai'));
+  }
+
   function init() {
     if (document.getElementById('ecoSwitchBtn')) return; // تفادي التكرار لو انحقن السكربت أكثر من مرة
+    if (shouldSkip()) return;
     injectStyles();
 
     var overlay = document.createElement('div');

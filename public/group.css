@@ -47,6 +47,42 @@ html.page-group {
       --red-h: var(--primary-h);
       --sidebar-bg: var(--glass-bg);
     }
+/* بدون هذا البلوك، تبديل الثيم ما كان يشتغل بهاي الصفحة إطلاقاً — نفس علة
+   shiziai.css/chat.css بالضبط (راجع التعليق بـshiziai.css). */
+html[data-theme="dark"].page-group {
+      --black: #000000;
+      --dark: #121212;
+      --card: #1c1c1e;
+      --border: rgba(255,255,255,0.08);
+      --text: #f5f5f7;
+      --muted: #8e8e93;
+      --primary: #C9986B;
+      --primary-h: #E0B78E;
+      --primary-light: rgba(201,152,107,0.12);
+      --primary-mid: rgba(201,152,107,0.2);
+      --primary-border: rgba(201,152,107,0.3);
+      --accent: #C9986B;
+      --mine-bg: linear-gradient(135deg, var(--primary), var(--primary-h));
+      --mine-border: rgba(201,152,107,0.18);
+      --their-bg: var(--card);
+      --their-border: rgba(255,255,255,0.06);
+      --topbar-bg: rgba(0,0,0,0.65);
+      --input-bg: #1c1c1e;
+      --modal-bg: #1c1c1e;
+      --post-bg: #1c1c1e;
+      --sort-btn-bg: rgba(255,255,255,0.04);
+      --surface-elevated: #2c2c2e;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.2);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+      --avatar-gradient: linear-gradient(145deg, #C9986B, #D9AF8B);
+      --glass-bg: rgba(28,28,30,0.72);
+      --glass-bg-strong: rgba(28,28,30,0.88);
+      --glass-border: rgba(255,255,255,0.08);
+      --wallpaper-overlay: rgba(0,0,0,0);
+      --red: var(--primary);
+      --red-h: var(--primary-h);
+      --sidebar-bg: var(--glass-bg);
+    }
 body.page-group, body.page-group * {margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html.page-group, body.page-group {height:100%;overflow:hidden;}
 body.page-group {
