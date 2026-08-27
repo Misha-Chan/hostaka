@@ -531,7 +531,7 @@ function verifyStatusPill(){
 
 function render(){
   const wrap = document.getElementById('wrap');
-  const avatarHtml = ME.avatar ? `<img src="${esc(ME.avatar)}" alt="">` : initials(ME.display_name||ME.username);
+  const avatarHtml = ME.avatar ? `<img src="${esc(ME.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
   wrap.innerHTML = `
     <div class="page-title">${t('accountManagement')}</div>
     <div class="page-sub">${t('accountManagementSub')}</div>
