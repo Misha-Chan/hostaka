@@ -10,6 +10,7 @@ const fs      = require('fs');
 const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
 const { q, initDB } = require('./database');
+const { generateOgImage } = require('./ogimage');
 
 // ===== استيراد node-fetch و crypto =====
 const fetch  = require('node-fetch');
@@ -3866,7 +3867,7 @@ app.get('/profile', async (req, res) => {
       if (user && !user.suspended) {
         meta.title = `${user.display_name || user.username} (@${user.username}) | ${SITE_NAME}`;
         meta.description = ogTruncate(user.bio) || DEFAULT_DESC;
-        meta.image = absUrl(req, user.avatar || DEFAULT_IMG);
+        meta.image = user.avatar ? absUrl(req, user.avatar) : absUrl(req, `/api/og-image?type=profile&u=${encodeURIComponent(user.username)}`);
         meta.type = 'profile';
         meta.jsonld = {
           '@context': 'https://schema.org',
@@ -3895,7 +3896,7 @@ app.get('/page', async (req, res) => {
       if (page) {
         meta.title = `${page.name} | ${SITE_NAME}`;
         meta.description = ogTruncate(page.bio) || DEFAULT_DESC;
-        meta.image = absUrl(req, page.avatar || DEFAULT_IMG);
+        meta.image = page.avatar ? absUrl(req, page.avatar) : absUrl(req, `/api/og-image?type=page&u=${encodeURIComponent(page.username)}`);
       }
     } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
   }
@@ -3941,6 +3942,7 @@ app.get('/short', async (req, res) => {
         meta.title = `${who} على ${SITE_NAME}`;
         meta.description = ogTruncate(rec.content) || DEFAULT_DESC;
         if (rec.image) meta.image = absUrl(req, rec.image);
+        else meta.image = absUrl(req, `/api/og-image?type=video&brand=aethercast&id=${encodeURIComponent(id)}`);
         if (rec.video) meta.video = absUrl(req, rec.video);
       }
     } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
@@ -3960,6 +3962,7 @@ app.get('/video', async (req, res) => {
         meta.title = `${who} على aethercast`;
         meta.description = ogTruncate(rec.content) || DEFAULT_DESC;
         if (rec.image) meta.image = absUrl(req, rec.image);
+        else meta.image = absUrl(req, `/api/og-image?type=video&brand=aethercast&id=${encodeURIComponent(id)}`);
         if (rec.video) meta.video = absUrl(req, rec.video);
       }
     } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
@@ -4005,6 +4008,7 @@ app.get('/app/:token', async (req, res) => {
         meta.title = `${app_.name} · Hostaka Apps`;
         meta.description = ogTruncate(app_.description) || DEFAULT_DESC;
         if (app_.icon) meta.image = absUrl(req, app_.icon);
+        else meta.image = absUrl(req, `/api/og-image?type=app&brand=apps&token=${encodeURIComponent(tok)}`);
       }
     } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
   }
@@ -4056,10 +4060,53 @@ app.get('/wiki/:extension/:token', async (req, res) => {
         meta.title = post.title ? `${post.title} · Hostaka Wiki` : `رد من @${post.author_username} · Hostaka Wiki`;
         meta.description = ogTruncate(post.body) || DEFAULT_DESC;
         if (post.image) meta.image = absUrl(req, post.image);
+        else meta.image = absUrl(req, `/api/og-image?type=wiki&brand=wiki&token=${encodeURIComponent(tok)}`);
       }
     } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
   }
   sendWikiRedirect(req, res, '/' + encodeURIComponent(ext) + '/' + encodeURIComponent(tok), meta);
+});
+
+// ============================================================
+// /api/og-image — dynamic Open Graph preview image (see ogimage.js).
+// Used by hostaka.fun's own routes below, and referenced by absolute
+// URL from the other Hostaka Ecosystem subdomains (aethercast, apps,
+// wiki) whenever the shared content has no image/thumbnail/avatar of
+// its own to show as a "screenshot" preview when shared on social apps.
+// ============================================================
+app.get('/api/og-image', async (req, res) => {
+  try {
+    const type = (req.query.type || 'post').trim();
+    const brand = (req.query.brand || 'hostaka').trim();
+    let imageUrl = null;
+    let imageIsSquare = false;
+
+    if (type === 'post' || type === 'video') {
+      const rec = await q.getRecordById(req.query.id);
+      if (rec && rec.image) imageUrl = absUrl(req, rec.image);
+      else if (rec && rec.user_avatar) { imageUrl = absUrl(req, rec.user_avatar); imageIsSquare = true; }
+    } else if (type === 'profile') {
+      const user = await q.getUserByUsername(req.query.u);
+      if (user && user.avatar) { imageUrl = absUrl(req, user.avatar); imageIsSquare = true; }
+    } else if (type === 'page') {
+      const page = await q.getPageByUsername(req.query.u);
+      if (page && page.avatar) { imageUrl = absUrl(req, page.avatar); imageIsSquare = true; }
+    } else if (type === 'app') {
+      const app_ = await q.getAppByToken(req.query.token);
+      if (app_ && app_.icon) { imageUrl = absUrl(req, app_.icon); imageIsSquare = true; }
+    } else if (type === 'wiki') {
+      const post = await q.getWikiPostByToken(req.query.token);
+      if (post && post.image) imageUrl = absUrl(req, post.image);
+      else if (post && post.author_avatar) { imageUrl = absUrl(req, post.author_avatar); imageIsSquare = true; }
+    }
+
+    const png = await generateOgImage({ brand, type, imageUrl, imageIsSquare });
+    res.set('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+    res.type('image/png').send(png);
+  } catch (e) {
+    console.error('❌ og-image generation failed:', e);
+    res.redirect(absUrl(req, DEFAULT_IMG));
+  }
 });
 
 // ============================================================
@@ -4092,6 +4139,16 @@ Sitemap: ${origin}/sitemap.xml
 // بسرعة أكبر بدل انتظار الزحف العشوائي.
 // بعد رفع الموقع، يُفضّل أيضاً إضافته يدوياً على:
 // https://search.google.com/search-console (إضافة الموقع ثم "خرائط الموقع")
+//
+// Hostaka Ecosystem: this is the flagship/main site (social platform),
+// already indexed by Google — kept as-is below, only this note is new.
+// Sibling services, each with its own auto-generated sitemap.xml:
+//   Orbithub      (orbithub.hostaka.fun)  — private & group messaging
+//   aethercast    (aethercast.hostaka.fun) — video & reels platform
+//   Hostaka Apps  (apps.hostaka.fun)       — Hostaka's app store
+//   Wiki          (wiki.hostaka.fun)       — Hostaka's community wiki
+//   Laps          (laps.hostaka.fun)       — Hostaka's experiments page
+//   Console       (console.hostaka.fun)    — admin update announcements
 // ============================================================
 app.get('/sitemap.xml', async (req, res) => {
   try {
@@ -4136,7 +4193,16 @@ app.get('*', async (req, res) => {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: SITE_NAME,
-    url: `${req.protocol}://${req.get('host')}/`
+    url: `${req.protocol}://${req.get('host')}/`,
+    description: 'Hostaka — social media platform, and the flagship of the Hostaka Ecosystem.',
+    sameAs: [
+      'https://orbithub.hostaka.fun/',
+      'https://aethercast.hostaka.fun/',
+      'https://apps.hostaka.fun/',
+      'https://wiki.hostaka.fun/',
+      'https://laps.hostaka.fun/',
+      'https://console.hostaka.fun/'
+    ]
   };
   const pid = (req.query.p || '').trim();
   if (pid) {
@@ -4147,6 +4213,7 @@ app.get('*', async (req, res) => {
         meta.title = `منشور ${who} | ${SITE_NAME}`;
         meta.description = ogTruncate(rec.content) || DEFAULT_DESC;
         if (rec.image) meta.image = absUrl(req, rec.image);
+        else meta.image = absUrl(req, `/api/og-image?type=post&id=${encodeURIComponent(pid)}`);
         meta.type = 'article';
         delete meta.jsonld;
       }
