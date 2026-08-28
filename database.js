@@ -337,6 +337,21 @@ async function initDB() {
     CREATE INDEX IF NOT EXISTS idx_wiki_posts_extension ON wiki_posts(extension);
     CREATE INDEX IF NOT EXISTS idx_wiki_posts_parent ON wiki_posts(parent_id);
     CREATE UNIQUE INDEX IF NOT EXISTS idx_wiki_posts_token ON wiki_posts(token);
+
+    -- ===== جدول أخبار/تحديثات console.hostaka.fun =====
+    -- منشورات رسمية ينشرها admin من لوحة الإدارة (زر "نشر" بمنتصف
+    -- لوحة التحكم)، وتظهر بشكل طبيعي بالصفحة الرئيسية التعريفية
+    -- لـ console.hostaka.fun. صورة مرفقة اختيارية فقط (نفس مسار
+    -- الرفع العام /api/upload المستخدم ببقية المنصة).
+    CREATE TABLE IF NOT EXISTS news_posts (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      author_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      title      TEXT NOT NULL DEFAULT '',
+      body       TEXT NOT NULL DEFAULT '',
+      image      TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_news_posts_created ON news_posts(created_at);
   `);
 
   // Migrations — إضافة أعمدة مفقودة
@@ -538,6 +553,16 @@ const WIKI_POST_SELECT = `
   JOIN users u ON u.id = wp.author_id
   LEFT JOIN wiki_posts pp ON pp.id = wp.parent_id
   LEFT JOIN users pu ON pu.id = pp.author_id
+`;
+
+// SELECT مشترك لأخبار/تحديثات console — يجيب معلومات الناشر (اسم العرض +
+// الصورة) عشان تُعرض بشكل طبيعي بالصفحة الرئيسية وبلوحة الإدارة معاً.
+const NEWS_POST_SELECT = `
+  SELECT np.*,
+         u.username as author_username, u.display_name as author_display_name,
+         COALESCE(u.avatar,'') as author_avatar
+  FROM news_posts np
+  JOIN users u ON u.id = np.author_id
 `;
 
 const q = {
@@ -1292,6 +1317,21 @@ const q = {
           ORDER BY wp.created_at DESC LIMIT 200`,
     args: (() => { const s = '%' + (search || '') + '%'; return [search || '', s, s, s, s]; })()
   }).then(rows),
+
+  // ============================================================
+  // console.hostaka.fun — أخبار وتحديثات
+  // ============================================================
+  createNewsPost: (p) => db.execute({
+    sql: `INSERT INTO news_posts (author_id,title,body,image) VALUES (?,?,?,?)`,
+    args: [p.author_id, p.title || '', p.body || '', p.image || '']
+  }),
+  listNewsPosts: () => db.execute({
+    sql: `${NEWS_POST_SELECT} ORDER BY np.created_at DESC LIMIT 100`
+  }).then(rows),
+  getNewsPostById: (id) => db.execute({
+    sql: `${NEWS_POST_SELECT} WHERE np.id = ?`, args: [id]
+  }).then(r => rows(r)[0] || null),
+  deleteNewsPost: (id) => db.execute({ sql: 'DELETE FROM news_posts WHERE id = ?', args: [id] }),
 };
 
 module.exports = { db, q, initDB };

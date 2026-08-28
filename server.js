@@ -460,7 +460,7 @@ async function createLoginSession(user, req) {
     const ua = req.headers['user-agent'] || '';
     const { browser, os, device } = parseUserAgent(ua);
     await q.createSession(user.id, jti, device, browser, os, ip, '', ua, user.username);
-    await q.logSecurityEvent(user.id, 'login', `تسجيل دخول جديد عبر ${browser} على ${os}`, ip, device);
+    await q.logSecurityEvent(user.id, 'login', `${browser} · ${os}`, ip, device);
   } catch(e) {
     // تسجيل الجلسة/تنبيه الأمان ميزة إضافية ولا يجب أبداً أن تمنع تسجيل الدخول نفسه
     console.error('⚠️ createLoginSession: تعذر تسجيل الجلسة (سيستمر تسجيل الدخول عادياً):', e.message || e);
@@ -1808,6 +1808,59 @@ app.delete('/api/admin/wiki-posts/:id', requireAdmin, async (req, res) => {
 });
 
 // ============================================================
+// console.hostaka.fun — أخبار وتحديثات
+// منشورات رسمية ينشرها admin من لوحة الإدارة، وتظهر بشكل طبيعي
+// بالصفحة الرئيسية التعريفية لـ console.hostaka.fun. القراءة عامة
+// (بدون تسجيل دخول)، والنشر/الحذف يتطلب صلاحية admin.
+// ============================================================
+function formatNewsPost(p) {
+  if (!p) return null;
+  return {
+    id: p.id, title: p.title, body: p.body, image: p.image,
+    created_at: p.created_at,
+    author: {
+      username: p.author_username,
+      display_name: p.author_display_name || p.author_username,
+      avatar: p.author_avatar || ''
+    }
+  };
+}
+
+app.get('/api/news', async (req, res) => {
+  try {
+    const list = await q.listNewsPosts();
+    res.json(list.map(formatNewsPost));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.post('/api/admin/news', requireAdmin, async (req, res) => {
+  try {
+    const title = String(req.body?.title || '').trim().slice(0, 150);
+    const body = String(req.body?.body || '').trim().slice(0, 5000);
+    const image = String(req.body?.image || '').trim();
+    if (!title) return res.status(400).json({ error: 'عنوان الخبر مطلوب' });
+    if (!body) return res.status(400).json({ error: 'نص الخبر مطلوب' });
+
+    await q.createNewsPost({ author_id: req.user.id, title, body, image });
+    res.json({ success: true });
+  } catch(e) {
+    console.error('Create news post error:', e);
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+app.delete('/api/admin/news/:id', requireAdmin, async (req, res) => {
+  try {
+    await q.deleteNewsPost(req.params.id);
+    res.json({ success: true });
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+
+// ============================================================
 // Hostaka Video (فيديوهات عادية/أفقية — تُعرض بطريقة يوتيوب في /video)
 // ============================================================
 app.get('/api/videos', async (req, res) => {
@@ -2412,17 +2465,17 @@ app.post('/api/account/change/verify', requireAuth, async (req, res) => {
         if (e.message?.includes('UNIQUE')) return res.status(400).json({ error:'اسم المستخدم أصبح مستخدماً، حاول باسم آخر' });
         throw e;
       }
-      await q.logSecurityEvent(req.user.id, 'username_changed', `تم تغيير اسم المستخدم إلى @${payload.newUsername}`, getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
+      await q.logSecurityEvent(req.user.id, 'username_changed', `@${payload.newUsername}`, getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
     } else if (purpose === 'email') {
       try { await q.updateEmail(req.user.id, payload.newEmail); }
       catch(e) {
         if (e.message?.includes('UNIQUE')) return res.status(400).json({ error:'البريد الإلكتروني أصبح مستخدماً' });
         throw e;
       }
-      await q.logSecurityEvent(req.user.id, 'email_changed', `تم تغيير البريد الإلكتروني إلى ${maskEmail(payload.newEmail)}`, getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
+      await q.logSecurityEvent(req.user.id, 'email_changed', maskEmail(payload.newEmail), getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
     } else if (purpose === 'password') {
       await q.updateUserPassword(req.user.id, payload.newPasswordHash);
-      await q.logSecurityEvent(req.user.id, 'password_changed', 'تم تغيير كلمة المرور', getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
+      await q.logSecurityEvent(req.user.id, 'password_changed', '', getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
     } else if (purpose === 'delete') {
       await q.deleteAccountChange(req.user.id, purpose);
       await q.deleteUser(req.user.id);
@@ -2492,7 +2545,7 @@ app.post('/api/account/2fa/enable', requireAuth, async (req, res) => {
     const backupCodes = generateBackupCodes(5);
     const hashedCodes = backupCodes.map(c => bcrypt.hashSync(c, 10));
     await q.enableTotp(req.user.id, JSON.stringify(hashedCodes));
-    await q.logSecurityEvent(req.user.id, '2fa_enabled', 'تم تفعيل المصادقة الثنائية', getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
+    await q.logSecurityEvent(req.user.id, '2fa_enabled', '', getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
 
     res.json({ success:true, backupCodes });
   } catch(e) {
@@ -2522,7 +2575,7 @@ app.post('/api/account/2fa/disable', requireAuth, async (req, res) => {
     if (!ok) return res.status(400).json({ error:'كود المصادقة غير صحيح' });
 
     await q.disableTotp(req.user.id);
-    await q.logSecurityEvent(req.user.id, '2fa_disabled', 'تم إلغاء تفعيل المصادقة الثنائية', getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
+    await q.logSecurityEvent(req.user.id, '2fa_disabled', '', getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
     res.json({ success:true });
   } catch(e) {
     console.error('❌ 2fa/disable error:', e);
@@ -2578,10 +2631,9 @@ app.get('/api/account/sessions', requireAuth, async (req, res) => {
       browser: s.browser,
       os: s.os,
       ip: s.ip,
-      location: s.location || 'غير معروف',
+      location: s.location || null,
       created_at: s.created_at,
       last_active: s.last_active,
-      last_active_text: timeAgoAr(s.last_active),
       is_current: s.jti === req.user.jti
     })));
   } catch(e) {
@@ -2593,7 +2645,7 @@ app.get('/api/account/sessions', requireAuth, async (req, res) => {
 app.post('/api/account/sessions/:id/revoke', requireAuth, async (req, res) => {
   try {
     await q.revokeSession(req.user.id, Number(req.params.id));
-    await q.logSecurityEvent(req.user.id, 'session_revoked', 'تم إنهاء جلسة تسجيل دخول من جهاز آخر', getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
+    await q.logSecurityEvent(req.user.id, 'session_revoked', '', getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
     res.json({ success:true });
   } catch(e) {
     console.error('❌ sessions/:id/revoke error:', e.message || e);
@@ -2605,7 +2657,7 @@ app.post('/api/account/sessions/:id/revoke', requireAuth, async (req, res) => {
 app.post('/api/account/sessions/revoke-all', requireAuth, async (req, res) => {
   try {
     await q.revokeAllSessions(req.user.id, req.user.jti || '');
-    await q.logSecurityEvent(req.user.id, 'sessions_revoked_all', 'تم تسجيل الخروج من جميع الأجهزة الأخرى', getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
+    await q.logSecurityEvent(req.user.id, 'sessions_revoked_all', '', getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
     res.json({ success:true });
   } catch(e) {
     console.error('❌ sessions/revoke-all error:', e.message || e);
@@ -2616,15 +2668,17 @@ app.post('/api/account/sessions/revoke-all', requireAuth, async (req, res) => {
 // ============================================================
 // تنبيهات الأمان — /manager
 // ============================================================
-const SECURITY_EVENT_LABELS = {
-  login: { title:'تسجيل دخول جديد', icon:'login' },
-  username_changed: { title:'تغيير اسم المستخدم', icon:'edit' },
-  email_changed: { title:'تغيير البريد الإلكتروني', icon:'mail' },
-  password_changed: { title:'تغيير كلمة المرور', icon:'lock' },
-  '2fa_enabled': { title:'تفعيل المصادقة الثنائية', icon:'shield' },
-  '2fa_disabled': { title:'إلغاء تفعيل المصادقة الثنائية', icon:'shield' },
-  session_revoked: { title:'إنهاء جلسة', icon:'logout' },
-  sessions_revoked_all: { title:'تسجيل خروج من كل الأجهزة', icon:'logout' },
+const SECURITY_EVENT_ICONS = {
+  login: 'login',
+  username_changed: 'edit',
+  email_changed: 'mail',
+  password_changed: 'lock',
+  '2fa_enabled': 'shield',
+  '2fa_disabled': 'shield',
+  admin_2fa_disabled: 'shield',
+  session_revoked: 'logout',
+  sessions_revoked_all: 'logout',
+  drive_backup: 'bell',
 };
 
 app.get('/api/account/security-events', requireAuth, async (req, res) => {
@@ -2633,13 +2687,11 @@ app.get('/api/account/security-events', requireAuth, async (req, res) => {
     res.json(events.map(e => ({
       id: e.id,
       type: e.type,
-      title: (SECURITY_EVENT_LABELS[e.type]?.title) || e.type,
-      icon: (SECURITY_EVENT_LABELS[e.type]?.icon) || 'bell',
+      icon: SECURITY_EVENT_ICONS[e.type] || 'bell',
       description: e.description,
       ip: e.ip,
       device: e.device,
-      created_at: e.created_at,
-      time_text: timeAgoAr(e.created_at)
+      created_at: e.created_at
     })));
   } catch(e) {
     res.status(500).json({ error:'خطأ في الخادم' });
@@ -2749,7 +2801,7 @@ app.get('/api/account/backup/drive/callback', async (req, res) => {
       return res.status(400).send('تعذر رفع النسخة الاحتياطية إلى Drive');
     }
 
-    await q.logSecurityEvent(decoded.id, 'drive_backup', 'تم رفع نسخة احتياطية إلى Google Drive', getClientIp(req), '');
+    await q.logSecurityEvent(decoded.id, 'drive_backup', '', getClientIp(req), '');
     res.send(`<html dir="rtl"><body style="font-family:sans-serif;text-align:center;padding:60px;"><h2>تم رفع النسخة الاحتياطية إلى Google Drive بنجاح ✅</h2><p>يمكنك إغلاق هذه الصفحة والعودة إلى المنصة.</p></body></html>`);
   } catch(e) {
     console.error('❌ drive/callback error:', e);
@@ -3777,7 +3829,7 @@ app.put('/api/admin/users/:id/unsuspend', requireModerator, async (req, res) => 
 app.put('/api/admin/users/:id/2fa/disable', requireAdmin, async (req, res) => {
   try {
     await q.disableTotp(req.params.id);
-    await q.logSecurityEvent(req.params.id, '2fa_disabled', 'قام أحد المشرفين بإلغاء تفعيل المصادقة الثنائية لحسابك (إنقاذ طارئ)', getClientIp(req), '');
+    await q.logSecurityEvent(req.params.id, 'admin_2fa_disabled', '', getClientIp(req), '');
     res.json({ success:true });
   } catch(e) {
     res.status(500).json({ error: 'خطأ في الخادم' });
