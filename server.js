@@ -1831,6 +1831,7 @@ app.get('/api/news', async (req, res) => {
     const list = await q.listNewsPosts();
     res.json(list.map(formatNewsPost));
   } catch(e) {
+    console.error('List news error:', e);
     res.status(500).json({ error: 'خطأ في الخادم' });
   }
 });
@@ -1856,6 +1857,7 @@ app.delete('/api/admin/news/:id', requireAdmin, async (req, res) => {
     await q.deleteNewsPost(req.params.id);
     res.json({ success: true });
   } catch(e) {
+    console.error('Delete news error:', e);
     res.status(500).json({ error: 'خطأ في الخادم' });
   }
 });
