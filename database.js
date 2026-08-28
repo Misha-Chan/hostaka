@@ -1326,7 +1326,8 @@ const q = {
     args: [p.author_id, p.title || '', p.body || '', p.image || '']
   }),
   listNewsPosts: () => db.execute({
-    sql: `${NEWS_POST_SELECT} ORDER BY np.created_at DESC LIMIT 100`
+    sql: `${NEWS_POST_SELECT} ORDER BY np.created_at DESC LIMIT 100`,
+    args: []
   }).then(rows),
   getNewsPostById: (id) => db.execute({
     sql: `${NEWS_POST_SELECT} WHERE np.id = ?`, args: [id]
