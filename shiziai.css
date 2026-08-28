@@ -1,0 +1,331 @@
+/* ================= shiziai.html ================= */
+html.page-shiziai {
+      /* === Hostaka UI Design System v2.0 === */
+      --black: #ffffff;
+      --dark: #f5f5f7;
+      --card: #ffffff;
+      --border: rgba(0,0,0,0.08);
+      --text: #1c1c1e;
+      --muted: #8e8e93;
+      --primary: #8B5E3C;
+      --primary-h: #6D4A2E;
+      --primary-light: rgba(139,94,60,0.08);
+      --primary-mid: rgba(139,94,60,0.15);
+      --primary-border: rgba(139,94,60,0.25);
+      --accent: #8B5E3C;
+      --mine-bg: linear-gradient(135deg, var(--primary), var(--primary-h));
+      --mine-border: rgba(139,94,60,0.12);
+      --their-bg: var(--card);
+      --their-border: rgba(0,0,0,0.06);
+      --topbar-bg: rgba(255,255,255,0.72);
+      --input-bg: #f2f2f7;
+      --modal-bg: #ffffff;
+      --post-bg: #ffffff;
+      --sort-btn-bg: rgba(0,0,0,0.04);
+      --surface-elevated: #ffffff;
+      --shadow: 0 4px 24px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+      --avatar-gradient: linear-gradient(145deg, #8B5E3C, #C9986B);
+      --glass-bg: rgba(255,255,255,0.65);
+      --glass-bg-strong: rgba(255,255,255,0.82);
+      --glass-border: rgba(255,255,255,0.4);
+      --glass-blur: 24px;
+      --wallpaper-img: none;
+      --wallpaper-overlay: rgba(255,255,255,0);
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-xl: 32px;
+      --radius-full: 999px;
+      --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      --success: #34c759;
+      --warning: #ff9500;
+      --danger: #ff3b30;
+      /* === توافق مع الأسماء القديمة (لا تُحذف) === */
+      --pink: var(--primary);
+      --pink-h: var(--primary-h);
+      --shizi-bg: var(--primary-light);
+      --shizi-border: var(--primary-border);
+      --shizi-gradient: var(--avatar-gradient);
+    }
+/* بدون هذا البلوك، تبديل الثيم ما كان يشتغل بهاي الصفحة إطلاقاً: القاعدة
+   فوق (html.page-shiziai) نفس درجة التخصيص بالضبط متل [data-theme="dark"]
+   بملف theme.css، وبما إنها تحمَّل بعدها بترتيب الصفحة، كانت تكسب دايماً
+   وتفرض ألوان الوضع الفاتح حتى لو data-theme="dark" مفعّلة على <html>. */
+html[data-theme="dark"].page-shiziai {
+      --black: #000000;
+      --dark: #121212;
+      --card: #1c1c1e;
+      --border: rgba(255,255,255,0.08);
+      --text: #f5f5f7;
+      --muted: #8e8e93;
+      --primary: #C9986B;
+      --primary-h: #E0B78E;
+      --primary-light: rgba(201,152,107,0.12);
+      --primary-mid: rgba(201,152,107,0.2);
+      --primary-border: rgba(201,152,107,0.3);
+      --accent: #C9986B;
+      --mine-bg: linear-gradient(135deg, var(--primary), var(--primary-h));
+      --mine-border: rgba(201,152,107,0.18);
+      --their-bg: var(--card);
+      --their-border: rgba(255,255,255,0.06);
+      --topbar-bg: rgba(0,0,0,0.65);
+      --input-bg: #1c1c1e;
+      --modal-bg: #1c1c1e;
+      --post-bg: #1c1c1e;
+      --sort-btn-bg: rgba(255,255,255,0.04);
+      --surface-elevated: #2c2c2e;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.2);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+      --avatar-gradient: linear-gradient(145deg, #C9986B, #D9AF8B);
+      --glass-bg: rgba(28,28,30,0.72);
+      --glass-bg-strong: rgba(28,28,30,0.88);
+      --glass-border: rgba(255,255,255,0.08);
+      --pink: var(--primary);
+      --pink-h: var(--primary-h);
+      --shizi-bg: var(--primary-light);
+      --shizi-border: var(--primary-border);
+      --shizi-gradient: var(--avatar-gradient);
+    }
+body.page-shiziai, body.page-shiziai * {margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html.page-shiziai, body.page-shiziai {height:100%;overflow:hidden;}
+body.page-shiziai {
+      background:radial-gradient(circle at 18% 16%,rgba(128,128,128,0.06),transparent 22%),var(--black);
+      color:var(--text);
+      font-family:'Ubuntu','El Messiri',sans-serif;
+      display:flex;flex-direction:column;
+      -webkit-font-smoothing:antialiased;
+      transition:background var(--transition-slow), color var(--transition-slow);
+    }
+html.has-wallpaper body.page-shiziai * {
+      transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, color 0.4s ease;
+    }
+/* ===== خلفية المنصة (Wallpaper) ===== */
+    body.page-shiziai .wallpaper-bg {
+      position:fixed;inset:0;z-index:-2;
+      background-image:var(--wallpaper-img);
+      background-size:cover;background-position:center;background-repeat:no-repeat;
+      opacity:0;transition:opacity 0.6s ease;
+      transform:scale(1.02);
+    }
+html.has-wallpaper body.page-shiziai .wallpaper-bg {opacity:1;}
+body.page-shiziai .wallpaper-overlay {
+      position:fixed;inset:0;z-index:-1;
+      background:var(--wallpaper-overlay);
+      pointer-events:none;
+      transition:background 0.6s ease;
+    }
+html.has-wallpaper body.page-shiziai .topbar {
+      background:var(--glass-bg)!important;
+      backdrop-filter:blur(var(--glass-blur)) saturate(1.5);
+      -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.5);
+      border-color:var(--glass-border)!important;
+    }
+html.has-wallpaper body.page-shiziai {background:transparent;}
+/* ===== نافذة إعداد الخلفية ===== */
+    body.page-shiziai .wp-overlay {position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;z-index:999;opacity:0;visibility:hidden;transition:all .25s ease;padding:20px;}
+body.page-shiziai .wp-overlay.show {opacity:1;visibility:visible;}
+body.page-shiziai .wp-box {background:var(--modal-bg);border:1px solid var(--border);border-radius:22px;padding:26px 22px;width:100%;max-width:420px;max-height:88vh;overflow-y:auto;transform:translateY(14px) scale(.97);transition:all .3s cubic-bezier(.16,1,.3,1);box-shadow:var(--shadow);}
+body.page-shiziai .wp-overlay.show .wp-box {transform:translateY(0) scale(1);}
+body.page-shiziai .wp-title {font-weight:800;font-size:1.02rem;color:var(--text);display:flex;align-items:center;gap:9px;margin-bottom:14px;}
+body.page-shiziai .wp-title svg {width:19px;height:19px;color:var(--accent);flex-shrink:0;}
+body.page-shiziai .wp-desc {color:var(--muted);font-size:.8rem;line-height:1.7;margin-bottom:14px;}
+body.page-shiziai .wp-preview {width:100%;height:110px;border-radius:14px;border:1px solid var(--border);background:var(--input-bg);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.78rem;margin-bottom:14px;overflow:hidden;}
+body.page-shiziai .wp-upload-btn {width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(128,128,128,.08);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:12px;font-family:'Ubuntu','El Messiri',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;transition:all .2s;margin-bottom:14px;}
+body.page-shiziai .wp-upload-btn:hover {background:rgba(128,128,128,.14);}
+body.page-shiziai .wp-row {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+body.page-shiziai .wp-row label {font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:6px;flex-shrink:0;}
+body.page-shiziai .wp-row input[type=range] {flex:1;accent-color:var(--accent);}
+body.page-shiziai .wp-check {display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--muted);margin-bottom:16px;cursor:pointer;}
+body.page-shiziai .wp-check input {accent-color:var(--accent);}
+body.page-shiziai .wp-footer {display:flex;gap:10px;justify-content:flex-end;margin-top:6px;}
+body.page-shiziai .wp-btn-ghost {background:none;border:1px solid var(--border);color:var(--muted);padding:9px 16px;border-radius:10px;cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:6px;transition:all .2s;}
+body.page-shiziai .wp-btn-ghost:hover {color:var(--text);border-color:var(--text);}
+body.page-shiziai .wp-btn-primary {background:var(--accent);color:var(--black);border:none;padding:9px 20px;border-radius:10px;cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;font-size:.82rem;font-weight:800;transition:all .2s;}
+body.page-shiziai .wp-btn-primary:hover {opacity:.88;}
+body.page-shiziai .topbar {
+      height:56px;background:var(--topbar-bg);
+      backdrop-filter:blur(24px) saturate(1.2);-webkit-backdrop-filter:blur(24px);
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;padding:0 16px;gap:10px;
+      flex-shrink:0;z-index:20;transition:background 0.3s, border-color 0.3s;
+    }
+body.page-shiziai .topbar-left {display:flex;align-items:center;gap:10px;flex:1;min-width:0;}
+body.page-shiziai .topbar-right {display:flex;align-items:center;gap:6px;flex-shrink:0;}
+body.page-shiziai .back-btn {
+      display:flex;align-items:center;gap:6px;
+      color:var(--muted);font-size:0.82rem;cursor:pointer;
+      padding:6px 12px;border-radius:999px;
+      background:rgba(128,128,128,0.06);border:1px solid var(--border);
+      font-family:'Ubuntu','El Messiri';font-weight:600;text-decoration:none;white-space:nowrap;
+      transition:all 0.18s;
+    }
+body.page-shiziai .back-btn:hover {color:var(--text);background:rgba(128,128,128,0.12);}
+body.page-shiziai .back-btn:active {transform:scale(0.95);}
+body.page-shiziai .back-btn svg {width:14px;height:14px;}
+body.page-shiziai .shizi-brand {display:flex;align-items:center;gap:9px;min-width:0;}
+body.page-shiziai .shizi-av {
+      width:34px;height:34px;border-radius:50%;
+      background:var(--shizi-gradient);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:800;font-size:1rem;color:var(--black);flex-shrink:0;
+      box-shadow:0 4px 14px rgba(0,0,0,0.25);
+      overflow:hidden;
+    }
+body.page-shiziai .shizi-av img {width:100%;height:100%;object-fit:cover;}
+body.page-shiziai .shizi-name {font-weight:800;font-size:0.92rem;color:var(--text);white-space:nowrap;}
+body.page-shiziai .shizi-status {font-size:0.68rem;color:var(--pink);font-weight:700;display:flex;align-items:center;gap:4px;}
+body.page-shiziai .shizi-status .dot {width:6px;height:6px;border-radius:50%;background:var(--pink);animation:shiziai-pulse 2s ease-in-out infinite;}
+body.page-shiziai .icon-btn {
+      width:36px;height:36px;border-radius:50%;
+      background:rgba(128,128,128,0.06);border:1px solid var(--border);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;color:var(--muted);transition:all 0.2s;flex-shrink:0;
+    }
+body.page-shiziai .icon-btn:hover, body.page-shiziai .icon-btn:active {background:rgba(128,128,128,0.12);color:var(--text);}
+body.page-shiziai .icon-btn svg {width:16px;height:16px;}
+body.page-shiziai .lang-selector {position:relative;}
+body.page-shiziai .lang-menu {
+      position:absolute;top:42px;left:0;
+      background:var(--modal-bg);border:1px solid var(--border);border-radius:12px;
+      padding:6px 0;min-width:140px;
+      opacity:0;visibility:hidden;transform:translateY(-6px) scale(0.96);
+      transition:all 0.2s cubic-bezier(0.16,1,0.3,1);z-index:30;box-shadow:var(--shadow);
+    }
+body.page-shiziai .lang-menu.show {opacity:1;visibility:visible;transform:translateY(0) scale(1);}
+body.page-shiziai .lang-menu button {
+      display:flex;align-items:center;gap:8px;width:100%;padding:8px 16px;
+      background:none;border:none;color:var(--text);
+      font-family:'Ubuntu','El Messiri',sans-serif;font-size:0.85rem;cursor:pointer;
+      transition:background 0.15s;text-align:right;
+    }
+body.page-shiziai .lang-menu button:hover {background:rgba(128,128,128,0.08);}
+body.page-shiziai .lang-menu button .flag {font-size:1.1rem;}
+body.page-shiziai .chat-main {flex:1;display:flex;flex-direction:column;min-height:0;position:relative;}
+body.page-shiziai .msgs-area {
+      flex:1;overflow-y:auto;padding:18px 14px;
+      display:flex;flex-direction:column;gap:4px;min-height:0;
+    }
+body.page-shiziai .msgs-area::-webkit-scrollbar {width:4px;}
+body.page-shiziai .msgs-area::-webkit-scrollbar-thumb {background:var(--border);border-radius:3px;}
+body.page-shiziai .welcome {
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:14px;color:var(--muted);text-align:center;padding:20px;animation:shiziai-fadeIn 0.5s ease;
+    }
+body.page-shiziai .welcome .shizi-big {
+      width:76px;height:76px;border-radius:50%;
+      background:var(--shizi-gradient);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:800;font-size:2rem;color:var(--black);
+      box-shadow:0 10px 30px rgba(0,0,0,0.25);
+      overflow:hidden;
+    }
+body.page-shiziai .welcome .shizi-big img {width:100%;height:100%;object-fit:cover;}
+body.page-shiziai .welcome h2 {font-size:1.15rem;color:var(--text);font-weight:800;}
+body.page-shiziai .welcome p {font-size:0.85rem;max-width:320px;line-height:1.7;}
+body.page-shiziai .suggestions {display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:420px;margin-top:6px;}
+body.page-shiziai .suggestion-chip {
+      padding:8px 14px;border-radius:999px;
+      background:var(--shizi-bg);border:1px solid var(--shizi-border);
+      color:var(--pink);font-size:0.78rem;font-weight:700;cursor:pointer;
+      font-family:'Ubuntu','El Messiri';transition:all 0.18s;
+    }
+body.page-shiziai .suggestion-chip:hover {background:var(--shizi-border);transform:translateY(-1px);}
+body.page-shiziai .msg-row {display:flex;align-items:flex-end;gap:8px;margin-bottom:8px;animation:shiziai-msgIn 0.25s cubic-bezier(0.16,1,0.3,1);}
+body.page-shiziai .msg-row.mine {flex-direction:row-reverse;}
+body.page-shiziai .msg-av {
+      width:28px;height:28px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;font-size:0.75rem;color:#fff;flex-shrink:0;overflow:hidden;
+    }
+body.page-shiziai .msg-av.shizi {background:var(--shizi-gradient);color:var(--black);}
+body.page-shiziai .msg-av.shizi img {width:100%;height:100%;object-fit:cover;}
+body.page-shiziai .msg-av.user {background:linear-gradient(145deg,#333,#111);}
+body.page-shiziai .msg-av.user img {width:100%;height:100%;object-fit:cover;}
+body.page-shiziai .bubble-wrap {display:flex;flex-direction:column;max-width:74%;min-width:0;}
+body.page-shiziai .msg-row.mine .bubble-wrap {align-items:flex-end;}
+body.page-shiziai .bubble {
+      padding:11px 15px;border-radius:18px;font-size:0.9rem;line-height:1.7;
+      word-break:break-word;white-space:pre-wrap;
+      transition:background-color 0.3s ease, box-shadow 0.15s ease;
+      box-shadow:0 1px 2px rgba(0,0,0,0.04);
+    }
+body.page-shiziai .msg-row.mine .bubble {background:var(--mine-bg);color:#fff;border-bottom-left-radius:5px;box-shadow:0 2px 8px rgba(139,94,60,0.22);}
+body.page-shiziai .msg-row.theirs .bubble {background:var(--card);border:1px solid var(--shizi-border);border-bottom-right-radius:5px;}
+body.page-shiziai .msg-time {font-size:0.62rem;color:var(--muted);padding:3px 5px;font-weight:600;}
+body.page-shiziai .typing-row {display:flex;align-items:flex-end;gap:8px;margin-bottom:8px;}
+body.page-shiziai .typing-bubble {
+      background:var(--shizi-bg);border:1px solid var(--shizi-border);
+      border-radius:18px;border-bottom-right-radius:5px;
+      padding:13px 16px;display:flex;gap:4px;align-items:center;
+    }
+body.page-shiziai .typing-dot {width:6px;height:6px;border-radius:50%;background:var(--pink);animation:shiziai-typingBounce 1.2s infinite ease-in-out;}
+body.page-shiziai .typing-dot:nth-child(2) {animation-delay:0.15s;}
+body.page-shiziai .typing-dot:nth-child(3) {animation-delay:0.3s;}
+body.page-shiziai .input-area {
+      padding:12px 14px;border-top:1px solid var(--border);
+      display:flex;align-items:flex-end;gap:8px;
+      background:var(--topbar-bg);flex-shrink:0;
+    }
+body.page-shiziai .msg-input {
+      flex:1;padding:12px 16px;background:var(--input-bg);
+      border:1px solid var(--border);border-radius:20px;
+      color:var(--text);font-family:'Ubuntu','El Messiri';font-size:0.9rem;
+      resize:none;max-height:120px;line-height:1.5;
+      transition:all 0.2s;
+    }
+body.page-shiziai .msg-input:focus {outline:none;box-shadow:0 0 0 3px var(--shizi-border);}
+body.page-shiziai .msg-input::placeholder {color:var(--muted);}
+body.page-shiziai .send-btn {
+      width:42px;height:42px;border-radius:50%;flex-shrink:0;
+      background:var(--shizi-gradient);border:none;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      transition:all 0.2s;box-shadow:0 4px 14px rgba(0,0,0,0.25);
+    }
+body.page-shiziai .send-btn:hover {transform:translateY(-2px);}
+body.page-shiziai .send-btn:active {transform:translateY(0);}
+body.page-shiziai .send-btn:disabled {opacity:0.5;cursor:not-allowed;transform:none;}
+body.page-shiziai .send-btn svg {width:17px;height:17px;}
+body.page-shiziai .not-logged {
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:14px;padding:80px 20px;text-align:center;
+    }
+body.page-shiziai .not-logged svg {width:44px;height:44px;color:var(--muted);}
+body.page-shiziai .not-logged h2 {font-size:1.1rem;color:var(--text);font-weight:800;}
+body.page-shiziai .not-logged p {color:var(--muted);font-size:0.85rem;max-width:280px;}
+body.page-shiziai .btn-go {
+      margin-top:6px;display:inline-flex;align-items:center;gap:8px;
+      background:var(--shizi-gradient);color:var(--black);padding:10px 22px;
+      border-radius:12px;text-decoration:none;font-weight:700;font-size:0.85rem;
+    }
+body.page-shiziai .toast {
+      position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+      padding:12px 22px;border-radius:14px;font-size:0.88rem;font-weight:600;
+      z-index:999;border:1px solid var(--border);
+      backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+      opacity:0;visibility:hidden;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);
+      white-space:nowrap;max-width:90vw;text-align:center;
+    }
+body.page-shiziai .toast.show {opacity:1;visibility:visible;transform:translateX(-50%) translateY(0);}
+body.page-shiziai .toast-success {background:var(--modal-bg);color:var(--text);border-color:var(--border);}
+body.page-shiziai .toast-error {background:#ef4444;color:#fff;border-color:#ef4444;}
+body.page-shiziai ::-webkit-scrollbar {width:4px;}
+body.page-shiziai ::-webkit-scrollbar-track {background:transparent;}
+body.page-shiziai ::-webkit-scrollbar-thumb {background:var(--border);border-radius:3px;}
+@media(max-width:680px){
+      body.page-shiziai .topbar {height:52px;padding:0 12px;gap:6px;}
+      body.page-shiziai .back-btn span {display:none;}
+      body.page-shiziai .back-btn {padding:6px;}
+      body.page-shiziai .shizi-av {width:30px;height:30px;font-size:0.9rem;}
+      body.page-shiziai .shizi-name {font-size:0.86rem;}
+      body.page-shiziai .bubble-wrap {max-width:86%;}
+      body.page-shiziai .bubble {padding:10px 13px;font-size:0.88rem;}
+      body.page-shiziai .input-area {padding:9px 10px;}
+      body.page-shiziai .msg-input {padding:10px 14px;font-size:0.86rem;}
+      body.page-shiziai .send-btn {width:38px;height:38px;}
+    }
+@media(prefers-reduced-motion:reduce){
+      body.page-shiziai, body.page-shiziai *, body.page-shiziai *::before, body.page-shiziai *::after {animation-duration:0.01ms!important;transition-duration:0.01ms!important;}
+    }
