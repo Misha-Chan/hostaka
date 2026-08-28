@@ -89,7 +89,8 @@ function fmtDate(s){
   let d;
   if(typeof s === 'string' && !/[zZ]|[+-]\d\d:?\d\d$/.test(s)) d = new Date(s.replace(' ','T')+'Z');
   else d = new Date(s);
-  return d.toLocaleDateString('ar-SA',{year:'numeric',month:'short',day:'numeric'}) + ' - ' + d.toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'});
+  const locale = currentLang === 'ar' ? 'ar-SA' : 'en-US';
+  return d.toLocaleDateString(locale,{year:'numeric',month:'short',day:'numeric'}) + ' - ' + d.toLocaleTimeString(locale,{hour:'2-digit',minute:'2-digit'});
 }
 
 function renderForm(){
