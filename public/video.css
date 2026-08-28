@@ -36,12 +36,12 @@ body.page-video .vg-title {font-weight:800;font-size:0.92rem;line-height:1.4;col
 body.page-video .vg-sub {font-size:0.78rem;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
 body.page-video .vg-sub .dot {width:3px;height:3px;border-radius:50%;background:var(--muted);display:inline-block;}
 /* عرض تشغيل فيديو محدد (مثل صفحة مشاهدة يوتيوب) */
-body.page-video .video-watch-layout {display:grid;grid-template-columns:1fr;gap:24px;}
+body.page-video .video-watch-layout {display:grid;grid-template-columns:minmax(0,1fr);gap:24px;}
 @media (min-width:920px) {
   body.page-video .video-watch-layout {grid-template-columns:minmax(0,1fr) 340px;align-items:start;}
 }
-body.page-video .video-player-wrap {background:#000;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg);}
-body.page-video .video-player {width:100%;max-height:70vh;display:block;background:#000;}
+body.page-video .video-player-wrap {background:#000;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg);max-width:100%;}
+body.page-video .video-player {width:100%;max-width:100%;max-height:70vh;display:block;background:#000;}
 body.page-video .video-watch-title {font-weight:900;font-size:1.15rem;line-height:1.5;margin-top:16px;}
 body.page-video .video-watch-pubrow {display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;flex-wrap:wrap;}
 body.page-video .video-watch-pub {display:flex;align-items:center;gap:12px;}

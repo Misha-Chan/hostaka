@@ -42,7 +42,7 @@ function toUTCDate(s){
 }
 function fmtDate(s){
   const d = toUTCDate(s);
-  return d.toLocaleDateString('ar', { day:'numeric', month:'short', year:'numeric' });
+  return d.toLocaleDateString(currentLang === 'ar' ? 'ar' : 'en-US', { day:'numeric', month:'short', year:'numeric' });
 }
 
 const username = new URLSearchParams(location.search).get('u') || '';

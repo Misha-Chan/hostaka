@@ -68,7 +68,7 @@ function fmtDate(s){
   let d;
   if(typeof s === 'string' && !/[zZ]|[+-]\d\d:?\d\d$/.test(s)) d = new Date(s.replace(' ','T')+'Z');
   else d = new Date(s);
-  return d.toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  return d.toLocaleDateString(currentLang === 'ar' ? 'ar-SA' : 'en-US',{year:'numeric',month:'long',day:'numeric'});
 }
 
 const SVG = {

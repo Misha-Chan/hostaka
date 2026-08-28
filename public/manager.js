@@ -18,6 +18,11 @@ const LANG = {
     confirmLogoutAllOther: 'تسجيل الخروج من كل الأجهزة الأخرى؟ ستبقى فقط هذه الجلسة الحالية مفعّلة.', loggedOutAllOther: 'تم تسجيل الخروج من كل الأجهزة الأخرى',
     noSecurityEventsYet: 'لا توجد أحداث أمنية مسجّلة بعد', cantLoadLog: 'تعذر تحميل السجل',
     cantCreateBackup: 'تعذر إنشاء النسخة الاحتياطية', downloadingBackup: 'جارٍ تنزيل نسخة بياناتك',
+    secEv_login: 'تسجيل دخول جديد', secEv_username_changed: 'تغيير اسم المستخدم', secEv_email_changed: 'تغيير البريد الإلكتروني',
+    secEv_password_changed: 'تغيير كلمة المرور', secEv_2fa_enabled: 'تفعيل المصادقة الثنائية', secEv_2fa_disabled: 'إلغاء تفعيل المصادقة الثنائية',
+    secEv_admin_2fa_disabled: 'قامت الإدارة بإلغاء تفعيل المصادقة الثنائية لحسابك (إنقاذ طارئ)', secEv_session_revoked: 'إنهاء جلسة',
+    secEv_sessions_revoked_all: 'تسجيل خروج من كل الأجهزة', secEv_drive_backup: 'رفع نسخة احتياطية إلى Google Drive',
+    justNow: 'الآن', minutesAgo: 'منذ {n} دقيقة', hoursAgo: 'منذ {n} ساعة', daysAgo: 'منذ {n} يوم', unknown: 'غير معروف',
     driveFeatureDisabled: 'هذه الميزة غير مفعّلة على الخادم حالياً', driveFeatureUnavailable: 'ميزة Google Drive غير مفعّلة حالياً',
     cantStartSetup: 'تعذر بدء الإعداد', enable2FATitle: 'تفعيل المصادقة الثنائية', saveBackupCodesTitle: 'احفظ أكواد الاسترجاع',
     enter6DigitAppCode: 'أدخل كود التطبيق المكوّن من 6 أرقام', tfaEnabledSuccess: 'تم تفعيل المصادقة الثنائية بنجاح',
@@ -60,6 +65,11 @@ const LANG = {
     confirmLogoutAllOther: 'Log out of all other devices? Only this current session will remain active.', loggedOutAllOther: 'Logged out of all other devices',
     noSecurityEventsYet: 'No security events recorded yet', cantLoadLog: 'Could not load the log',
     cantCreateBackup: 'Could not create the backup', downloadingBackup: 'Downloading your data backup',
+    secEv_login: 'New login', secEv_username_changed: 'Username changed', secEv_email_changed: 'Email changed',
+    secEv_password_changed: 'Password changed', secEv_2fa_enabled: 'Two-factor authentication enabled', secEv_2fa_disabled: 'Two-factor authentication disabled',
+    secEv_admin_2fa_disabled: 'Admins disabled two-factor authentication on your account (emergency recovery)', secEv_session_revoked: 'Session ended',
+    secEv_sessions_revoked_all: 'Logged out of all devices', secEv_drive_backup: 'Backup uploaded to Google Drive',
+    justNow: 'Just now', minutesAgo: '{n} min ago', hoursAgo: '{n}h ago', daysAgo: '{n}d ago', unknown: 'Unknown',
     driveFeatureDisabled: 'This feature is not enabled on the server right now', driveFeatureUnavailable: 'Google Drive feature is not enabled right now',
     cantStartSetup: 'Could not start setup', enable2FATitle: 'Enable Two-Factor Authentication', saveBackupCodesTitle: 'Save your recovery codes',
     enter6DigitAppCode: 'Enter the 6-digit code from the app', tfaEnabledSuccess: 'Two-factor authentication enabled successfully',
@@ -141,7 +151,24 @@ function fmtDate(s){
   let d;
   if(typeof s === 'string' && !/[zZ]|[+-]\d\d:?\d\d$/.test(s)) d = new Date(s.replace(' ','T')+'Z');
   else d = new Date(s);
-  return d.toLocaleDateString('ar-SA',{year:'numeric',month:'long',day:'numeric'});
+  const locale = currentLang === 'ar' ? 'ar-SA' : 'en-US';
+  return d.toLocaleDateString(locale,{year:'numeric',month:'long',day:'numeric'});
+}
+
+function timeAgo(dateStr){
+  if(!dateStr) return t('unknown');
+  let d;
+  if(typeof dateStr === 'string' && !/[zZ]|[+-]\d\d:?\d\d$/.test(dateStr)) d = new Date(dateStr.replace(' ','T')+'Z');
+  else d = new Date(dateStr);
+  const ms = Date.now() - d.getTime();
+  if (Number.isNaN(ms)) return t('unknown');
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return t('justNow');
+  if (mins < 60) return t('minutesAgo', {n: mins});
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return t('hoursAgo', {n: hrs});
+  const days = Math.floor(hrs / 24);
+  return t('daysAgo', {n: days});
 }
 
 function initials(name){
@@ -337,7 +364,7 @@ async function loadSessions(){
         <div class="session-icon">${DEVICE_ICONS[s.device] || DEVICE_ICONS['حاسوب']}</div>
         <div class="session-info">
           <div class="session-name">${esc(s.browser)} · ${esc(s.os)} ${s.is_current ? '<span class="status-pill st-verified" style="margin-inline-start:6px;">'+t('thisDevice')+'</span>' : ''}</div>
-          <div class="session-meta">${esc(s.ip || t('ipUnknown'))} · ${esc(s.last_active_text)}</div>
+          <div class="session-meta">${esc(s.ip || t('ipUnknown'))} · ${esc(timeAgo(s.last_active))}</div>
         </div>
         ${!s.is_current ? `<button class="btn-outline-danger" style="padding:6px 12px;font-size:0.76rem;" onclick="revokeSession(${s.id})">${t('endSession')}</button>` : ''}
       </div>
@@ -380,8 +407,8 @@ async function loadSecurityEvents(){
       <div class="session-row">
         <div class="session-icon">${SECURITY_ICONS[ev.icon] || SECURITY_ICONS.bell}</div>
         <div class="session-info">
-          <div class="session-name">${esc(ev.title)}</div>
-          <div class="session-meta">${esc(ev.description||'')} · ${esc(ev.time_text)}</div>
+          <div class="session-name">${esc(t('secEv_'+ev.type) !== 'secEv_'+ev.type ? t('secEv_'+ev.type) : ev.type)}</div>
+          <div class="session-meta">${esc(ev.description||'')} · ${esc(timeAgo(ev.created_at))}</div>
         </div>
       </div>
     `).join('');
