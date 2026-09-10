@@ -44,7 +44,7 @@
   padding:8px 4px;border-radius:10px;transition:background .12s ease;}
 #ecoSwitchPanel a:hover{background:rgba(255,255,255,0.06);}
 #ecoSwitchPanel a img{width:44px;height:44px;border-radius:12px;object-fit:cover;display:block;}
-#ecoSwitchPanel a.current img{outline:2px solid #6ea8ff;outline-offset:2px;}
+#ecoSwitchPanel a.current img{outline:2px solid #E4536B;outline-offset:2px;}
 #ecoSwitchPanel a span{font-size:11px;color:#eaeaef;text-align:center;line-height:1.2;
   max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #ecoSwitchOverlay{position:fixed;inset:0;z-index:99997;display:none;}
