@@ -19,14 +19,14 @@
 
 :root,
 html {
-  /* ---------- Brand / Primary (Timeline direction: rose) ---------- */
-  --primary: #C23B54;
-  --primary-h: #A22E44;              /* hover / pressed */
-  --primary-light: rgba(228, 83, 107, 0.08);
-  --primary-mid: rgba(228, 83, 107, 0.15);
-  --primary-border: rgba(228, 83, 107, 0.25);
-  --accent: #C23B54;
-  --avatar-gradient: linear-gradient(145deg, #E4536B, #8A2E43);
+  /* ---------- Brand / Primary (default: brown) ---------- */
+  --primary: #8B5E3C;
+  --primary-h: #6D4A2E;              /* hover / pressed */
+  --primary-light: rgba(139, 94, 60, 0.08);
+  --primary-mid: rgba(139, 94, 60, 0.15);
+  --primary-border: rgba(139, 94, 60, 0.25);
+  --accent: #8B5E3C;
+  --avatar-gradient: linear-gradient(145deg, #8B5E3C, #C9986B);
 
   /* ---------- Surfaces / neutrals (light) ---------- */
   --black: #ffffff;
@@ -54,7 +54,7 @@ html {
   --space-12: 48px;
 
   /* ---------- Typography scale ---------- */
-  --font-family: 'Hanken Grotesk', 'El Messiri', sans-serif;
+  --font-family: 'Ubuntu', 'El Messiri', sans-serif;
   --text-xs: 0.75rem;    /* 12px */
   --text-sm: 0.85rem;    /* 13.6px */
   --text-base: 0.95rem;  /* 15.2px */
@@ -125,20 +125,20 @@ html {
 
 /* ---------- Dark mode ---------- */
 [data-theme="dark"] {
-  --primary: #E4536B;
-  --primary-h: #EE7387;
-  --primary-light: rgba(228, 83, 107, 0.14);
-  --primary-mid: rgba(228, 83, 107, 0.2);
-  --primary-border: rgba(228, 83, 107, 0.32);
-  --accent: #E4536B;
-  --avatar-gradient: linear-gradient(145deg, #E4536B, #8A2E43);
+  --primary: #C9986B;
+  --primary-h: #E0B78E;
+  --primary-light: rgba(201, 152, 107, 0.12);
+  --primary-mid: rgba(201, 152, 107, 0.2);
+  --primary-border: rgba(201, 152, 107, 0.3);
+  --accent: #C9986B;
+  --avatar-gradient: linear-gradient(145deg, #C9986B, #D9AF8B);
 
-  --black: #0B0C0F;
-  --dark: #101114;
-  --card: #17181C;
-  --border: rgba(255, 255, 255, 0.09);
-  --text: #EFEFF1;
-  --muted: #93939C;
+  --black: #000000;
+  --dark: #121212;
+  --card: #1c1c1e;
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #f5f5f7;
+  --muted: #8e8e93;
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
@@ -169,7 +169,7 @@ html {
   --pink-h: var(--primary-h);
   --sort-btn-bg: rgba(255,255,255,0.04);
   --badge-verified-fill: var(--primary);
-  --badge-verified-check: #ffffff;
+  --badge-verified-check: #000000;
 
   --shizi-bg: var(--primary-light);
   --shizi-border: var(--primary-border);
