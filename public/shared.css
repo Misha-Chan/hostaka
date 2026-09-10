@@ -25,7 +25,7 @@
 @keyframes index-menuPop{from{opacity:0;transform:translateY(8px) scale(0.9);}to{opacity:1;transform:translateY(0) scale(1);}}
 @keyframes index-fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 /* الرد داخل التعليقات */
-body.page-profile .reply-btn, body.page-index .reply-btn {background:none;border:none;color:var(--muted);font-family:'Ubuntu','El Messiri',sans-serif;font-weight:700;font-size:0.74rem;cursor:pointer;padding:0;margin-inline-start:8px;}
+body.page-profile .reply-btn, body.page-index .reply-btn {background:none;border:none;color:var(--muted);font-family:'Hanken Grotesk','El Messiri',sans-serif;font-weight:700;font-size:0.74rem;cursor:pointer;padding:0;margin-inline-start:8px;}
 body.page-profile .reply-btn:hover, body.page-index .reply-btn:hover {color:var(--primary);}
 body.page-profile .replies-list, body.page-index .replies-list {margin-inline-start:38px;margin-top:6px;display:flex;flex-direction:column;gap:8px;}
 body.page-profile .reply-input-row, body.page-index .reply-input-row {display:flex;gap:8px;margin-inline-start:38px;margin-top:6px;}
@@ -51,12 +51,12 @@ html[dir="ltr"].page-shiziai .lang-menu {
 }
 /* زر الحفظ (bookmark) في المنشورات */
 body.page-index .save-btn.saved, body.page-profile .save-btn.saved, body.page-short .save-btn.saved {color:#f5a623;}
-body.page-save .reply-btn, body.page-index .reply-btn {background:none;border:none;color:var(--muted);font-family:'Ubuntu','El Messiri',sans-serif;font-weight:700;font-size:0.74rem;cursor:pointer;padding:0;margin-inline-start:8px;}
+body.page-save .reply-btn, body.page-index .reply-btn {background:none;border:none;color:var(--muted);font-family:'Hanken Grotesk','El Messiri',sans-serif;font-weight:700;font-size:0.74rem;cursor:pointer;padding:0;margin-inline-start:8px;}
 body.page-save .reply-btn:hover, body.page-index .reply-btn:hover {color:var(--primary);}
 body.page-save .replies-list, body.page-index .replies-list {margin-inline-start:38px;margin-top:6px;display:flex;flex-direction:column;gap:8px;}
 body.page-save .reply-input-row, body.page-index .reply-input-row {display:flex;gap:8px;margin-inline-start:38px;margin-top:6px;}
 body.page-index .save-btn.saved, body.page-save .save-btn.saved, body.page-short .save-btn.saved {color:#f5a623;}
-body.page-post .reply-btn, body.page-index .reply-btn {background:none;border:none;color:var(--muted);font-family:'Ubuntu','El Messiri',sans-serif;font-weight:700;font-size:0.74rem;cursor:pointer;padding:0;margin-inline-start:8px;}
+body.page-post .reply-btn, body.page-index .reply-btn {background:none;border:none;color:var(--muted);font-family:'Hanken Grotesk','El Messiri',sans-serif;font-weight:700;font-size:0.74rem;cursor:pointer;padding:0;margin-inline-start:8px;}
 body.page-post .reply-btn:hover, body.page-index .reply-btn:hover {color:var(--primary);}
 body.page-post .replies-list, body.page-index .replies-list {margin-inline-start:38px;margin-top:6px;display:flex;flex-direction:column;gap:8px;}
 body.page-post .reply-input-row, body.page-index .reply-input-row {display:flex;gap:8px;margin-inline-start:38px;margin-top:6px;}
