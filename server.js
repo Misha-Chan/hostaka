@@ -921,6 +921,25 @@ app.put('/api/account/message-privacy', requireAuth, async (req, res) => {
   }
 });
 
+// الثيمات: 20 نمط صناعي (نفس القائمة في public/themes.js) — يُطبَّق فوراً
+// من localStorage عبر public/themes.js، وهذا فقط لمزامنة الاختيار بين الأجهزة.
+const HOSTAKA_THEME_IDS = [
+  'brass','night','field','crimson-line','verdigris','slate-wire','ember',
+  'arctic-signal','rust-belt','moss-relay','plum-circuit','graphite',
+  'indigo-dial','cobalt-patch','copper-dusk','pine-signal','desert-line',
+  'ink-well','amber-grid','sandstorm'
+];
+app.put('/api/account/theme', requireAuth, async (req, res) => {
+  try {
+    const { theme } = req.body || {};
+    if (!HOSTAKA_THEME_IDS.includes(theme)) return res.status(400).json({ error:'قيمة غير صحيحة' });
+    await q.updateTheme(req.user.id, theme);
+    res.json({ success:true });
+  } catch(e) {
+    res.status(500).json({ error:'خطأ في الخادم' });
+  }
+});
+
 // ── الأصدقاء المقربون ──
 app.get('/api/account/close-friends', requireAuth, async (req, res) => {
   try {

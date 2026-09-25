@@ -464,6 +464,10 @@ async function initDB() {
     // فقط: salt عشوائي، iv، النص المشفّر (wrapped_key)، وverifier (بصمة أحادية
     // الاتجاه تسمح للسيرفر يتحقق من صحة المحاولة قبل ما يرجّع wrapped_key).
     "CREATE TABLE IF NOT EXISTS key_backups (user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, salt TEXT NOT NULL, iv TEXT NOT NULL, wrapped_key TEXT NOT NULL, verifier TEXT NOT NULL, iterations INTEGER NOT NULL DEFAULT 600000, failed_attempts INTEGER NOT NULL DEFAULT 0, locked_until TEXT DEFAULT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')))",
+    // ✅ الثيم المختار (نظام "الثيمات" — 20 نمط صناعي معرّفة في public/theme.css
+    // كـ [data-theme="id"]). يُحفظ هنا فقط لمزامنة الاختيار بين الأجهزة؛
+    // التطبيق الفعلي يبقى فوري من localStorage عبر public/themes.js.
+    "ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'brass'",
   ];
   for (const sql of migrations) {
     try { await db.execute(sql); } catch(e) { /* column/table already exists */ }
@@ -568,7 +572,7 @@ const NEWS_POST_SELECT = `
 const q = {
   // ── Users ──
   getUserByEmail:   (email)    => db.execute({ sql:'SELECT * FROM users WHERE email=?', args:[email] }).then(first),
-  getUserById:      (id)       => db.execute({ sql:'SELECT id,username,email,role,avatar,bio,game_id,display_name,cover,cover_type,verified,suspended,suspend_reason,birth_date,totp_enabled,is_private,message_privacy,country,favorite_song,school,certificates,last_seen,read_receipts,created_at FROM users WHERE id=?', args:[id] }).then(first),
+  getUserById:      (id)       => db.execute({ sql:'SELECT id,username,email,role,avatar,bio,game_id,display_name,cover,cover_type,verified,suspended,suspend_reason,birth_date,totp_enabled,is_private,message_privacy,country,favorite_song,school,certificates,last_seen,read_receipts,theme,created_at FROM users WHERE id=?', args:[id] }).then(first),
   getUserByIdFull:  (id)       => db.execute({ sql:'SELECT * FROM users WHERE id=?', args:[id] }).then(first),
   touchLastSeen: (id) => db.execute({ sql:"UPDATE users SET last_seen=datetime('now') WHERE id=?", args:[id] }).catch(()=>{}),
   getUserStatus: async (username) => {
@@ -626,6 +630,10 @@ const q = {
   updateProfile:    (display_name,bio,game_id,avatar,cover,id,country,favorite_song,school,certificates,cover_type) => db.execute({ sql:'UPDATE users SET display_name=?,bio=?,game_id=?,avatar=?,cover=?,cover_type=?,country=?,favorite_song=?,school=?,certificates=? WHERE id=?', args:[display_name,bio,game_id,avatar,cover,cover_type||'image',country||'',favorite_song||'',school||'',certificates||'',id] }),
   updatePrivacy:        (id, isPrivate) => db.execute({ sql:'UPDATE users SET is_private=? WHERE id=?', args:[isPrivate?1:0, id] }),
   updateMessagePrivacy: (id, pref) => db.execute({ sql:'UPDATE users SET message_privacy=? WHERE id=?', args:[pref, id] }),
+
+  // ===== الثيمات (20 نمط صناعي، انظر public/theme.css و public/themes.js) =====
+  getUserTheme: (id) => db.execute({ sql:'SELECT theme FROM users WHERE id=?', args:[id] }).then(r => (first(r) || {}).theme || 'brass'),
+  updateTheme:  (id, theme) => db.execute({ sql:'UPDATE users SET theme=? WHERE id=?', args:[theme, id] }),
 
   // ── الأصدقاء المقربون ──
   getCloseFriends:    (userId) => db.execute({ sql:`SELECT u.id,u.username,u.display_name,u.avatar,u.verified FROM close_friends cf JOIN users u ON u.id=cf.friend_id WHERE cf.user_id=? ORDER BY cf.created_at DESC`, args:[userId] }).then(rows),
