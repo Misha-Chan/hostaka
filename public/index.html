@@ -6,7 +6,7 @@
   <link rel="icon" href="hostaka-icon.png" type="image/png">
   <title>Hostaka</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&family=El+Messiri:wght@400..700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&family=El+Messiri:wght@400..700&display=swap" rel="stylesheet">
   </style>
   <link rel="stylesheet" href="/theme.css">
 <link rel="stylesheet" href="/shared.css">
@@ -105,6 +105,13 @@
           </svg></span>
           <span data-i18n="common.toggleTheme">Toggle theme</span>
         </button>
+        <button id="themesMenuBtn" onclick="openThemesPicker()">
+          <span class="ti-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="10" cy="19" r="2.5"/>
+            <path d="M13.5 9v3.5M11.8 20.3 9 20.5M17.2 14.3 15.5 17"/>
+          </svg></span>
+          <span data-i18n="common.themes">الثيمات</span>
+        </button>
         <button id="wallpaperToggle" onclick="openWallpaperModal()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -165,10 +172,80 @@
   <div class="stories-track" id="storiesTrack"></div>
 </div>
 
+<div class="line-composer" id="lineComposer" onclick="if(typeof openPostModal==='function') openPostModal();" style="display:none;">
+  <div class="line-composer-jack">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+  </div>
+  <span data-i18n="index.composerPlaceholder">Patch through a new line…</span>
+  <button type="button" class="line-composer-btn" onclick="event.stopPropagation(); if(typeof openPostModal==='function') openPostModal();" data-i18n="profile.publish">Publish</button>
+</div>
+
 <div id="feed" class="feed">
   <div class="loading">
     <div class="spinner"></div>
     <div id="loadingText" data-i18n="index.loadingPosts">Loading posts...</div>
+  </div>
+</div>
+
+<!-- New post modal (openPostModal() in index.js already expects these exact
+     ids — this block was missing from the page, so composing from the home
+     feed silently failed before. Mirrors profile.html's working version. -->
+<div class="modal-bd" id="postModal">
+  <div class="modal-box wide">
+    <div class="modal-t">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <span id="newPostModalTitle" data-i18n="profile.newPost">New post</span>
+    </div>
+    <div class="fg" id="postAsWrap" style="display:none;margin-bottom:10px;">
+      <label style="font-size:0.78rem;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;" data-i18n="profile.postAs">Post as</label>
+      <select id="postAsSelect" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;font-family:inherit;font-size:0.85rem;background:var(--input-bg);color:var(--text);"></select>
+    </div>
+    <div class="err" id="postErr"></div>
+    <div class="fmt-bar">
+      <button class="fmt-btn" onclick="fmt('bold')" data-i18n-title="profile.fmtBold" title="Bold">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
+      </button>
+      <button class="fmt-btn" onclick="fmt('italic')" data-i18n-title="profile.fmtItalic" title="Italic">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+      </button>
+      <button class="fmt-btn" onclick="fmt('underline')" data-i18n-title="profile.fmtUnderline" title="Underline">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>
+      </button>
+      <div class="fmt-sep"></div>
+      <button class="fmt-btn" onclick="fmtBlock('h2')" data-i18n-title="profile.fmtHeading" title="Heading">H1</button>
+      <button class="fmt-btn" onclick="fmtBlock('h3')" data-i18n-title="profile.fmtSubheading" title="Subheading">H2</button>
+      <div class="fmt-sep"></div>
+      <button class="fmt-btn" onclick="fmtList('ul')" data-i18n-title="profile.fmtList" title="List">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
+      <button class="fmt-btn" onclick="fmtLine()" data-i18n-title="profile.fmtDivider" title="Divider">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <button class="fmt-btn" onclick="fmtQuote()" data-i18n-title="profile.fmtQuote" title="Quote">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg>
+      </button>
+      <div style="flex:1;"></div>
+      <button class="fmt-btn" onclick="document.getElementById('postMediaFile').click()" data-i18n-title="profile.attachMedia" title="Attach image or video" style="gap:5px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span id="attachMediaText" data-i18n="profile.media">Media</span>
+      </button>
+      <input type="file" id="postMediaFile" accept=".jpg,.jpeg,image/jpeg,.mp4,.webm,.mov,.avi,.mkv,.ogg,video/*" style="display:none;" onchange="onPostMedia(event)">
+      <button class="fmt-btn femoji-trigger-btn" id="postEmojiBtn" data-i18n-title="profile.emoji" title="Emoji"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
+    </div>
+    <div class="fg">
+      <div id="postEditor" class="post-editor" contenteditable="true" dir="auto" placeholder="Write your post here..." data-i18n-placeholder="profile.writePostHere"></div>
+    </div>
+    <div class="media-preview-wrap" id="postMediaPreviewWrap">
+      <div id="postMediaPreview"></div>
+      <button class="remove-media" onclick="removePostMedia()" data-i18n-title="profile.removeFile" title="Remove file">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('postModal')"><span id="cancelBtn" data-i18n="common.cancel">Cancel</span></button>
+      <button class="btn-submit" style="width:auto;padding:10px 26px;" id="postBtn" onclick="submitPost()"><span id="publishBtn" data-i18n="profile.publish">Publish</span></button>
+    </div>
   </div>
 </div>
 
@@ -330,5 +407,6 @@
 
   <script src="/shared.js" defer></script>
   <script src="/index.js" defer></script>
+  <script src="/themes.js" defer></script>
 </body>
 </html>

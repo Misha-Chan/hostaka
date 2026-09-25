@@ -1,6 +1,6 @@
 body.page-short, body.page-short * {margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html.page-short, body.page-short {height:100%;background:#000;overscroll-behavior:none;}
-body.page-short {font-family:'Ubuntu','El Messiri',sans-serif;color:#fff;}
+body.page-short {font-family:var(--font-family);color:#fff;}
 body.page-short .topbar {
     position:fixed;top:0;left:0;right:0;z-index:50;
     display:flex;align-items:center;justify-content:space-between;
@@ -19,7 +19,7 @@ body.page-short .reel-slide {
   }
 body.page-short .reel-slide video {width:100%;height:100%;object-fit:contain;background:#000;}
 body.page-short .reel-load-more-slide {display:flex;align-items:center;justify-content:center;}
-body.page-short .reel-load-more-slide .load-more-btn {padding:14px 32px;border:1.5px solid rgba(255,255,255,0.3);border-radius:999px;background:rgba(255,255,255,0.08);color:#fff;font-family:'Ubuntu','El Messiri',sans-serif;font-weight:800;font-size:0.92rem;cursor:pointer;backdrop-filter:blur(10px);}
+body.page-short .reel-load-more-slide .load-more-btn {padding:14px 32px;border:1.5px solid rgba(255,255,255,0.3);border-radius:999px;background:rgba(255,255,255,0.08);color:#fff;font-family:var(--font-family);font-weight:800;font-size:0.92rem;cursor:pointer;backdrop-filter:blur(10px);}
 body.page-short .reel-load-more-slide .load-more-btn:hover {background:rgba(255,255,255,0.18);}
 body.page-short .reel-tap-layer {position:absolute;inset:0;z-index:2;}
 body.page-short .reel-mute-hint {
@@ -73,6 +73,6 @@ body.page-short .comments-input-row {display:flex;gap:10px;padding:12px 14px;bor
 body.page-short .comments-input-row input {flex:1;background:#222;border:none;border-radius:22px;padding:11px 16px;color:#fff;font-family:inherit;font-size:0.88rem;outline:none;}
 body.page-short .comments-input-row button {width:40px;height:40px;border-radius:var(--radius-full);background:#fff;color:#000;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;}
 /* الرد داخل تعليقات الريلز */
-body.page-short .reply-btn {background:none;border:none;color:rgba(255,255,255,0.6);font-family:'Ubuntu','El Messiri',sans-serif;font-weight:700;font-size:0.72rem;cursor:pointer;padding:0;margin-inline-start:8px;}
+body.page-short .reply-btn {background:none;border:none;color:rgba(255,255,255,0.6);font-family:var(--font-family);font-weight:700;font-size:0.72rem;cursor:pointer;padding:0;margin-inline-start:8px;}
 body.page-short .reply-btn:hover {color:#fff;}
 body.page-short .replies-list {margin-inline-start:30px;margin-top:6px;display:flex;flex-direction:column;gap:8px;}

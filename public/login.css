@@ -2,7 +2,7 @@ body.page-login, body.page-login * {margin:0;padding:0;box-sizing:border-box;-we
 html.page-login, body.page-login {height:100%;}
 body.page-login {
     background:radial-gradient(circle at 18% 16%,rgba(139,94,60,0.05),transparent 22%),var(--black);
-    color:var(--text); font-family:'Ubuntu','El Messiri',sans-serif;
+    color:var(--text); font-family:var(--font-family);
     display:flex; align-items:center; justify-content:center; padding:20px;
     transition:background var(--transition-base) ease,color var(--transition-base) ease;
   }

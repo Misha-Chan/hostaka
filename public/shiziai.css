@@ -1,100 +1,12 @@
 /* ================= shiziai.html ================= */
-html.page-shiziai {
-      /* === Hostaka UI Design System v2.0 === */
-      --black: #ffffff;
-      --dark: #f5f5f7;
-      --card: #ffffff;
-      --border: rgba(0,0,0,0.08);
-      --text: #1c1c1e;
-      --muted: #8e8e93;
-      --primary: #8B5E3C;
-      --primary-h: #6D4A2E;
-      --primary-light: rgba(139,94,60,0.08);
-      --primary-mid: rgba(139,94,60,0.15);
-      --primary-border: rgba(139,94,60,0.25);
-      --accent: #8B5E3C;
-      --mine-bg: linear-gradient(135deg, var(--primary), var(--primary-h));
-      --mine-border: rgba(139,94,60,0.12);
-      --their-bg: var(--card);
-      --their-border: rgba(0,0,0,0.06);
-      --topbar-bg: rgba(255,255,255,0.72);
-      --input-bg: #f2f2f7;
-      --modal-bg: #ffffff;
-      --post-bg: #ffffff;
-      --sort-btn-bg: rgba(0,0,0,0.04);
-      --surface-elevated: #ffffff;
-      --shadow: 0 4px 24px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
-      --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
-      --avatar-gradient: linear-gradient(145deg, #8B5E3C, #C9986B);
-      --glass-bg: rgba(255,255,255,0.65);
-      --glass-bg-strong: rgba(255,255,255,0.82);
-      --glass-border: rgba(255,255,255,0.4);
-      --glass-blur: 24px;
-      --wallpaper-img: none;
-      --wallpaper-overlay: rgba(255,255,255,0);
-      --radius-sm: 10px;
-      --radius-md: 16px;
-      --radius-lg: 24px;
-      --radius-xl: 32px;
-      --radius-full: 999px;
-      --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-      --transition-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      --success: #34c759;
-      --warning: #ff9500;
-      --danger: #ff3b30;
-      /* === توافق مع الأسماء القديمة (لا تُحذف) === */
-      --pink: var(--primary);
-      --pink-h: var(--primary-h);
-      --shizi-bg: var(--primary-light);
-      --shizi-border: var(--primary-border);
-      --shizi-gradient: var(--avatar-gradient);
-    }
-/* بدون هذا البلوك، تبديل الثيم ما كان يشتغل بهاي الصفحة إطلاقاً: القاعدة
-   فوق (html.page-shiziai) نفس درجة التخصيص بالضبط متل [data-theme="dark"]
-   بملف theme.css، وبما إنها تحمَّل بعدها بترتيب الصفحة، كانت تكسب دايماً
-   وتفرض ألوان الوضع الفاتح حتى لو data-theme="dark" مفعّلة على <html>. */
-html[data-theme="dark"].page-shiziai {
-      --black: #000000;
-      --dark: #121212;
-      --card: #1c1c1e;
-      --border: rgba(255,255,255,0.08);
-      --text: #f5f5f7;
-      --muted: #8e8e93;
-      --primary: #C9986B;
-      --primary-h: #E0B78E;
-      --primary-light: rgba(201,152,107,0.12);
-      --primary-mid: rgba(201,152,107,0.2);
-      --primary-border: rgba(201,152,107,0.3);
-      --accent: #C9986B;
-      --mine-bg: linear-gradient(135deg, var(--primary), var(--primary-h));
-      --mine-border: rgba(201,152,107,0.18);
-      --their-bg: var(--card);
-      --their-border: rgba(255,255,255,0.06);
-      --topbar-bg: rgba(0,0,0,0.65);
-      --input-bg: #1c1c1e;
-      --modal-bg: #1c1c1e;
-      --post-bg: #1c1c1e;
-      --sort-btn-bg: rgba(255,255,255,0.04);
-      --surface-elevated: #2c2c2e;
-      --shadow: 0 4px 24px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.2);
-      --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
-      --avatar-gradient: linear-gradient(145deg, #C9986B, #D9AF8B);
-      --glass-bg: rgba(28,28,30,0.72);
-      --glass-bg-strong: rgba(28,28,30,0.88);
-      --glass-border: rgba(255,255,255,0.08);
-      --pink: var(--primary);
-      --pink-h: var(--primary-h);
-      --shizi-bg: var(--primary-light);
-      --shizi-border: var(--primary-border);
-      --shizi-gradient: var(--avatar-gradient);
-    }
+/* Colors now inherit from /theme.css (single source of truth). */
+
 body.page-shiziai, body.page-shiziai * {margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html.page-shiziai, body.page-shiziai {height:100%;overflow:hidden;}
 body.page-shiziai {
       background:radial-gradient(circle at 18% 16%,rgba(128,128,128,0.06),transparent 22%),var(--black);
       color:var(--text);
-      font-family:'Ubuntu','El Messiri',sans-serif;
+      font-family:var(--font-family);
       display:flex;flex-direction:column;
       -webkit-font-smoothing:antialiased;
       transition:background var(--transition-slow), color var(--transition-slow);
@@ -133,7 +45,7 @@ body.page-shiziai .wp-title {font-weight:800;font-size:1.02rem;color:var(--text)
 body.page-shiziai .wp-title svg {width:19px;height:19px;color:var(--accent);flex-shrink:0;}
 body.page-shiziai .wp-desc {color:var(--muted);font-size:.8rem;line-height:1.7;margin-bottom:14px;}
 body.page-shiziai .wp-preview {width:100%;height:110px;border-radius:14px;border:1px solid var(--border);background:var(--input-bg);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.78rem;margin-bottom:14px;overflow:hidden;}
-body.page-shiziai .wp-upload-btn {width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(128,128,128,.08);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:12px;font-family:'Ubuntu','El Messiri',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;transition:all .2s;margin-bottom:14px;}
+body.page-shiziai .wp-upload-btn {width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(128,128,128,.08);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:12px;font-family:var(--font-family);font-weight:700;font-size:.85rem;cursor:pointer;transition:all .2s;margin-bottom:14px;}
 body.page-shiziai .wp-upload-btn:hover {background:rgba(128,128,128,.14);}
 body.page-shiziai .wp-row {display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
 body.page-shiziai .wp-row label {font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:6px;flex-shrink:0;}
@@ -141,9 +53,9 @@ body.page-shiziai .wp-row input[type=range] {flex:1;accent-color:var(--accent);}
 body.page-shiziai .wp-check {display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--muted);margin-bottom:16px;cursor:pointer;}
 body.page-shiziai .wp-check input {accent-color:var(--accent);}
 body.page-shiziai .wp-footer {display:flex;gap:10px;justify-content:flex-end;margin-top:6px;}
-body.page-shiziai .wp-btn-ghost {background:none;border:1px solid var(--border);color:var(--muted);padding:9px 16px;border-radius:10px;cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:6px;transition:all .2s;}
+body.page-shiziai .wp-btn-ghost {background:none;border:1px solid var(--border);color:var(--muted);padding:9px 16px;border-radius:10px;cursor:pointer;font-family:var(--font-family);font-size:.82rem;font-weight:700;display:flex;align-items:center;gap:6px;transition:all .2s;}
 body.page-shiziai .wp-btn-ghost:hover {color:var(--text);border-color:var(--text);}
-body.page-shiziai .wp-btn-primary {background:var(--accent);color:var(--black);border:none;padding:9px 20px;border-radius:10px;cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;font-size:.82rem;font-weight:800;transition:all .2s;}
+body.page-shiziai .wp-btn-primary {background:var(--accent);color:var(--black);border:none;padding:9px 20px;border-radius:10px;cursor:pointer;font-family:var(--font-family);font-size:.82rem;font-weight:800;transition:all .2s;}
 body.page-shiziai .wp-btn-primary:hover {opacity:.88;}
 body.page-shiziai .topbar {
       height:56px;background:var(--topbar-bg);
@@ -159,7 +71,7 @@ body.page-shiziai .back-btn {
       color:var(--muted);font-size:0.82rem;cursor:pointer;
       padding:6px 12px;border-radius:999px;
       background:rgba(128,128,128,0.06);border:1px solid var(--border);
-      font-family:'Ubuntu','El Messiri';font-weight:600;text-decoration:none;white-space:nowrap;
+      font-family:var(--font-family);font-weight:600;text-decoration:none;white-space:nowrap;
       transition:all 0.18s;
     }
 body.page-shiziai .back-btn:hover {color:var(--text);background:rgba(128,128,128,0.12);}
@@ -198,7 +110,7 @@ body.page-shiziai .lang-menu.show {opacity:1;visibility:visible;transform:transl
 body.page-shiziai .lang-menu button {
       display:flex;align-items:center;gap:8px;width:100%;padding:8px 16px;
       background:none;border:none;color:var(--text);
-      font-family:'Ubuntu','El Messiri',sans-serif;font-size:0.85rem;cursor:pointer;
+      font-family:var(--font-family);font-size:0.85rem;cursor:pointer;
       transition:background 0.15s;text-align:right;
     }
 body.page-shiziai .lang-menu button:hover {background:rgba(128,128,128,0.08);}
@@ -230,7 +142,7 @@ body.page-shiziai .suggestion-chip {
       padding:8px 14px;border-radius:999px;
       background:var(--shizi-bg);border:1px solid var(--shizi-border);
       color:var(--pink);font-size:0.78rem;font-weight:700;cursor:pointer;
-      font-family:'Ubuntu','El Messiri';transition:all 0.18s;
+      font-family:var(--font-family);transition:all 0.18s;
     }
 body.page-shiziai .suggestion-chip:hover {background:var(--shizi-border);transform:translateY(-1px);}
 body.page-shiziai .msg-row {display:flex;align-items:flex-end;gap:8px;margin-bottom:8px;animation:shiziai-msgIn 0.25s cubic-bezier(0.16,1,0.3,1);}
@@ -272,7 +184,7 @@ body.page-shiziai .input-area {
 body.page-shiziai .msg-input {
       flex:1;padding:12px 16px;background:var(--input-bg);
       border:1px solid var(--border);border-radius:20px;
-      color:var(--text);font-family:'Ubuntu','El Messiri';font-size:0.9rem;
+      color:var(--text);font-family:var(--font-family);font-size:0.9rem;
       resize:none;max-height:120px;line-height:1.5;
       transition:all 0.2s;
     }

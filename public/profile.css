@@ -2,7 +2,7 @@ body.page-profile, body.page-profile * {margin:0;padding:0;box-sizing:border-box
 body.page-profile {
       background:radial-gradient(circle at 18% 16%,rgba(128,128,128,0.05),transparent 22%),var(--black);
       color:var(--text);
-      font-family:'Ubuntu','El Messiri',sans-serif;
+      font-family:var(--font-family);
       min-height:100vh;
       -webkit-font-smoothing:antialiased;
       transition:background 0.3s ease, color 0.3s ease;
@@ -12,7 +12,7 @@ body.page-profile {
 body.page-profile .topbar.scrolled {background:var(--black);}
 body.page-profile .topbar-left {display:flex;align-items:center;gap:8px;}
 body.page-profile .topbar-right {display:flex;align-items:center;gap:6px;}
-body.page-profile .back-btn {display:inline-flex;align-items:center;gap:7px;background:rgba(128,128,128,0.08);border:1px solid var(--border);color:var(--muted);padding:7px 14px;border-radius:999px;cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;font-size:0.82rem;text-decoration:none;transition:all 0.2s;font-weight:600;}
+body.page-profile .back-btn {display:inline-flex;align-items:center;gap:7px;background:rgba(128,128,128,0.08);border:1px solid var(--border);color:var(--muted);padding:7px 14px;border-radius:999px;cursor:pointer;font-family:var(--font-family);font-size:0.82rem;text-decoration:none;transition:all 0.2s;font-weight:600;}
 body.page-profile .back-btn:hover {background:rgba(128,128,128,0.15);color:var(--text);border-color:var(--border);}
 body.page-profile .back-btn:active {transform:scale(0.95);}
 body.page-profile .back-btn svg {width:14px;height:14px;}
@@ -23,14 +23,14 @@ body.page-profile .icon-btn svg {width:16px;height:16px;}
 body.page-profile .lang-selector {position:relative;}
 body.page-profile .lang-menu {position:absolute;top:42px;left:0;background:var(--modal-bg);border:1px solid var(--border);border-radius:12px;padding:6px 0;min-width:140px;opacity:0;visibility:hidden;transform:translateY(-6px) scale(0.96);transition:all 0.2s cubic-bezier(0.16,1,0.3,1);z-index:20;box-shadow:var(--shadow);}
 body.page-profile .lang-menu.show {opacity:1;visibility:visible;transform:translateY(0) scale(1);}
-body.page-profile .lang-menu button {display:flex;align-items:center;gap:8px;width:100%;padding:8px 16px;background:none;border:none;color:var(--text);font-family:'Ubuntu','El Messiri',sans-serif;font-size:0.85rem;cursor:pointer;transition:background 0.15s;text-align:right;}
+body.page-profile .lang-menu button {display:flex;align-items:center;gap:8px;width:100%;padding:8px 16px;background:none;border:none;color:var(--text);font-family:var(--font-family);font-size:0.85rem;cursor:pointer;transition:background 0.15s;text-align:right;}
 body.page-profile .lang-menu button:hover {background:rgba(128,128,128,0.08);}
 body.page-profile .lang-menu button .flag {font-size:1.1rem;}
 body.page-profile .cover-wrap {position:relative;width:100%;height:220px;margin-top:56px;background:var(--card);overflow:hidden;cursor:pointer;transition:height 0.3s;}
 body.page-profile .cover-img {width:100%;height:100%;object-fit:cover;display:block;}
 body.page-profile .cover-placeholder {width:100%;height:100%;background:linear-gradient(135deg,#0d0d0e 0%,#1a1a1e 50%,#0d0d0e 100%);display:flex;align-items:center;justify-content:center;color:#333;}
 body.page-profile .cover-placeholder svg {width:48px;height:48px;}
-body.page-profile .cover-edit-btn {position:absolute;bottom:12px;inset-inline-end:12px;background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;font-size:0.72rem;display:none;align-items:center;gap:5px;transition:all 0.2s;font-weight:600;}
+body.page-profile .cover-edit-btn {position:absolute;bottom:12px;inset-inline-end:12px;background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;font-family:var(--font-family);font-size:0.72rem;display:none;align-items:center;gap:5px;transition:all 0.2s;font-weight:600;}
 body.page-profile .cover-edit-btn:hover {background:rgba(0,0,0,0.9);}
 body.page-profile .cover-edit-btn svg {width:12px;height:12px;}
 body.page-profile .cover-wrap:hover .cover-edit-btn {display:flex;}
@@ -43,15 +43,15 @@ body.page-profile .av-overlay {position:absolute;inset:0;background:rgba(0,0,0,0
 body.page-profile .avatar-big:hover .av-overlay {opacity:1;}
 body.page-profile .av-overlay svg {width:18px;height:18px;}
 body.page-profile .profile-actions {display:flex;gap:8px;padding-bottom:4px;flex-wrap:wrap;justify-content:flex-end;}
-body.page-profile .btn-edit {display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(128,128,128,0.08);border:1px solid var(--border);border-radius:10px;color:var(--muted);cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;font-size:0.82rem;font-weight:700;transition:all 0.18s;}
+body.page-profile .btn-edit {display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(128,128,128,0.08);border:1px solid var(--border);border-radius:10px;color:var(--muted);cursor:pointer;font-family:var(--font-family);font-size:0.82rem;font-weight:700;transition:all 0.18s;}
 body.page-profile .btn-edit:hover {background:rgba(128,128,128,0.15);color:var(--text);border-color:var(--border);}
 body.page-profile .btn-edit:active {transform:scale(0.95);}
 body.page-profile .btn-edit svg {width:13px;height:13px;}
-body.page-profile .btn-msg {display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--primary-light);border:1px solid var(--primary-border);border-radius:10px;color:var(--primary);cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;font-size:0.82rem;font-weight:700;transition:all 0.18s;text-decoration:none;}
+body.page-profile .btn-msg {display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--primary-light);border:1px solid var(--primary-border);border-radius:10px;color:var(--primary);cursor:pointer;font-family:var(--font-family);font-size:0.82rem;font-weight:700;transition:all 0.18s;text-decoration:none;}
 body.page-profile .btn-msg:hover {background:var(--primary-mid);transform:translateY(-1px);}
 body.page-profile .btn-msg:active {transform:scale(0.95);}
 body.page-profile .btn-msg svg {width:13px;height:13px;}
-body.page-profile .btn-follow {display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;border:1px solid var(--primary-border);cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;font-size:0.82rem;font-weight:700;transition:all 0.18s;background:var(--primary);color:var(--black);}
+body.page-profile .btn-follow {display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;border:1px solid var(--primary-border);cursor:pointer;font-family:var(--font-family);font-size:0.82rem;font-weight:700;transition:all 0.18s;background:var(--primary);color:var(--black);}
 body.page-profile .btn-follow:hover {background:var(--primary-h);transform:translateY(-1px);}
 body.page-profile .btn-follow.following {background:rgba(128,128,128,0.08);color:var(--text);border-color:var(--border);}
 body.page-profile .btn-follow.following:hover {background:rgba(128,128,128,0.15);}
@@ -63,7 +63,7 @@ body.page-profile .btn-more:hover {background:rgba(128,128,128,0.15);color:var(-
 body.page-profile .btn-more svg {width:15px;height:15px;}
 body.page-profile .more-menu {position:absolute;top:42px;left:0;background:var(--modal-bg,var(--card));backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid var(--border);border-radius:12px;min-width:180px;opacity:0;visibility:hidden;transform:translateY(-8px) scale(0.96);transition:all 0.18s cubic-bezier(0.16,1,0.3,1);z-index:25;box-shadow:0 8px 32px rgba(0,0,0,0.3);overflow:hidden;}
 body.page-profile .more-menu.show {opacity:1;visibility:visible;transform:translateY(0) scale(1);}
-body.page-profile .more-menu button {display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--text);font-family:'Ubuntu','El Messiri',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;text-align:right;transition:background 0.15s;}
+body.page-profile .more-menu button {display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--text);font-family:var(--font-family);font-size:0.8rem;font-weight:600;cursor:pointer;text-align:right;transition:background 0.15s;}
 body.page-profile .more-menu button:hover {background:rgba(128,128,128,0.08);}
 body.page-profile .more-menu button.danger {color:#dc2626;}
 body.page-profile .more-menu svg {width:14px;height:14px;flex-shrink:0;}
@@ -89,7 +89,7 @@ body.page-profile .stat-l {font-size:0.74rem;color:var(--muted);}
 body.page-profile .stat-clickable {cursor:pointer;}
 body.page-profile .stat-clickable:hover .stat-n {color:var(--primary);}
 body.page-profile .tabs-bar {display:flex;border-bottom:1px solid var(--border);margin-top:16px;}
-body.page-profile .tab-btn {flex:1;padding:12px;text-align:center;font-family:'Ubuntu','El Messiri',sans-serif;font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all 0.2s;margin-bottom:-1px;position:relative;}
+body.page-profile .tab-btn {flex:1;padding:12px;text-align:center;font-family:var(--font-family);font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all 0.2s;margin-bottom:-1px;position:relative;}
 body.page-profile .tab-btn.active {color:var(--text);border-bottom-color:var(--primary);}
 body.page-profile .tab-btn:hover:not(.active) {color:var(--text);}
 body.page-profile .posts-tab {padding:16px 0;}
@@ -116,7 +116,7 @@ body.page-profile .post-empty svg {width:40px;height:40px;margin-bottom:12px;opa
 body.page-profile .edit-section {padding:16px 0;animation:profile-fadeIn 0.3s ease;}
 body.page-profile .fg {margin-bottom:14px;}
 body.page-profile .fg label {display:block;margin-bottom:6px;color:var(--muted);font-size:0.82rem;font-weight:600;}
-body.page-profile .fg input, body.page-profile .fg textarea {width:100%;padding:11px 14px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Ubuntu','El Messiri',sans-serif;font-size:0.9rem;transition:all 0.2s;}
+body.page-profile .fg input, body.page-profile .fg textarea {width:100%;padding:11px 14px;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--font-family);font-size:0.9rem;transition:all 0.2s;}
 body.page-profile .fg input:focus, body.page-profile .fg textarea:focus {outline:none;border-color:var(--border);background:var(--input-bg);box-shadow:0 0 0 3px rgba(128,128,128,0.08);}
 body.page-profile .fg input::placeholder, body.page-profile .fg textarea::placeholder {color:var(--muted);}
 body.page-profile .fg textarea {resize:vertical;min-height:80px;line-height:1.7;}
@@ -124,7 +124,7 @@ body.page-profile .fg-row {display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 body.page-profile .alert {padding:11px 14px;border-radius:10px;font-size:0.84rem;margin-bottom:14px;display:none;font-weight:600;animation:profile-fadeIn 0.2s ease;}
 body.page-profile .alert-err {background:var(--primary-light);color:var(--primary);border:1px solid var(--primary-border);}
 body.page-profile .alert-ok {background:rgba(34,197,94,0.08);color:#4ade80;border:1px solid rgba(34,197,94,0.18);}
-body.page-profile .btn-save {display:inline-flex;align-items:center;gap:7px;padding:11px 24px;background:var(--primary);color:var(--black);border:none;border-radius:10px;cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;font-weight:800;font-size:0.88rem;transition:all 0.2s;}
+body.page-profile .btn-save {display:inline-flex;align-items:center;gap:7px;padding:11px 24px;background:var(--primary);color:var(--black);border:none;border-radius:10px;cursor:pointer;font-family:var(--font-family);font-weight:800;font-size:0.88rem;transition:all 0.2s;}
 body.page-profile .btn-save:hover {background:var(--primary-h);transform:translateY(-1px);}
 body.page-profile .btn-save:active {transform:translateY(0);}
 body.page-profile .btn-save:disabled {opacity:0.5;cursor:not-allowed;transform:none;}
@@ -278,7 +278,7 @@ body.page-profile .react-main-btn {
       border:1.5px solid var(--border);
       background:var(--sort-btn-bg);
       color:var(--muted);
-      cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;
+      cursor:pointer;font-family:var(--font-family);
       font-size:0.85rem;font-weight:700;
       transition:all var(--transition-fast);user-select:none;
     }
@@ -316,7 +316,7 @@ body.page-profile .react-btn {
       border:1.5px solid var(--border);
       background:var(--sort-btn-bg);
       color:var(--muted);
-      cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;
+      cursor:pointer;font-family:var(--font-family);
       font-size:0.85rem;font-weight:700;
       transition:all var(--transition-fast);user-select:none;
     }
@@ -327,7 +327,7 @@ body.page-profile .comments-section {border-top:1.5px solid var(--border);paddin
 body.page-profile .comments-toggle {
       display:flex;align-items:center;gap:8px;
       background:none;border:none;color:var(--muted);
-      cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;
+      cursor:pointer;font-family:var(--font-family);
       font-size:0.88rem;padding:4px 0;margin-bottom:14px;
       transition:all var(--transition-fast);font-weight:700;
     }
@@ -358,7 +358,7 @@ body.page-profile .c-text {
 body.page-profile .c-del {
       background:none;border:none;color:var(--muted);
       cursor:pointer;padding:4px 8px;border-radius:var(--radius-sm);
-      font-size:0.78rem;font-family:'Ubuntu','El Messiri',sans-serif;
+      font-size:0.78rem;font-family:var(--font-family);
       transition:all var(--transition-fast);margin-right:auto;
       font-weight:600;
     }
@@ -370,7 +370,7 @@ body.page-profile .comment-input {
       border:1.5px solid var(--border);
       border-radius:var(--radius-full);
       color:var(--text);
-      font-family:'Ubuntu','El Messiri',sans-serif;
+      font-family:var(--font-family);
       font-size:0.9rem;
       transition:all var(--transition-fast);
       font-weight:500;
@@ -388,7 +388,7 @@ body.page-profile .btn-send-comment {
 body.page-profile .btn-send-comment:hover {background:var(--primary-h);transform:scale(1.1);box-shadow:0 4px 16px rgba(139,94,60,0.35);}
 body.page-profile .btn-send-comment:active {transform:scale(0.92);}
 body.page-profile .btn-send-comment svg {width:16px;height:16px;stroke:#fff;}
-body.page-profile .load-more-btn {display:block;width:100%;padding:13px;border:1.5px solid var(--border);border-radius:var(--radius-md, 14px);background:var(--card, transparent);color:var(--text);font-family:'Ubuntu','El Messiri',sans-serif;font-weight:800;font-size:0.88rem;cursor:pointer;transition:all 0.2s;}
+body.page-profile .load-more-btn {display:block;width:100%;padding:13px;border:1.5px solid var(--border);border-radius:var(--radius-md, 14px);background:var(--card, transparent);color:var(--text);font-family:var(--font-family);font-weight:800;font-size:0.88rem;cursor:pointer;transition:all 0.2s;}
 body.page-profile .load-more-btn:hover {background:var(--primary, #8B5E3C);color:#fff;border-color:transparent;}
 body.page-profile .modal-box.wide {max-width:640px;}
 body.page-profile .modal-t {font-size:1.15rem;font-weight:900;color:var(--text);margin-bottom:24px;display:flex;align-items:center;gap:12px;}
@@ -396,7 +396,7 @@ body.page-profile .modal-t svg {width:22px;height:22px;color:var(--primary);}
 body.page-profile .tabs {display:flex;gap:4px;background:var(--sort-btn-bg);border-radius:var(--radius-md);padding:4px;margin-bottom:24px;}
 body.page-profile .tab {
       flex:1;padding:10px;border:none;border-radius:var(--radius-sm);
-      cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;
+      cursor:pointer;font-family:var(--font-family);
       font-size:0.88rem;font-weight:800;
       background:none;color:var(--muted);
       transition:all var(--transition-fast);
@@ -413,7 +413,7 @@ body.page-profile .fg input {
       border:1.5px solid var(--border);
       border-radius:var(--radius-md);
       color:var(--text);
-      font-family:'Ubuntu','El Messiri',sans-serif;
+      font-family:var(--font-family);
       font-size:0.92rem;
       transition:all var(--transition-fast);
       font-weight:500;
@@ -433,7 +433,7 @@ body.page-profile .btn-submit {
       background:var(--primary);
       color:var(--black);
       font-weight:800;border:none;border-radius:var(--radius-md);
-      cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;
+      cursor:pointer;font-family:var(--font-family);
       font-size:0.95rem;transition:all var(--transition-fast);margin-top:6px;
       box-shadow:0 2px 8px rgba(0,0,0,0.15);
     }
@@ -464,7 +464,7 @@ body.page-profile .fmt-btn {
       border:1.5px solid var(--border);
       color:var(--muted);
       padding:7px 12px;border-radius:var(--radius-sm);
-      cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;
+      cursor:pointer;font-family:var(--font-family);
       font-size:0.8rem;font-weight:700;
       transition:all var(--transition-fast);
       display:flex;align-items:center;justify-content:center;
@@ -486,7 +486,7 @@ body.page-profile .btn-ghost {
       border:1.5px solid var(--border);
       border-radius:var(--radius-md);
       color:var(--muted);
-      cursor:pointer;font-family:'Ubuntu','El Messiri',sans-serif;
+      cursor:pointer;font-family:var(--font-family);
       font-size:0.9rem;font-weight:700;
       transition:all var(--transition-fast);
     }
@@ -509,15 +509,15 @@ body.page-profile .media-preview-wrap .remove-media svg {width:14px;height:14px;
 /* إعدادات النشر الجديدة: الخصوصية + الجدولة (صفحة البروفايل) */
 body.page-profile .post-settings-box {background:var(--input-bg, rgba(0,0,0,0.03));border:1px solid var(--border);border-radius:var(--radius-md,14px);padding:14px;margin:14px 0;}
 body.page-profile .privacy-choices {display:flex;gap:8px;flex-wrap:wrap;}
-body.page-profile .privacy-opt {display:flex;align-items:center;gap:6px;padding:9px 14px;border-radius:999px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font-family:'Ubuntu','El Messiri',sans-serif;font-weight:700;font-size:0.82rem;cursor:pointer;transition:all 0.2s;}
+body.page-profile .privacy-opt {display:flex;align-items:center;gap:6px;padding:9px 14px;border-radius:999px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font-family:var(--font-family);font-weight:700;font-size:0.82rem;cursor:pointer;transition:all 0.2s;}
 body.page-profile .privacy-opt:hover {border-color:var(--primary-border);}
 body.page-profile .privacy-opt.active {background:var(--primary);color:var(--black);border-color:transparent;}
 body.page-profile .privacy-opt svg {flex-shrink:0;}
-body.page-profile .schedule-input {width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm,10px);background:var(--card);color:var(--text);font-family:'Ubuntu','El Messiri',sans-serif;font-size:0.85rem;}
+body.page-profile .schedule-input {width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm,10px);background:var(--card);color:var(--text);font-family:var(--font-family);font-size:0.85rem;}
 body.page-profile .schedule-input:focus {outline:none;border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-light);}
 body.page-profile #scheduleWrap {margin-top:12px;}
 /* زر إنشاء منشور في تبويب المنشورات بالبروفايل */
-body.page-profile .create-post-cta {display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;margin-bottom:16px;border:none;border-radius:var(--radius-md,14px);background:var(--primary);color:var(--black);font-family:'Ubuntu','El Messiri',sans-serif;font-weight:800;font-size:0.9rem;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.15);transition:all 0.2s;}
+body.page-profile .create-post-cta {display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;margin-bottom:16px;border:none;border-radius:var(--radius-md,14px);background:var(--primary);color:var(--black);font-family:var(--font-family);font-weight:800;font-size:0.9rem;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.15);transition:all 0.2s;}
 body.page-profile .create-post-cta:hover {background:var(--primary-h);transform:translateY(-1px);}
 /* شارة حالة المنشور (خاص/مسودة/مجدول) */
 body.page-profile .post-status-badge {display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;font-weight:800;padding:3px 9px;border-radius:999px;margin-inline-start:6px;}
@@ -580,7 +580,7 @@ body.page-profile .switch .slider {position:absolute;cursor:pointer;inset:0;back
 body.page-profile .switch .slider:before {position:absolute;content:"";height:20px;width:20px;left:3px;bottom:3px;background-color:white;transition:0.2s;border-radius:50%;}
 body.page-profile .switch input:checked + .slider {background-color:var(--primary);}
 body.page-profile .switch input:checked + .slider:before {transform:translateX(-20px);}
-body.page-profile #fMsgPrivacy {width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);font-family:'Ubuntu','El Messiri',sans-serif;font-size:0.85rem;}
+body.page-profile #fMsgPrivacy {width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);font-family:var(--font-family);font-size:0.85rem;}
 body.page-profile .post-status-badge.st-close-friends {background:rgba(220,38,127,0.1);color:#dc267f;}
 /* صفوف الأصدقاء المقربين (نفس تصميم الأجهزة بصفحة إدارة الحساب) */
 body.page-profile .session-row {display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
@@ -589,5 +589,79 @@ body.page-profile .session-icon {width:36px;height:36px;border-radius:999px;back
 body.page-profile .session-info {flex:1;min-width:0;}
 body.page-profile .session-name {font-weight:800;font-size:0.84rem;}
 body.page-profile .session-meta {color:var(--muted);font-size:0.75rem;margin-top:1px;}
-body.page-profile .btn-outline-danger {padding:7px 14px;border:1.5px solid var(--danger, #ff3b30);border-radius:10px;background:transparent;color:var(--danger, #ff3b30);font-family:'Ubuntu','El Messiri',sans-serif;font-weight:700;font-size:0.78rem;cursor:pointer;flex-shrink:0;}
+body.page-profile .btn-outline-danger {padding:7px 14px;border:1.5px solid var(--danger, #ff3b30);border-radius:10px;background:transparent;color:var(--danger, #ff3b30);font-family:var(--font-family);font-weight:700;font-size:0.78rem;cursor:pointer;flex-shrink:0;}
 body.page-profile .btn-outline-danger:hover {background:rgba(255,59,48,0.08);}
+
+/* =========================================================================
+   SWITCHBOARD SKIN — appended, does not touch any rule above.
+   Restyles the existing structure only (topbar, cover, avatar, stats,
+   tabs, post-card, create-post-cta); no class renamed, no id touched,
+   so profile.js keeps working exactly as before.
+   ========================================================================= */
+
+/* ---- Topbar: icon buttons read as jacks/ports ---- */
+body.page-profile .icon-btn:hover {box-shadow:0 0 0 2px var(--primary-border);}
+body.page-profile .back-btn {border-radius:var(--radius-full);}
+
+/* ---- Cover: a "signal readout" panel instead of a plain photo well ---- */
+body.page-profile .cover-wrap {
+  background-image:
+    repeating-linear-gradient(90deg, var(--border) 0 1px, transparent 1px 34px),
+    linear-gradient(160deg, var(--card), var(--dark));
+}
+body.page-profile .cover-wrap::after {
+  content:'';
+  position:absolute; inset:0; pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 220' preserveAspectRatio='none'%3E%3Cpolyline points='0,120 220,120 250,60 280,180 310,120 800,120' fill='none' stroke='%23C1904E' stroke-width='1.5' opacity='0.35'/%3E%3C/svg%3E");
+  background-size:100% 100%;
+  opacity:.5;
+}
+
+/* ---- Avatar: jack ring (avatar-gradient already theme-driven) ---- */
+body.page-profile .avatar-big {box-shadow:0 0 0 3px var(--primary-border);}
+body.page-profile .avatar-big:hover {box-shadow:0 0 0 5px var(--primary-light);}
+
+/* ---- Stats -> small readout dials ---- */
+body.page-profile .meta-stats {gap:10px;border-top:none;padding-top:0;}
+body.page-profile .stat {
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius-md);
+  padding:8px 16px; text-align:center; min-width:76px;
+}
+body.page-profile .stat-n {font-family:var(--font-family);}
+
+/* ---- Tabs -> channel selector ---- */
+body.page-profile .tab-btn.active {font-family:var(--font-family);}
+
+/* ---- Composer CTA: "Patch through a new line…" ---- */
+body.page-profile .create-post-cta {
+  justify-content:flex-start; padding-inline-start:18px; gap:12px;
+  background:var(--card); color:var(--muted); border:1px solid var(--border);
+  box-shadow:none; font-weight:500;
+}
+body.page-profile .create-post-cta svg {
+  flex:none; width:34px; height:34px; padding:8px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, var(--surface-elevated), var(--black));
+  border:2px solid var(--primary-border); color:var(--primary); box-sizing:border-box;
+}
+body.page-profile .create-post-cta:hover {border-color:var(--primary-border); background:var(--card); transform:none;}
+
+/* ---- Feed: each post reads as a numbered line, same trick as index.css ---- */
+body.page-profile #postsTab {counter-reset:line-num;}
+body.page-profile #postsTab > .post-card {
+  border-inline-start:3px solid var(--primary-border);
+  padding-inline-start:14px;
+}
+body.page-profile #postsTab > .post-card::before {
+  counter-increment:line-num;
+  content:"0" counter(line-num);
+  position:absolute; top:14px; inset-inline-end:16px;
+  font-family:var(--font-family); font-size:.7rem; color:var(--muted);
+  letter-spacing:.5px; pointer-events:none;
+}
+
+/* ---- Mobile: correct spacing/hit-targets this skin added ---- */
+@media (max-width:600px) {
+  body.page-profile .meta-stats {gap:8px;}
+  body.page-profile .stat {padding:6px 10px;min-width:64px;}
+  body.page-profile .create-post-cta {padding-inline-start:14px;}
+}
