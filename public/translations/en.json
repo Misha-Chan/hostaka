@@ -84,6 +84,7 @@
     "loading": "Loading...",
     "password": "Password",
     "save": "Save",
+    "themes": "Themes",
     "toggleTheme": "Toggle theme"
   },
   "group": {
@@ -106,6 +107,7 @@
     "confirmLogin": "Confirm log in",
     "createAccount": "Create account",
     "createStory": "Create story",
+    "composerPlaceholder": "Patch through a new line…",
     "downloadAndroid": "Download Android app",
     "loadingPosts": "Loading posts...",
     "loginRegister": "Log In / Sign Up",
