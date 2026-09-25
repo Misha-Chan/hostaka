@@ -84,6 +84,7 @@
     "loading": "جارٍ التحميل...",
     "password": "كلمة المرور",
     "save": "حفظ",
+    "themes": "الثيمات",
     "toggleTheme": "تبديل الثيم"
   },
   "group": {
@@ -106,6 +107,7 @@
     "confirmLogin": "تأكيد الدخول",
     "createAccount": "إنشاء الحساب",
     "createStory": "إنشاء قصة",
+    "composerPlaceholder": "بشنو كتفكر؟ اكتب منشورك هنا…",
     "downloadAndroid": "تحميل تطبيق الأندرويد",
     "loadingPosts": "جارٍ تحميل المنشورات...",
     "loginRegister": "دخول / تسجيل",
