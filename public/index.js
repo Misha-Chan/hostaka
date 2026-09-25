@@ -913,6 +913,8 @@ function setLoggedInUI(user){
   el.innerHTML = user.avatar ? `<img src="${esc(user.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
   const ab = document.getElementById('adminBtn');
   if(ab) ab.style.display = user.role==='admin' ? 'flex' : 'none';
+  const lc = document.getElementById('lineComposer');
+  if (lc) lc.style.display = 'flex';
   checkVerifyStatus();
   loadNotifCount();
   renderStoriesBar();
@@ -929,6 +931,8 @@ function clearUser(){
   document.getElementById('btnLogin').style.display = 'flex';
   document.getElementById('userBadgeWrap').style.display = 'none';
   document.getElementById('notifWrap').style.display = 'none';
+  const lc = document.getElementById('lineComposer');
+  if (lc) lc.style.display = 'none';
   renderStoriesBar();
   renderAccountSwitcher();
 }
