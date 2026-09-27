@@ -334,7 +334,7 @@ function applyLang() {
   if (allPosts.length) renderFeed(allPosts);
   else {
     const feed = document.getElementById('feed');
-    if (feed && !feed.querySelector('.post-card')) {
+    if (feed && !feed.querySelector('.sw-post')) {
       feed.innerHTML = `<div class="empty">${getEmptySvg()}<br>${t('empty')}</div>`;
     }
   }
@@ -1478,7 +1478,7 @@ function renderPost(p){
   const avatarHtml = p.user_avatar ? `<img src="${esc(p.user_avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`;
   const badgeCls   = p.user_role==='Admin' ? 'badge-admin' : 'badge-member';
   const canDel     = ME && (ME.role==='admin' || p.user_id==ME?.id);
-  
+
   // عرض الوسائط (صورة أو فيديو) - استخدام الكلاس المعدل
   let mediaHtml = '';
   if (p.video && Number(p.is_reel) === 1) {
@@ -1522,47 +1522,47 @@ function renderPost(p){
     const cleanContent = linkifyContent(esc(c.content));
     const replies = repliesOf(c.id);
     const repliesHtml = replies.length ? `<div class="replies-list">${replies.map(r=>oneCommentHtml(r, postId)).join('')}</div>` : '';
-    return `<div class="comment" id="cmt-${c.id}">
-      <div class="c-avatar">${ca}</div>
-      <div class="c-bubble">
-        <div class="c-name">${esc(c.display_name||c.username)} ${cBadge}
+    return `<div class="sw-comment" id="cmt-${c.id}">
+      <div class="sw-c-avatar">${ca}</div>
+      <div class="sw-c-bubble">
+        <div class="sw-c-name">${esc(c.display_name||c.username)} ${cBadge}
           ${ME ? `<button class="reply-btn" onclick="toggleReplyInput(${postId},${c.id})">${t('reply')}</button>` : ''}
-          ${canDelC?`<button class="c-del" onclick="delComment(${c.id},${postId})">${SVG.delete}</button>`:''}
+          ${canDelC?`<button class="sw-c-del" onclick="delComment(${c.id},${postId})">${SVG.delete}</button>`:''}
         </div>
-        <div class="c-text">${cleanContent}</div>
+        <div class="sw-c-text">${cleanContent}</div>
       </div>
     </div>
     <div class="reply-input-row" id="replyRow-${c.id}" style="display:none;">
-      <input class="comment-input" type="text" placeholder="${t('reply')} @${esc(c.username||'')}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
+      <input class="sw-comment-field" type="text" placeholder="${t('reply')} @${esc(c.username||'')}" id="ri-${c.id}" onkeydown="if(event.key==='Enter')sendComment(${postId},${c.id})">
       <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ri-${c.id}" title="Emoji"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
-      <button class="btn-send-comment" onclick="sendComment(${postId},${c.id})">${SVG.send}</button>
+      <button class="sw-send-btn" onclick="sendComment(${postId},${c.id})">${SVG.send}</button>
     </div>
     ${repliesHtml}`;
   }
   const commentsHtml = topComments.map(c => oneCommentHtml(c, p.id)).join('');
 
-  const commentInputHtml = ME ? `<div class="comment-input-row">
-    <input class="comment-input" type="text" placeholder="${t('reply')}" id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
+  const commentInputHtml = ME ? `<div class="sw-comment-row">
+    <input class="sw-comment-field" type="text" placeholder="${t('reply')}" id="ci-${p.id}" onkeydown="if(event.key==='Enter')sendComment(${p.id})">
     <button type="button" class="btn-icon-sm femoji-comment-btn" data-target="ci-${p.id}" title="Emoji"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-3px;"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
-    <button class="btn-send-comment" onclick="sendComment(${p.id})">${SVG.send}</button>
+    <button class="sw-send-btn" onclick="sendComment(${p.id})">${SVG.send}</button>
   </div>` : '';
 
-  return `<div class="post-card" id="post-${p.id}" onclick="goPost(event, ${p.id})">
-    ${mediaHtml}
-    <div class="card-body">
-      <div class="pub-row">
-        <div class="pub-info">
-          <div class="pub-avatar" onclick="goPublisher('${p.page_username?esc(p.page_username):esc(p.publisher_username||p.publisher)}', ${p.page_id?'true':'false'})">${avatarHtml}</div>
-          <div class="pub-meta">
-            <div class="pub-name" onclick="goPublisher('${p.page_username?esc(p.page_username):esc(p.publisher_username||p.publisher)}', ${p.page_id?'true':'false'})">
-              <span class="role-badge ${badgeCls}">${p.user_role==='Admin' ? t('adminRole') : (p.user_role==='Page' ? t('pageWord') : t('member'))}</span>
-              ${esc(name)}
-              ${(p.publisher_verified||p.user_verified) ? verifiedBadge() : ''}
-            </div>
-            <div class="pub-date">${fmtDate(p.created_at)}${Number(p.edited)===1 ? ' · <span style="opacity:0.7;">'+esc(t('postEdited'))+'</span>' : ''}</div>
+  return `<div class="sw-post" id="post-${p.id}" onclick="goPost(event, ${p.id})">
+    <div class="sw-rail">
+      <div class="sw-jack" onclick="event.stopPropagation();goPublisher('${p.page_username?esc(p.page_username):esc(p.publisher_username||p.publisher)}', ${p.page_id?'true':'false'})">${avatarHtml}</div>
+      <div class="sw-wire"></div>
+    </div>
+    <div class="sw-body">
+      <div class="sw-head">
+        <div class="sw-who">
+          <div class="sw-name" onclick="goPublisher('${p.page_username?esc(p.page_username):esc(p.publisher_username||p.publisher)}', ${p.page_id?'true':'false'})">
+            <span class="role-badge ${badgeCls}">${p.user_role==='Admin' ? t('adminRole') : (p.user_role==='Page' ? t('pageWord') : t('member'))}</span>
+            ${esc(name)}
+            ${(p.publisher_verified||p.user_verified) ? verifiedBadge() : ''}
           </div>
+          <div class="sw-date">${fmtDate(p.created_at)}${Number(p.edited)===1 ? ' · <span style="opacity:0.7;">'+esc(t('postEdited'))+'</span>' : ''}</div>
         </div>
-        <div class="pub-actions">
+        <div class="sw-actions">
           ${ME ? `<button class="btn-icon save-btn ${p.is_saved?'saved':''}" onclick="toggleSavePost(${p.id})" title="${p.is_saved?t('unsave'):t('save')}">${p.is_saved?SVG.bookmarkFilled:SVG.bookmark}</button>` : ''}
           <button class="btn-icon" onclick="sharePost(${p.id})" title="${t('share')}">${SVG.share}</button>
           ${ME && p.user_id && p.user_id!=ME?.id ? `<button class="btn-icon" onclick="location.href='/chat?with=${esc(p.publisher_username||p.publisher)}'" title="${t('message')}">${SVG.comment}</button>` : ''}
@@ -1585,16 +1585,17 @@ function renderPost(p){
           </div>` : ''}
         </div>
       </div>
-      <div class="post-text post-html">${linkifyContent(p.content)}</div>
+      ${mediaHtml}
+      <div class="sw-text post-html">${linkifyContent(p.content)}</div>
       ${extractFirstUrl(p.content) ? `<div class="link-preview-slot" data-lp-url="${esc(extractFirstUrl(p.content))}"></div>` : ''}
-      <div class="reactions-row">
+      <div class="sw-reactions">
         ${reactionHtml}
         <button class="react-btn" onclick="toggleComments(${p.id})" id="cmtToggle-${p.id}">
           ${SVG.comment}<span>${commCount} ${t('comment')}</span>
         </button>
       </div>
-      <div class="comments-section" id="cmtSec-${p.id}" style="display:none;">
-        <div class="comments-list" id="cmtList-${p.id}">${commentsHtml}</div>
+      <div class="sw-comments" id="cmtSec-${p.id}" style="display:none;">
+        <div class="sw-comments-list" id="cmtList-${p.id}">${commentsHtml}</div>
         ${commentInputHtml}
       </div>
     </div>
@@ -1609,7 +1610,7 @@ function goPublisher(username, isPage){
 // والاسم، الوسائط اللي عندها فتح خاص فيها، وقسم التعليقات بالكامل) تودّي
 // مباشرة لرابط المنشور المستقل /post?id=
 function goPost(e, id){
-  if (e.target.closest('a, button, input, textarea, .comments-section, .reel-card, .video-card, .pub-avatar, .pub-name, .link-preview-slot, .post-opts-wrap, .post-opts-menu')) return;
+  if (e.target.closest('a, button, input, textarea, .sw-comments, .reel-card, .video-card, .sw-jack, .sw-name, .link-preview-slot, .post-opts-wrap, .post-opts-menu')) return;
   window.location = '/post?id=' + id;
 }
 
@@ -2003,365 +2004,4 @@ async function submitStory(){
     const d = await apiFetch('/api/stories', 'POST', { media: mediaUrl, media_type: storyMediaType, caption });
     if (d.success) { closeModal('storyCreateModal'); await loadStories(); showToast(t('storyPublish')); }
     else { errEl.textContent = d.error || t('postFail'); errEl.style.display = 'block'; }
-  } catch(e) { errEl.textContent = e.message || t('cantConnect'); errEl.style.display = 'block'; }
-  finally { btn.disabled = false; }
-}
-
-// ----- عارض القصص -----
-function openStoryViewer(userId){
-  const idx = storyViewOrder.findIndex(g => g.user_id === userId);
-  if (idx === -1) return;
-  currentGroupIdx = idx;
-  storySlideIndex = 0;
-  document.getElementById('storyViewer').classList.add('show');
-  showStorySlide();
-}
-
-function currentStoryGroup(){ return storyViewOrder[currentGroupIdx]; }
-
-function showStorySlide(){
-  clearTimeout(storyTimer);
-  const group = currentStoryGroup();
-  if (!group) { closeStoryViewer(); return; }
-  const story = group.stories[storySlideIndex];
-  if (!story) {
-    if (currentGroupIdx < storyViewOrder.length - 1) { currentGroupIdx++; storySlideIndex = 0; showStorySlide(); }
-    else closeStoryViewer();
-    return;
-  }
-
-  document.getElementById('storyViewerAvatar').innerHTML = group.avatar
-    ? `<img src="${esc(group.avatar)}" alt="">`
-    : `<img src="/default-avatar.jpg" alt="">`;
-  document.getElementById('storyViewerName').textContent = group.display_name || group.username;
-  document.getElementById('storyViewerTime').textContent = fmtStoryTime(story.created_at);
-  document.getElementById('storyViewerCaption').textContent = story.caption || '';
-  document.getElementById('storyViewerDelete').style.display = (ME && Number(ME.id) === Number(group.user_id)) ? 'flex' : 'none';
-
-  const wrap = document.getElementById('storyProgressWrap');
-  wrap.innerHTML = group.stories.map((s,i) =>
-    `<div class="story-progress-bar ${i < storySlideIndex ? 'done' : ''}"><div class="story-progress-fill" id="spf-${i}"></div></div>`
-  ).join('');
-
-  const mediaEl = document.getElementById('storyViewerMedia');
-  if (story.media_type === 'video') {
-    mediaEl.innerHTML = `<video id="storyVideoEl" src="${esc(story.media)}" autoplay playsinline></video>`;
-    const v = document.getElementById('storyVideoEl');
-    v.onloadedmetadata = () => animateStoryProgress(Math.min((v.duration || 5) * 1000, 60000));
-    v.onended = () => advanceStory();
-  } else {
-    mediaEl.innerHTML = `<img src="${esc(story.media)}" alt="">`;
-    animateStoryProgress(5000);
-  }
-
-  if (ME) { apiFetch('/api/stories/' + story.id + '/view', 'POST').catch(()=>{}); story.viewed = true; }
-}
-
-function animateStoryProgress(duration){
-  const fill = document.getElementById('spf-' + storySlideIndex);
-  if (fill) {
-    fill.style.transition = 'none'; fill.style.width = '0%';
-    requestAnimationFrame(() => { fill.style.transition = 'width ' + duration + 'ms linear'; fill.style.width = '100%'; });
-  }
-  storyTimer = setTimeout(advanceStory, duration);
-}
-
-function advanceStory(){ storySlideIndex++; showStorySlide(); }
-function nextStory(){ clearTimeout(storyTimer); advanceStory(); }
-function prevStory(){
-  clearTimeout(storyTimer);
-  if (storySlideIndex > 0) { storySlideIndex--; showStorySlide(); }
-  else if (currentGroupIdx > 0) { currentGroupIdx--; storySlideIndex = Math.max(0, currentStoryGroup().stories.length - 1); showStorySlide(); }
-  else showStorySlide();
-}
-
-function closeStoryViewer(){
-  clearTimeout(storyTimer);
-  document.getElementById('storyViewer').classList.remove('show');
-  document.getElementById('storyViewerMedia').innerHTML = '';
-  renderStoriesBar();
-}
-
-async function deleteCurrentStory(){
-  clearTimeout(storyTimer); // أوقف التقدم التلقائي فوراً لمنع تسابق يفسد الحذف
-  const group = currentStoryGroup();
-  const story = group?.stories[storySlideIndex];
-  if (!story) return;
-  if (!await hostakaConfirm(t('storyDeleteConfirm'))) { showStorySlide(); return; } // نعيد المؤقت إذا ألغى المستخدم
-  const targetStoryId = story.id;
-  const targetUserId = group.user_id;
-  try {
-    const d = await apiFetch('/api/stories/' + targetStoryId, 'DELETE');
-    if (d && d.error) { showToast(d.error, 'error'); showStorySlide(); return; }
-  } catch(e) { showToast(t('cantDeleteStory'), 'error'); showStorySlide(); return; }
-
-  // نعيد إيجاد المجموعة/الفهرس بالاعتماد على المعرّفات لا الفهارس (تحسباً لأي تغيير أثناء الانتظار)
-  const gIdx = storyViewOrder.findIndex(g => g.user_id === targetUserId);
-  if (gIdx === -1) { closeStoryViewer(); return; }
-  const g = storyViewOrder[gIdx];
-  const sIdx = g.stories.findIndex(s => s.id === targetStoryId);
-  if (sIdx !== -1) g.stories.splice(sIdx, 1);
-  storiesData = storiesData.filter(sg => sg.user_id !== g.user_id || g.stories.length > 0);
-
-  if (!g.stories.length) {
-    storyViewOrder.splice(gIdx, 1);
-    currentGroupIdx = Math.min(gIdx, storyViewOrder.length - 1);
-    storySlideIndex = 0;
-    if (!storyViewOrder.length) { closeStoryViewer(); return; }
-    showStorySlide();
-  } else {
-    currentGroupIdx = gIdx;
-    storySlideIndex = Math.min(sIdx, g.stories.length - 1);
-    showStorySlide();
-  }
-}
-
-document.addEventListener('keydown', e => {
-  if (!document.getElementById('storyViewer')?.classList.contains('show')) return;
-  if (e.key === 'Escape') closeStoryViewer();
-  else if (e.key === 'ArrowLeft') (currentLang === 'ar' ? nextStory() : prevStory());
-  else if (e.key === 'ArrowRight') (currentLang === 'ar' ? prevStory() : nextStory());
-});
-
-function toggleReactMenu(postId){
-  if(!ME){openAuth();return;}
-  const menu = document.getElementById('rmenu-'+postId);
-  if(!menu) return;
-  document.querySelectorAll('.react-menu.show').forEach(m=>{ if(m!==menu) m.classList.remove('show'); });
-  menu.classList.toggle('show');
-}
-document.addEventListener('click', e=>{
-  if(!e.target.closest('.react-wrap')) document.querySelectorAll('.react-menu.show').forEach(m=>m.classList.remove('show'));
-});
-
-async function toggleReact(postId, emoji){
-  if(!ME){openAuth();return;}
-  document.querySelectorAll('.react-menu.show').forEach(m=>m.classList.remove('show'));
-  const d=await apiFetch('/api/records/'+postId+'/react','POST',{emoji});
-  if(!d.success) return;
-  const post=allPosts.find(p=>p.id===postId);
-  if(post){ post.reactions=d.reactions; post.userReaction=d.userReaction; }
-  const card=document.getElementById('post-'+postId);
-  if(card){ const newCard=document.createElement('div'); newCard.innerHTML=renderPost(post); card.replaceWith(newCard.firstChild); }
-}
-
-function toggleComments(id){
-  const sec=document.getElementById('cmtSec-'+id);
-  const toggle=document.getElementById('cmtToggle-'+id);
-  if(sec){
-    const showing = sec.style.display==='none';
-    sec.style.display = showing ? 'block' : 'none';
-    if(toggle) toggle.classList.toggle('expanded', showing);
-  }
-}
-
-function toggleReplyInput(postId, commentId){
-  const row = document.getElementById('replyRow-'+commentId);
-  if(!row) return;
-  const showing = row.style.display === 'none';
-  row.style.display = showing ? 'flex' : 'none';
-  if(showing) document.getElementById('ri-'+commentId)?.focus();
-}
-
-async function sendComment(postId, parentId){
-  if(!ME){openAuth();return;}
-  const input = parentId ? document.getElementById('ri-'+parentId) : document.getElementById('ci-'+postId);
-  if(!input||!input.value.trim()) return;
-  const content=input.value.trim(); input.value='';
-  const d=await apiFetch('/api/records/'+postId+'/comments','POST',{content, parent_id: parentId||null});
-  if(!d.success) return;
-  const comments=await apiFetch('/api/records/'+postId+'/comments');
-  const post=allPosts.find(p=>p.id===postId);
-  if(post){ post.comments=comments; }
-  const card=document.getElementById('post-'+postId);
-  if(card){ const newCard=document.createElement('div'); newCard.innerHTML=renderPost(post); card.replaceWith(newCard.firstChild); document.getElementById('cmtSec-'+postId).style.display='block'; document.getElementById('cmtToggle-'+postId)?.classList.add('expanded'); }
-}
-
-async function delComment(commentId, postId){
-  if(!await hostakaConfirm(t('deleteComment'))) return;
-  await apiFetch('/api/comments/'+commentId,'DELETE');
-  document.getElementById('cmt-'+commentId)?.remove();
-}
-
-// ============================================================
-//  INIT
-// ============================================================
-(async function init() {
-  if (currentTheme === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    setThemeIcon(THEME_ICON_DARK);
-  }
-
-  loadWallpaperState();
-  applyWallpaper();
-
-  window.addEventListener('scroll',()=>{
-    document.getElementById('topbar').classList.toggle('scrolled', window.scrollY > 10);
-  });
-
-  applyLang();
-
-  if (TOKEN) {
-    try {
-      const r = await fetch('/api/auth/me', { headers:{'Authorization':'Bearer '+TOKEN} });
-      if (r.ok) {
-        const u = await r.json();
-        if (u && !u.error) {
-          ME = { username: u.username, role: u.role, avatar: u.avatar||'', id: u.id };
-          localStorage.setItem('hostaka_user', JSON.stringify(ME));
-          setLoggedInUI(ME);
-          fetch('/api/me', { headers:{'Authorization':'Bearer '+TOKEN} })
-            .then(r=>r.ok?r.json():null)
-            .then(full=>{ if(full&&!full.error&&full.avatar){ ME.avatar=full.avatar; setLoggedInUI(ME); } })
-            .catch(()=>{});
-        } else {
-          localStorage.removeItem('hostaka_token');
-          localStorage.removeItem('hostaka_user');
-          ME = null;
-        }
-      }
-    } catch(e) { if (ME) setLoggedInUI(ME); }
-  }
-
-  if (!document.documentElement.classList.contains('splash-seen')) {
-    if (ME) showSplashLoggedIn(ME); else showSplashGuest();
-  }
-
-  if (ME && TOKEN) await loadBlockedSet();
-  await loadPosts();
-  loadStories();
-  if (ME && TOKEN) {
-    loadUnread();
-    loadNotifCount();
-    setInterval(()=>{ loadUnread(); loadNotifCount(); }, 30000);
-  }
-
-  const urlPostId = new URLSearchParams(location.search).get('p');
-  if(urlPostId){
-    setTimeout(()=>{
-      const el=document.getElementById('post-'+urlPostId);
-      if(el){ el.scrollIntoView({behavior:'smooth',block:'center'}); el.style.border='1px solid var(--primary)'; setTimeout(()=>el.style.border='',4000); }
-    },700);
-  }
-
-  document.getElementById('lPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-  document.getElementById('lEmail').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-})();
-
-/* expose top-level functions for inline onclick handlers */
-try { window.splashPeriodIcon = splashPeriodIcon; } catch(e) {}
-try { window.pickSplashGreeting = pickSplashGreeting; } catch(e) {}
-try { window.showSplashLoggedIn = showSplashLoggedIn; } catch(e) {}
-try { window.showSplashGuest = showSplashGuest; } catch(e) {}
-try { window.splashOpenAuth = splashOpenAuth; } catch(e) {}
-try { window.splashClickToDismiss = splashClickToDismiss; } catch(e) {}
-try { window.dismissSplash = dismissSplash; } catch(e) {}
-try { window.readVideoDimensions = readVideoDimensions; } catch(e) {}
-try { window.t = t; } catch(e) {}
-try { window.applyLang = applyLang; } catch(e) {}
-try { window.getEmptySvg = getEmptySvg; } catch(e) {}
-try { window.setTheme = setTheme; } catch(e) {}
-try { window.toggleTheme = toggleTheme; } catch(e) {}
-try { window.loadWallpaperState = loadWallpaperState; } catch(e) {}
-try { window.saveWallpaperState = saveWallpaperState; } catch(e) {}
-try { window.openWallpaperModal = openWallpaperModal; } catch(e) {}
-try { window.onWallpaperFile = onWallpaperFile; } catch(e) {}
-try { window.updateWallpaperTuning = updateWallpaperTuning; } catch(e) {}
-try { window.removeWallpaper = removeWallpaper; } catch(e) {}
-try { window.analyzeWallpaperColors = analyzeWallpaperColors; } catch(e) {}
-try { window.applyWallpaper = applyWallpaper; } catch(e) {}
-try { window.toggleLangMenu = toggleLangMenu; } catch(e) {}
-try { window.setLang = setLang; } catch(e) {}
-try { window.verifiedBadge = verifiedBadge; } catch(e) {}
-try { window.sortPosts = sortPosts; } catch(e) {}
-try { window.setSort = setSort; } catch(e) {}
-try { window.esc = esc; } catch(e) {}
-try { window.toUTCDate = toUTCDate; } catch(e) {}
-try { window.fmtDate = fmtDate; } catch(e) {}
-try { window.stripEmojis = stripEmojis; } catch(e) {}
-try { window.apiFetch = apiFetch; } catch(e) {}
-try { window.handleSuspended = handleSuspended; } catch(e) {}
-try { window.setLoggedInUI = setLoggedInUI; } catch(e) {}
-try { window.clearUser = clearUser; } catch(e) {}
-try { window.getSavedAccounts = getSavedAccounts; } catch(e) {}
-try { window.setSavedAccounts = setSavedAccounts; } catch(e) {}
-try { window.saveAccountToSwitcher = saveAccountToSwitcher; } catch(e) {}
-try { window.renderAccountSwitcher = renderAccountSwitcher; } catch(e) {}
-try { window.switchAccount = switchAccount; } catch(e) {}
-try { window.removeAccountFromSwitcher = removeAccountFromSwitcher; } catch(e) {}
-try { window.toggleDrop = toggleDrop; } catch(e) {}
-try { window.openAuth = openAuth; } catch(e) {}
-try { window.closeModal = closeModal; } catch(e) {}
-try { window.switchTab = switchTab; } catch(e) {}
-try { window.showToast = showToast; } catch(e) {}
-try { window.getToken = getToken; } catch(e) {}
-try { window.doLogin = doLogin; } catch(e) {}
-try { window.submit2FALogin = submit2FALogin; } catch(e) {}
-try { window.show2FAStep = show2FAStep; } catch(e) {}
-try { window.doRegister = doRegister; } catch(e) {}
-try { window.doLogout = doLogout; } catch(e) {}
-try { window.loadUnread = loadUnread; } catch(e) {}
-try { window.timeAgo = timeAgo; } catch(e) {}
-try { window.notifMessage = notifMessage; } catch(e) {}
-try { window.loadNotifCount = loadNotifCount; } catch(e) {}
-try { window.loadNotifications = loadNotifications; } catch(e) {}
-try { window.toggleNotifDrop = toggleNotifDrop; } catch(e) {}
-try { window.markAllNotifRead = markAllNotifRead; } catch(e) {}
-try { window.delNotif = delNotif; } catch(e) {}
-try { window.onNotifClick = onNotifClick; } catch(e) {}
-try { window.linkifyContent = linkifyContent; } catch(e) {}
-try { window.extractFirstUrl = extractFirstUrl; } catch(e) {}
-try { window.fetchLinkPreview = fetchLinkPreview; } catch(e) {}
-try { window.linkPreviewCardHtml = linkPreviewCardHtml; } catch(e) {}
-try { window.loadLinkPreviews = loadLinkPreviews; } catch(e) {}
-try { window.filterByHashtag = filterByHashtag; } catch(e) {}
-try { window.loadBlockedSet = loadBlockedSet; } catch(e) {}
-try { window.togglePostOpts = togglePostOpts; } catch(e) {}
-try { window.closePostOpts = closePostOpts; } catch(e) {}
-try { window.openReportModal = openReportModal; } catch(e) {}
-try { window.submitReport = submitReport; } catch(e) {}
-try { window.toggleBlockUser = toggleBlockUser; } catch(e) {}
-try { window.checkVerifyStatus = checkVerifyStatus; } catch(e) {}
-try { window.requestVerify = requestVerify; } catch(e) {}
-try { window.loadPosts = loadPosts; } catch(e) {}
-try { window.renderFeedDone = renderFeedDone; } catch(e) {}
-try { window.renderFeed = renderFeed; } catch(e) {}
-try { window.renderPost = renderPost; } catch(e) {}
-try { window.goProfile = goProfile; } catch(e) {}
-try { window.goPublisher = goPublisher; } catch(e) {}
-try { window.sharePost = sharePost; } catch(e) {}
-try { window.openPostModal = openPostModal; } catch(e) {}
-try { window.loadPostAsOptions = loadPostAsOptions; } catch(e) {}
-try { window.onPostMedia = onPostMedia; } catch(e) {}
-try { window.removePostMedia = removePostMedia; } catch(e) {}
-try { window.fmt = fmt; } catch(e) {}
-try { window.fmtBlock = fmtBlock; } catch(e) {}
-try { window.fmtList = fmtList; } catch(e) {}
-try { window.fmtLine = fmtLine; } catch(e) {}
-try { window.fmtQuote = fmtQuote; } catch(e) {}
-try { window.submitPost = submitPost; } catch(e) {}
-try { window.openEditPost = openEditPost; } catch(e) {}
-try { window.delPost = delPost; } catch(e) {}
-try { window.toggleSavePost = toggleSavePost; } catch(e) {}
-try { window.loadStories = loadStories; } catch(e) {}
-try { window.storyItemHtml = storyItemHtml; } catch(e) {}
-try { window.renderStoriesBar = renderStoriesBar; } catch(e) {}
-try { window.fmtStoryTime = fmtStoryTime; } catch(e) {}
-try { window.openStoryCreate = openStoryCreate; } catch(e) {}
-try { window.onStoryMedia = onStoryMedia; } catch(e) {}
-try { window.submitStory = submitStory; } catch(e) {}
-try { window.openStoryViewer = openStoryViewer; } catch(e) {}
-try { window.currentStoryGroup = currentStoryGroup; } catch(e) {}
-try { window.showStorySlide = showStorySlide; } catch(e) {}
-try { window.animateStoryProgress = animateStoryProgress; } catch(e) {}
-try { window.advanceStory = advanceStory; } catch(e) {}
-try { window.nextStory = nextStory; } catch(e) {}
-try { window.prevStory = prevStory; } catch(e) {}
-try { window.closeStoryViewer = closeStoryViewer; } catch(e) {}
-try { window.deleteCurrentStory = deleteCurrentStory; } catch(e) {}
-try { window.toggleReactMenu = toggleReactMenu; } catch(e) {}
-try { window.toggleReact = toggleReact; } catch(e) {}
-try { window.toggleComments = toggleComments; } catch(e) {}
-try { window.sendComment = sendComment; } catch(e) {}
-try { window.toggleReplyInput = toggleReplyInput; } catch(e) {}
-try { window.delComment = delComment; } catch(e) {}
+  } catch(e) { errEl.text
