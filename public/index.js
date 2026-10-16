@@ -301,8 +301,10 @@ function readVideoDimensions(file){
 
 try { if(stored) ME = JSON.parse(stored); } catch(e) {}
 
-function t(key) {
-  return LANG[currentLang]?.[key] || LANG['ar'][key] || key;
+function t(key, vars) {
+  let s = LANG[currentLang]?.[key] || LANG['ar'][key] || key;
+  if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
+  return s;
 }
 
 function applyLang() {

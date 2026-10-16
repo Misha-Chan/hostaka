@@ -126,8 +126,10 @@ let currentTheme = localStorage.getItem('hostaka_theme') || 'light';
 // ============================================================
 //  دوال الترجمة والثيم
 // ============================================================
-function t(key) {
-  return LANG[currentLang]?.[key] || LANG['ar'][key] || key;
+function t(key, vars) {
+  let s = LANG[currentLang]?.[key] || LANG['ar'][key] || key;
+  if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
+  return s;
 }
 
 function applyLang() {

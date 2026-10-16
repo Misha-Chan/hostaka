@@ -119,7 +119,11 @@ let pollTimer = null;
 let msgReactions = {};
 let chatImgBase64 = '';
 
-function t(key){ return LANG[currentLang]?.[key] || LANG['ar'][key] || key; }
+function t(key, vars) {
+  let s = LANG[currentLang]?.[key] || LANG['ar'][key] || key;
+  if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]);
+  return s;
+}
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ============================================================
