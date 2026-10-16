@@ -33,7 +33,8 @@
   ];
   window.HOSTAKA_THEMES = THEMES;
 
-  var STORAGE_KEY = 'hostaka_theme';
+  var STORAGE_KEY = 'hostaka_accent';   // لون الثيم (منفصل عن hostaka_theme اللي هو light/dark)
+  var LEGACY_KEY  = 'hostaka_theme';    // القيمة القديمة: light | dark
 
   function isRTL() {
     return (document.documentElement.getAttribute('dir') || 'ltr') === 'rtl' ||
@@ -44,12 +45,15 @@
   function apply(themeId, opts) {
     opts = opts || {};
     var html = document.documentElement;
-    if (themeId && themeId !== 'light') {
-      html.setAttribute('data-theme', themeId);
+    // brass = الشكل الافتراضي بدون أي تجاوز. باقي الثيمات تُطبَّق عبر data-accent
+    // (انظر theme.css)، وlight/dark يبقى على data-theme كما هو.
+    if (themeId && themeId !== 'brass' && themeId !== 'light' && themeId !== 'dark') {
+      html.setAttribute('data-accent', themeId);
     } else {
-      html.removeAttribute('data-theme');
+      html.removeAttribute('data-accent');
+      themeId = 'brass';
     }
-    try { localStorage.setItem(STORAGE_KEY, themeId || 'light'); } catch (e) {}
+    try { localStorage.setItem(STORAGE_KEY, themeId); } catch (e) {}
     if (!opts.silent) {
       document.querySelectorAll('.hst-theme-swatch').forEach(function (b) {
         b.classList.toggle('active', b.dataset.themeId === themeId);
@@ -74,6 +78,15 @@
   // إعادة تطبيق القيمة المحفوظة بعد أن ينتهي سكربت الصفحة من عمله — هذا هو
   // سبب وجود هذا الملف كسكربت منفصل يُحمَّل أخيراً (راجع تعليق الرأس).
   try {
+    var ids = THEMES.map(function (t) { return t.id; });
+    // ترحيل: النسخة القديمة كانت تخزّن id الثيم داخل hostaka_theme فتكسر
+    // وضع light/dark (السكربتات الأخرى ما بتعرف القيمة وبترجع للفاتح).
+    var legacy = localStorage.getItem(LEGACY_KEY);
+    if (legacy && ids.indexOf(legacy) !== -1) {
+      localStorage.setItem(STORAGE_KEY, legacy);
+      localStorage.setItem(LEGACY_KEY, 'dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
     var saved = localStorage.getItem(STORAGE_KEY);
     if (saved) apply(saved, { silent: true });
   } catch (e) {}
@@ -120,6 +133,8 @@
     var box = document.createElement('div');
     box.className = 'hst-themes-box';
     box.style.position = 'relative';
+    box.style.padding = '22px 20px';
+    box.style.boxSizing = 'border-box';
 
     var closeBtn = document.createElement('button');
     closeBtn.className = 'hst-themes-close';
