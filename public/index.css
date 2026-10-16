@@ -969,9 +969,3 @@ body.page-index .sw-send-btn svg {width:16px;height:16px;stroke:var(--black);}
   body.page-index .sw-head {flex-wrap:wrap;}
   body.page-index .sw-actions {width:100%;justify-content:flex-end;margin-top:8px;}
 }
-
-/* ---- Shizi AI button: glowing sparkle icon ---- */
-body.page-index #shiziBtn {border:1px solid var(--primary-border);background:radial-gradient(circle at 30% 25%, rgba(255,227,184,.14), transparent 70%), var(--input-bg, transparent);}
-body.page-index #shiziBtn svg {filter:drop-shadow(0 0 5px var(--primary-border));transition:transform .35s ease, filter .35s ease;}
-body.page-index #shiziBtn:hover svg {transform:rotate(18deg) scale(1.12);filter:drop-shadow(0 0 8px var(--primary));}
-@media (prefers-reduced-motion: reduce) {body.page-index #shiziBtn svg {transition:none;}body.page-index #shiziBtn:hover svg {transform:none;}}
