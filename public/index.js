@@ -333,7 +333,7 @@ function applyLang() {
   setText('.drop-download', t('downloadAndroid'), false);
   setText('.drop-logout', t('logout'), false);
   setText('loadingText', t('loading'));
-  if (allPosts.length) renderFeed(allPosts);
+  if (feedOrder.length) renderFeed(feedOrder);
   else {
     const feed = document.getElementById('feed');
     if (feed && !feed.querySelector('.sw-post')) {
@@ -781,7 +781,7 @@ function setLang(lang) {
   if (window.setHostakaLang) window.setHostakaLang(lang);
   document.getElementById('langMenu').classList.remove('show');
   applyLang();
-  if (allPosts.length) renderFeed(allPosts);
+  if (feedOrder.length) renderFeed(feedOrder);
 }
 
 // ============================================================
@@ -1443,35 +1443,116 @@ async function requestVerify(){
   } catch(e){ showToast(t('cantConnect'),'error'); }
 }
 
-// ----- Posts & Feed -----
-let feedOrder = [];
-let feedVisibleCount = 10;
+// ----- Posts & Feed (تحميل تدريجي: 10 منشورات، والباقي عند التمرير) -----
+let feedOrder = [];        // منشورات الفيد الرئيسي المحمّلة لحد الآن (بترتيب العرض)
+let feedOffset = 0;        // مكان الصفحة الجاية من السيرفر
+let feedHasMore = false;   // في منشورات إضافية؟
+let feedLoading = false;
+let feedObserver = null;
+let searchQuery = '';
 const FEED_PAGE_SIZE = 10;
 
-async function loadPosts(){
-  try {
-    const data = await apiFetch('/api/records');
-    allPosts = (Array.isArray(data) ? data : []).filter(p => !blockedUsernames.has(p.publisher));
-    feedOrder = weightedRandomSort(allPosts);
-    feedVisibleCount = FEED_PAGE_SIZE;
-    renderFeed(feedOrder.slice(0, feedVisibleCount));
-  } catch(e){ document.getElementById('feed').innerHTML='<div class="empty">'+SVG.empty+'<br>'+t('empty')+'</div>'; }
+function mergeIntoAll(posts){
+  posts.forEach(p => { if(!allPosts.some(x => x.id === p.id)) allPosts.push(p); });
 }
 
-function loadMoreFeed(){
-  feedVisibleCount += FEED_PAGE_SIZE;
-  renderFeed(feedOrder.slice(0, feedVisibleCount));
+// صفحة واحدة من السيرفر (تتوافق مع السيرفر القديم اللي يرجّع مصفوفة كاملة)
+async function fetchFeedPage(offset, search){
+  let url = '/api/records?limit=' + FEED_PAGE_SIZE + '&offset=' + offset;
+  if(search) url = '/api/records?limit=30&offset=0&q=' + encodeURIComponent(search);
+  const d = await apiFetch(url);
+  if(d && d.error && !Array.isArray(d)) throw new Error(d.error);
+  const list = Array.isArray(d) ? d : ((d && d.records) || []);
+  return {
+    posts: list.filter(p => !blockedUsernames.has(p.publisher)),
+    hasMore: !Array.isArray(d) && !!(d && d.hasMore),
+    next: (!Array.isArray(d) && d && typeof d.nextOffset === 'number') ? d.nextOffset : offset + list.length
+  };
+}
+
+function feedEmptyHtml(){ return '<div class="empty">'+SVG.empty+'<br>'+t('empty')+'</div>'; }
+
+async function loadPosts(){
+  const feed = document.getElementById('feed');
+  feedLoading = false; searchQuery = '';
+  try {
+    const pg = await fetchFeedPage(0);
+    feedOrder = pg.posts;
+    allPosts = pg.posts.slice();
+    feedOffset = pg.next;
+    feedHasMore = pg.hasMore;
+    renderFeed(feedOrder);
+    // لو الحظر شال كل منشورات الصفحة الأولى وفي بعدها، كمّل تحميل
+    if(!feedOrder.length && feedHasMore) loadMoreFeed();
+  } catch(e){
+    feed.innerHTML = '<div class="empty">'+SVG.empty+'<br>'+t('requestFail')+'<br><button class="load-more-btn" style="margin-top:14px;" onclick="loadPosts()">↻</button></div>';
+  }
+}
+
+async function loadMoreFeed(){
+  if(feedLoading || !feedHasMore || searchQuery) return;
+  feedLoading = true;
+  setFeedSentinel();
+  try {
+    const pg = await fetchFeedPage(feedOffset);
+    feedOffset = pg.next;
+    feedHasMore = pg.hasMore;
+    const fresh = pg.posts.filter(p => !feedOrder.some(x => x.id === p.id));
+    feedOrder = feedOrder.concat(fresh);
+    mergeIntoAll(fresh);
+    appendPosts(fresh);
+  } catch(e){
+    showToast(t('requestFail'), 'error');
+  } finally {
+    feedLoading = false;
+    setFeedSentinel();
+    observeFeedSentinel();
+    // لو الصفحة كانت كلها محظورين وفي بعدها، كمّل
+    if(feedHasMore && !searchQuery && feedOrder.length === 0) loadMoreFeed();
+  }
+}
+
+// عنصر آخر الفيد: يطلق التحميل لمّا يقترب من الشاشة (أو زر احتياطي لو المتصفح قديم)
+function setFeedSentinel(){
+  const feed = document.getElementById('feed');
+  let el = document.getElementById('feedSentinel');
+  const needed = feedHasMore && !searchQuery;
+  if(!needed){ if(el) el.remove(); return; }
+  if(!el){ el = document.createElement('div'); el.id = 'feedSentinel'; el.className = 'feed-sentinel'; feed.appendChild(el); }
+  else if(el.parentNode === feed && feed.lastElementChild !== el) feed.appendChild(el);
+  if(feedLoading) el.innerHTML = '<span class="feed-spinner"></span>';
+  else if('IntersectionObserver' in window) el.innerHTML = '';
+  else el.innerHTML = `<button class="load-more-btn" onclick="loadMoreFeed()">${t('loadMorePosts')}</button>`;
+}
+
+function observeFeedSentinel(){
+  if(feedObserver){ feedObserver.disconnect(); feedObserver = null; }
+  const el = document.getElementById('feedSentinel');
+  if(!el || !('IntersectionObserver' in window)) return;
+  feedObserver = new IntersectionObserver(entries => {
+    if(entries.some(e => e.isIntersecting)) loadMoreFeed();
+  }, { rootMargin: '700px 0px' });
+  feedObserver.observe(el);
+}
+
+function appendPosts(posts){
+  const feed = document.getElementById('feed');
+  const sentinel = document.getElementById('feedSentinel');
+  if(!posts.length) return;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = posts.map(p => renderPost(p)).join('');
+  const nodes = Array.from(tmp.children);
+  nodes.forEach(n => feed.insertBefore(n, sentinel));
+  nodes.forEach(n => loadLinkPreviews(n));
 }
 
 function renderFeedDone(){ loadLinkPreviews(document.getElementById('feed')); }
 function renderFeed(posts){
   const feed = document.getElementById('feed');
-  if(!posts.length){ feed.innerHTML='<div class="empty">'+SVG.empty+'<br>'+t('empty')+'</div>'; return; }
-  let html = posts.map(p => renderPost(p)).join('');
-  if (feedOrder.length > posts.length) {
-    html += `<button class="load-more-btn" onclick="loadMoreFeed()">${t('loadMorePosts')}</button>`;
-  }
-  feed.innerHTML = html;
+  if(!posts.length){ feed.innerHTML = feedEmptyHtml(); if(feedObserver){ feedObserver.disconnect(); feedObserver = null; } return; }
+  feed.innerHTML = posts.map(p => renderPost(p)).join('');
+  setFeedSentinel();
+  observeFeedSentinel();
   renderFeedDone();
 }
 
@@ -1622,11 +1703,25 @@ async function sharePost(id){
   else { await hostakaPrompt(t('copyLinkPrompt'),url); }
 }
 
+let searchTimer = null, searchSeq = 0;
+async function runFeedSearch(raw){
+  const q = raw.trim();
+  searchQuery = q.toLowerCase();
+  const seq = ++searchSeq;
+  if(!q){ renderFeed(feedOrder); return; }
+  try {
+    const pg = await fetchFeedPage(0, q);
+    if(seq !== searchSeq) return; // نتيجة قديمة
+    // سيرفر قديم ما يعرف q: فلتر محلي
+    const list = pg.posts.filter(p => (p.content||'').toLowerCase().includes(searchQuery) || (p.publisher||'').toLowerCase().includes(searchQuery));
+    mergeIntoAll(list);
+    renderFeed(list);
+  } catch(e){ if(seq === searchSeq) showToast(t('requestFail'), 'error'); }
+}
 document.getElementById('searchInput').addEventListener('input', function(){
-  const q = this.value.trim().toLowerCase();
-  const filtered = q ? allPosts.filter(p=>p.content.toLowerCase().includes(q)||p.publisher.toLowerCase().includes(q)) : allPosts;
-  const sorted = q ? filtered : feedOrder.slice(0, feedVisibleCount);
-  renderFeed(sorted);
+  const v = this.value;
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => runFeedSearch(v), 300);
 });
 
 // ----- Post Editor & Media Upload -----
@@ -1845,6 +1940,7 @@ async function delPost(id){
   if(!await hostakaConfirm(t('deleteConfirm'))) return;
   await apiFetch('/api/records/'+id,'DELETE');
   allPosts=allPosts.filter(p=>p.id!==id);
+  feedOrder=feedOrder.filter(p=>p.id!==id);
   document.getElementById('post-'+id)?.remove();
 }
 

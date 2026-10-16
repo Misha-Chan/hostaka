@@ -969,3 +969,9 @@ body.page-index .sw-send-btn svg {width:16px;height:16px;stroke:var(--black);}
   body.page-index .sw-head {flex-wrap:wrap;}
   body.page-index .sw-actions {width:100%;justify-content:flex-end;margin-top:8px;}
 }
+
+/* ---- Infinite scroll sentinel ---- */
+body.page-index .feed-sentinel {display:flex;justify-content:center;align-items:center;min-height:48px;padding:18px 0;}
+body.page-index .feed-spinner {width:22px;height:22px;border-radius:50%;border:2.5px solid var(--primary-border);border-top-color:var(--primary);animation:feedSpin .7s linear infinite;}
+@keyframes feedSpin {to {transform:rotate(360deg);}}
+@media (prefers-reduced-motion: reduce) {body.page-index .feed-spinner {animation-duration:2s;}}
