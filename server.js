@@ -1297,13 +1297,22 @@ app.get('/api/records/:id/single', async (req, res) => {
 app.get('/api/records', async (req, res) => {
   try {
     const u = verifyToken(req);
-    const records = await q.listRecords(u ? u.id : 0);
-    if (!records.length) return res.json([]);
-    const [allR, allC, urList] = await Promise.all([
-      q.getAllReactions(),
-      q.getAllComments(),
-      u ? q.getUserAllReactions(u.id) : Promise.resolve([])
-    ]);
+    // تحميل تدريجي: ?limit=10&offset=0[&q=بحث]. بدون limit يرجع كل المنشورات (للتوافق مع القديم).
+    const limit  = Math.min(Math.max(parseInt(req.query.limit, 10) || 0, 0), 30);
+    const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0);
+    const search = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 100) : '';
+
+    const rows = await q.listRecords(u ? u.id : 0, limit ? limit + 1 : 0, offset, search);
+    const hasMore = limit ? rows.length > limit : false;
+    const records = limit ? rows.slice(0, limit) : rows;
+    if (!records.length) return res.json(limit ? { records: [], hasMore: false, nextOffset: offset } : []);
+
+    const ids = records.map(r => r.id);
+    const [allR, allC, urList] = await Promise.all(
+      limit
+        ? [q.getReactionsForRecords(ids), q.getCommentsForRecords(ids), u ? q.getUserReactionsForRecords(u.id, ids) : Promise.resolve([])]
+        : [q.getAllReactions(), q.getAllComments(), u ? q.getUserAllReactions(u.id) : Promise.resolve([])]
+    );
     const rMap = {}, cMap = {}, urMap = {};
     allR.forEach(r => {
       if (!rMap[r.record_id]) rMap[r.record_id] = [];
@@ -1314,13 +1323,15 @@ app.get('/api/records', async (req, res) => {
       cMap[c.record_id].push(c);
     });
     urList.forEach(r => { urMap[r.record_id] = r.emoji; });
-    res.json(records.map(r => ({
+    const out = records.map(r => ({
       ...r,
       reactions: rMap[r.id] || [],
       comments: cMap[r.id] || [],
       userReaction: urMap[r.id] || null
-    })));
+    }));
+    res.json(limit ? { records: out, hasMore, nextOffset: offset + records.length } : out);
   } catch(e) {
+    console.error('❌ GET /api/records error:', e);
     res.status(500).json({ error: 'خطأ في الخادم' });
   }
 });

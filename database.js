@@ -713,7 +713,23 @@ const q = {
   unsuspendRecord:  (id) => db.execute({ sql:"UPDATE records SET suspended=0,suspend_reason='' WHERE id=?", args:[id] }),
 
   // ── Records ──
-  listRecords: (viewerId) => db.execute({ sql: `
+  listRecords: (viewerId, limit, offset, search) => {
+    const v = viewerId || 0;
+    const args = [v, v, v, v];
+    let extra = '';
+    if (search) {
+      // بحث بالمحتوى واسم الناشر (الهروب بـ ! عشان % و _ ما تتحول لـ wildcard)
+      const like = '%' + String(search).toLowerCase().replace(/[!%_]/g, m => '!' + m) + '%';
+      extra = ` AND (LOWER(r.content) LIKE ? ESCAPE '!' OR LOWER(COALESCE(u.username, r.publisher, '')) LIKE ? ESCAPE '!' OR LOWER(COALESCE(u.display_name, '')) LIKE ? ESCAPE '!')`;
+      args.push(like, like, like);
+    }
+    // تفضيل منشورات اللي يتابعهم المستخدم: منشورهم يُحسب كأنه أحدث بـ FOLLOWED_BOOST_DAYS أيام،
+    // فيطلع قبل غيره بدون ما منشور قديم جداً لمتابَع يدفن كل الجديد.
+    // (للترتيب الصارم "المتابَعين أولاً" ارفع الرقم لـ 36500، ولإلغاء التفضيل خلّه 0)
+    const FOLLOWED_BOOST_DAYS = 7;
+    let tail = `ORDER BY (julianday(r.created_at) + CASE WHEN f.follower_id IS NOT NULL THEN ${FOLLOWED_BOOST_DAYS} ELSE 0 END) DESC, r.id DESC`;
+    if (limit) { tail += ' LIMIT ? OFFSET ?'; args.push(limit, offset || 0); }
+    return db.execute({ sql: `
     SELECT r.*,
            COALESCE(u.avatar, r.user_avatar, '') as user_avatar,
            COALESCE(u.display_name, u.username, r.publisher, '') as publisher_name,
@@ -738,8 +754,10 @@ const q = {
         OR COALESCE(u.is_private,0) = 0
         OR f.follower_id IS NOT NULL
       )
-    ORDER BY r.created_at DESC
-  `, args: [viewerId || 0, viewerId || 0, viewerId || 0, viewerId || 0] }).then(rows),
+    ${extra}
+    ${tail}
+  `, args }).then(rows);
+  },
   // نسخة إدارية من listRecords: تشمل المنشورات المعلَّقة (suspended) وما
   // تطبّق فلترة الخصوصية العادية، عشان المشرف/الأدمن يشوف كل شي وقادر
   // يعلّق/يرجّع أي منشور من لوحة console
@@ -917,6 +935,16 @@ const q = {
   // ── Reactions ──
   getAllReactions:      () => db.execute('SELECT record_id,emoji,COUNT(*) as count FROM record_reactions GROUP BY record_id,emoji').then(rows),
   getReactions:        (rid) => db.execute({ sql:'SELECT emoji,COUNT(*) as count FROM record_reactions WHERE record_id=? GROUP BY emoji', args:[rid] }).then(rows),
+  // نسخ محدودة بقائمة منشورات (للتحميل التدريجي — بدل جلب كل تفاعلات/تعليقات الموقع)
+  getReactionsForRecords: (ids) => ids.length ? db.execute({ sql:`SELECT record_id,emoji,COUNT(*) as count FROM record_reactions WHERE record_id IN (${ids.map(()=>'?').join(',')}) GROUP BY record_id,emoji`, args: ids }).then(rows) : Promise.resolve([]),
+  getUserReactionsForRecords: (uid, ids) => ids.length ? db.execute({ sql:`SELECT record_id,emoji FROM record_reactions WHERE user_id=? AND record_id IN (${ids.map(()=>'?').join(',')})`, args: [uid, ...ids] }).then(rows) : Promise.resolve([]),
+  getCommentsForRecords: (ids) => ids.length ? db.execute({ sql:`
+    SELECT rc.*, COALESCE(u.avatar,rc.avatar,'') as avatar, COALESCE(u.display_name,rc.display_name,'') as display_name,
+           COALESCE(u.username, rc.username, '') as username
+    FROM record_comments rc LEFT JOIN users u ON u.id=rc.user_id
+    WHERE rc.record_id IN (${ids.map(()=>'?').join(',')})
+    ORDER BY rc.record_id ASC, rc.created_at ASC
+  `, args: ids }).then(rows) : Promise.resolve([]),
   getUserAllReactions: (uid) => db.execute({ sql:'SELECT record_id,emoji FROM record_reactions WHERE user_id=?', args:[uid] }).then(rows),
   getUserReaction:     (rid,uid) => db.execute({ sql:'SELECT emoji FROM record_reactions WHERE record_id=? AND user_id=?', args:[rid,uid] }).then(first),
   addReaction:         (rid,uid,emoji) => db.execute({ sql:'INSERT OR REPLACE INTO record_reactions (record_id,user_id,emoji) VALUES (?,?,?)', args:[rid,uid,emoji] }),
