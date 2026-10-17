@@ -3929,7 +3929,17 @@ function sendSubdomainRedirect(req, res, base, path) {
 
 // الدردشة والمجموعات → orbithub.hostaka.fun
 const ORBITHUB_BASE = process.env.ORBITHUB_BASE || 'https://orbithub.hostaka.fun';
-app.get('/chat',    (req, res) => sendSubdomainRedirect(req, res, ORBITHUB_BASE, '/chat'));
+// رابط المحادثة الموحّد هو /chat/<username> (نفس صيغة Orbithub للمحادثة
+// المباشرة). نبقى ندعم الشكل القديم /chat?with=<username> بالتحويل للرابط
+// الموحّد، حتى الروابط المحفوظة/القديمة ما تنكسر.
+app.get('/chat', (req, res) => {
+  if (req.query.with) {
+    return sendSubdomainRedirect(req, res, ORBITHUB_BASE, '/chat/' + encodeURIComponent(String(req.query.with)));
+  }
+  return sendSubdomainRedirect(req, res, ORBITHUB_BASE, '/chat');
+});
+app.get('/chat/:username', (req, res) =>
+  sendSubdomainRedirect(req, res, ORBITHUB_BASE, '/chat/' + encodeURIComponent(req.params.username)));
 app.get('/group',   (req, res) => sendSubdomainRedirect(req, res, ORBITHUB_BASE, '/group'));
 
 // لوحة التحكم (بالكامل، بدون زر أو صفحة على المنصة الرئيسية بعد اليوم) →
