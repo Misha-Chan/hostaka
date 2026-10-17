@@ -1,0 +1,93 @@
+ترخيص برمجيات خاص — جميع الحقوق محفوظة
+Proprietary Software License — All Rights Reserved
+
+حقوق النشر (c) 2026 Misha-Chan / Hostaka
+Copyright (c) 2026 Misha-Chan / Hostaka
+
+====================================================================
+العربية
+====================================================================
+
+١. الملكية
+هذا البرنامج ومصادره ("البرنامج") مملوك حصرياً لصاحب الحقوق أعلاه
+("المالك")، ومحمي بقوانين حقوق النشر والمعاهدات الدولية. لا يمنحك
+هذا الملف أي حق ملكية في البرنامج.
+
+٢. عدم منح الترخيص
+لا يُمنح أي ترخيص أو إذن، صريحاً كان أم ضمنياً، باستخدام البرنامج
+أو نسخه أو تعديله أو دمجه أو ترجمته أو توزيعه أو إعادة نشره أو
+بيعه أو تأجيره أو ترخيصه من الباطن أو استغلاله تجارياً بأي شكل،
+كلياً أو جزئياً، دون إذن كتابي مسبق من المالك.
+
+٣. العرض العام للمصدر
+كون المصدر متاحاً للعرض العلني (على سبيل المثال عبر GitHub) لا
+يُشكّل بأي حال تنازلاً عن الحقوق ولا منحاً ضمنياً لأي ترخيص مفتوح
+المصدر. العرض العام مقصود لأغراض العرض والتطوير فقط.
+
+٤. الاستخدام المسموح
+يُسمح للزوار بالاطلاع على المصدر ودراسته للفهم الشخصي فقط. أي
+استخدام آخر — بما في ذلك نسخ الشيفرة أو أجزاء منها في مشروع آخر —
+ممنوع منعاً باتاً.
+
+٥. إنهاء الحقوق
+أي خرق لهذا الترخيص ينهي تلقائياً أي حق محدود ممنوح بموجب البند
+(٤)، ويلزم المخالف بإتلاف جميع النسخ فوراً.
+
+٦. إخلاء المسؤولية
+يُقدَّم البرنامج "كما هو" دون أي ضمانات صريحة أو ضمنية، بما في ذلك
+ضمانات القابلية للتسويق أو الملاءمة لغرض معين أو عدم الانتهاك. لا
+يتحمّل المالك أي مسؤولية عن أي أضرار ناتجة عن استخدام البرنامج.
+
+٧. القانون الواجب التطبيق
+يخضع هذا الترخيص للقوانين المعمول بها في بلد المالك، وتختص محاكمه
+بالنظر في أي نزاع ينشأ عنه.
+
+لطلب إذن أو ترخيص استخدام، تواصل مع المالك:
+https://github.com/Misha-Chan
+
+====================================================================
+ENGLISH
+====================================================================
+
+1. OWNERSHIP
+This software and its source code (the "Software") are the exclusive
+property of the copyright holder named above (the "Owner"), and are
+protected by copyright laws and international treaties. This file
+grants you no ownership rights in the Software.
+
+2. NO LICENSE GRANTED
+No license or permission is granted, whether express or implied, to
+use, copy, modify, merge, translate, distribute, redistribute, sell,
+rent, sublicense, or commercially exploit the Software, in whole or
+in part, without the prior written permission of the Owner.
+
+3. PUBLIC SOURCE DISCLOSURE
+The public availability of the source code (for example via GitHub)
+does not constitute a waiver of rights, nor an implied grant of any
+open-source license. Public disclosure is intended solely for
+showcase and development purposes.
+
+4. PERMITTED USE
+Visitors are permitted to view and study the source code for personal
+comprehension only. Any other use — including copying the code or any
+portion of it into another project — is strictly prohibited.
+
+5. TERMINATION
+Any breach of this license automatically terminates the limited right
+granted under Section 4, and the violating party must immediately
+destroy all copies.
+
+6. DISCLAIMER OF WARRANTY
+The Software is provided "AS IS", without warranty of any kind,
+express or implied, including but not limited to the warranties of
+merchantability, fitness for a particular purpose, and
+non-infringement. In no event shall the Owner be liable for any
+damages arising from the use of the Software.
+
+7. GOVERNING LAW
+This license shall be governed by the laws applicable in the Owner's
+jurisdiction, whose courts shall have exclusive jurisdiction over any
+dispute arising hereunder.
+
+To request permission or a usage license, contact the Owner:
+https://github.com/Misha-Chan
