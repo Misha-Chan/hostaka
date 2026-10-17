@@ -241,3 +241,42 @@ body.page-shiziai ::-webkit-scrollbar-thumb {background:var(--border);border-rad
 @media(prefers-reduced-motion:reduce){
       body.page-shiziai, body.page-shiziai *, body.page-shiziai *::before, body.page-shiziai *::after {animation-duration:0.01ms!important;transition-duration:0.01ms!important;}
     }
+
+/* ---- زر الإيموجي بصندوق الكتابة ---- */
+body.page-shiziai .emoji-btn {width:42px;height:42px;border-radius:50%;flex-shrink:0;background:var(--input-bg);border:1px solid var(--border);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+body.page-shiziai .emoji-btn:hover {color:var(--text);border-color:var(--shizi-border);}
+body.page-shiziai .input-area .femoji {width:1.3em;height:1.3em;}
+@media(max-width:600px){body.page-shiziai .emoji-btn {width:38px;height:38px;}}
+
+/* ---- Markdown داخل فقاعات شيزي ---- */
+body.page-shiziai .bubble.md {white-space:normal;}
+body.page-shiziai .bubble.md > :first-child {margin-top:0;}
+body.page-shiziai .bubble.md > :last-child {margin-bottom:0;}
+body.page-shiziai .bubble.md p {margin:0 0 .65em;}
+body.page-shiziai .bubble.md strong {font-weight:700;}
+body.page-shiziai .bubble.md a {color:var(--primary,#4fb3b3);text-decoration:underline;text-underline-offset:2px;word-break:break-all;}
+body.page-shiziai .bubble.md .md-h {margin:.9em 0 .4em;line-height:1.35;font-weight:800;}
+body.page-shiziai .bubble.md h1.md-h {font-size:1.25em;}
+body.page-shiziai .bubble.md h2.md-h {font-size:1.15em;}
+body.page-shiziai .bubble.md h3.md-h {font-size:1.05em;}
+body.page-shiziai .bubble.md h4.md-h, body.page-shiziai .bubble.md h5.md-h, body.page-shiziai .bubble.md h6.md-h {font-size:1em;}
+body.page-shiziai .bubble.md ul, body.page-shiziai .bubble.md ol {margin:.2em 0 .7em;padding-inline-start:1.5em;}
+body.page-shiziai .bubble.md li {margin:.2em 0;}
+body.page-shiziai .bubble.md li > ul, body.page-shiziai .bubble.md li > ol {margin:.25em 0 .1em;}
+body.page-shiziai .bubble.md blockquote {margin:.5em 0 .7em;padding:.25em .9em;border-inline-start:3px solid var(--shizi-border,rgba(255,255,255,.25));color:var(--muted);}
+body.page-shiziai .bubble.md blockquote p {margin:.2em 0;}
+body.page-shiziai .bubble.md hr {border:0;border-top:1px solid var(--border,rgba(255,255,255,.15));margin:.9em 0;}
+body.page-shiziai .bubble.md code {font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em;padding:.12em .4em;border-radius:6px;background:rgba(127,127,127,.18);direction:ltr;unicode-bidi:isolate;}
+body.page-shiziai .bubble.md .md-codewrap {position:relative;margin:.5em 0 .8em;}
+body.page-shiziai .bubble.md pre.md-code {margin:0;padding:12px 14px;border-radius:12px;background:rgba(0,0,0,.35);border:1px solid var(--border,rgba(255,255,255,.12));overflow-x:auto;white-space:pre;line-height:1.55;text-align:left;}
+body.page-shiziai .bubble.md pre.md-code code {padding:0;background:none;font-size:.85em;}
+body.page-shiziai .bubble.md .md-lang {position:absolute;top:6px;inset-inline-start:12px;font-size:.66rem;opacity:.55;text-transform:uppercase;letter-spacing:.04em;pointer-events:none;}
+body.page-shiziai .bubble.md .md-codewrap pre.md-code {padding-top:26px;}
+body.page-shiziai .bubble.md .md-copy {position:absolute;top:5px;inset-inline-end:7px;z-index:1;background:none;border:none;color:inherit;opacity:.55;cursor:pointer;padding:4px;border-radius:6px;display:flex;}
+body.page-shiziai .bubble.md .md-copy:hover {opacity:1;background:rgba(255,255,255,.1);}
+body.page-shiziai .bubble.md .md-copy.copied {color:#5ec27a;opacity:1;}
+body.page-shiziai .bubble.md .md-table-wrap {overflow-x:auto;margin:.5em 0 .8em;max-width:100%;}
+body.page-shiziai .bubble.md table {border-collapse:collapse;font-size:.92em;min-width:60%;}
+body.page-shiziai .bubble.md th, body.page-shiziai .bubble.md td {border:1px solid var(--border,rgba(255,255,255,.15));padding:6px 10px;}
+body.page-shiziai .bubble.md th {background:rgba(127,127,127,.15);font-weight:700;}
+body.page-shiziai .bubble .femoji {width:1.25em;height:1.25em;vertical-align:-0.25em;}

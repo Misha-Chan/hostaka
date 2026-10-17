@@ -336,6 +336,155 @@ function quickSend(text){
   sendMsg();
 }
 
+
+// ===== Markdown لردود شيزي (آمن: يهرّب HTML أولاً ثم يبني الوسوم بنفسه) =====
+function mdFmt(s){
+  return s
+    .replace(/\*\*([^\s*](?:[^*\n]*?[^\s*])?)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^\w])__([^\s_](?:[^_\n]*?[^\s_])?)__(?!\w)/g, '$1<strong>$2</strong>')
+    .replace(/~~([^\s~](?:[^~\n]*?[^\s~])?)~~/g, '<del>$1</del>')
+    .replace(/(^|[^\w*])\*([^\s*](?:[^*\n]*?[^\s*])?)\*(?![\w*])/g, '$1<em>$2</em>')
+    .replace(/(^|[^\w])_([^\s_](?:[^_\n]*?[^\s_])?)_(?!\w)/g, '$1<em>$2</em>');
+}
+function mdInline(s){
+  const tokens = [];
+  const keep = h => { tokens.push(h); return '\u0001' + (tokens.length - 1) + '\u0001'; };
+  s = s.replace(/`([^`\n]+)`/g, (m, c) => keep('<code>' + c + '</code>'));
+  s = s.replace(/\[([^\]\n]+)\]\(((?:https?:\/\/|mailto:)[^\s)]+)\)/g,
+    (m, t, u) => keep('<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + mdFmt(t) + '</a>'));
+  s = s.replace(/(^|[\s(])(https?:\/\/[^\s<]+[^\s<.,;:!?)\]'"])/g,
+    (m, pre, u) => pre + keep('<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + u + '</a>'));
+  s = mdFmt(s);
+  let guard = 0;
+  while (/\u0001\d+\u0001/.test(s) && guard++ < 5) s = s.replace(/\u0001(\d+)\u0001/g, (m, i) => tokens[+i]);
+  return s.replace(/\n/g, '<br>');
+}
+function mdBlocks(lines, codeBlocks){
+  const D = ' dir="auto"';
+  const out = [];
+  let i = 0;
+  const isBlank = l => !l.trim();
+  const indentOf = str => str.replace(/\t/g, '    ').length;
+  const reHeading = /^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/;
+  const reHr = /^\s{0,3}([-*_])(?:\s*\1){2,}\s*$/;
+  const reList = /^(\s*)([-*+]|\d{1,9}[.)])\s+(.*)$/;
+  const reQuote = /^\s{0,3}&gt;\s?(.*)$/;
+  const reCode = /^\u0002(\d+)\u0002$/;
+  const reTableSep = /^\s*\|?\s*:?-{2,}:?\s*(?:\|\s*:?-{2,}:?\s*)*\|?\s*$/;
+  const isTableStart = k => k + 1 < lines.length && lines[k].includes('|') && lines[k + 1].includes('-') && reTableSep.test(lines[k + 1]);
+  const startsBlock = (l, k) => reHeading.test(l) || reHr.test(l) || reList.test(l) || reQuote.test(l) || reCode.test(l.trim()) || (k !== undefined && isTableStart(k));
+  const splitRow = r => r.trim().replace(/^\|/, '').replace(/\|$/, '').split(/(?<!\\)\|/).map(c => c.replace(/\\\|/g, '|').trim());
+
+  function parseList(){
+    const first = lines[i].match(reList);
+    const base = indentOf(first[1]);
+    const ordered = /\d/.test(first[2]);
+    const start = ordered ? parseInt(first[2], 10) : 1;
+    const items = [];
+    while (i < lines.length){
+      const l = lines[i];
+      if (isBlank(l)){
+        let j = i + 1;
+        while (j < lines.length && isBlank(lines[j])) j++;
+        if (j < lines.length){
+          const mm = lines[j].match(reList);
+          if (mm && (indentOf(mm[1]) > base || (indentOf(mm[1]) === base && /\d/.test(mm[2]) === ordered))){ i = j; continue; }
+        }
+        break;
+      }
+      const mm = l.match(reList);
+      const cur = items[items.length - 1];
+      if (mm){
+        const ind = indentOf(mm[1]);
+        if (ind < base) break;
+        if (ind === base){
+          if (/\d/.test(mm[2]) !== ordered) break;
+          items.push({ text: [mm[3]], sub: [] });
+        } else {
+          if (!cur) break;
+          cur.sub.push(l);
+        }
+        i++; continue;
+      }
+      if (!cur) break;
+      if (indentOf(l.match(/^\s*/)[0]) > base){
+        if (cur.sub.length) cur.sub.push(l); else cur.text.push(l.trim());
+        i++; continue;
+      }
+      if (startsBlock(l, i)) break;
+      cur.text.push(l.trim()); i++; // lazy continuation
+    }
+    const tag = ordered ? 'ol' : 'ul';
+    const startAttr = ordered && start !== 1 ? ' start="' + start + '"' : '';
+    return '<' + tag + D + startAttr + '>' + items.map(it =>
+      '<li' + D + '>' + mdInline(it.text.join('\n')) + (it.sub.length ? mdBlocks(it.sub, codeBlocks) : '') + '</li>'
+    ).join('') + '</' + tag + '>';
+  }
+
+  while (i < lines.length){
+    const line = lines[i];
+    if (isBlank(line)){ i++; continue; }
+    let m;
+    if ((m = line.trim().match(reCode))){
+      const cb = codeBlocks[+m[1]];
+      out.push('<div class="md-codewrap"><button type="button" class="md-copy" onclick="mdCopyCode(this)" title="Copy" aria-label="Copy"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>' +
+        (cb.lang ? '<span class="md-lang">' + esc(cb.lang) + '</span>' : '') +
+        '<pre class="md-code" dir="ltr"><code>' + esc(cb.code) + '</code></pre></div>');
+      i++; continue;
+    }
+    if ((m = line.match(reHeading))){
+      const n = m[1].length;
+      out.push('<h' + n + ' class="md-h"' + D + '>' + mdInline(m[2]) + '</h' + n + '>');
+      i++; continue;
+    }
+    if (reHr.test(line)){ out.push('<hr>'); i++; continue; }
+    if (isTableStart(i)){
+      const head = splitRow(lines[i]);
+      const aligns = splitRow(lines[i + 1]).map(c => /^:-+:$/.test(c) ? 'center' : /-:$/.test(c) ? 'right' : /^:-/.test(c) ? 'left' : '');
+      i += 2;
+      const rows = [];
+      while (i < lines.length && !isBlank(lines[i]) && lines[i].includes('|')){ rows.push(splitRow(lines[i])); i++; }
+      const cell = (tag, c, k) => '<' + tag + D + (aligns[k] ? ' style="text-align:' + aligns[k] + '"' : '') + '>' + mdInline(c) + '</' + tag + '>';
+      out.push('<div class="md-table-wrap"><table><thead><tr>' + head.map((c, k) => cell('th', c, k)).join('') + '</tr></thead><tbody>' +
+        rows.map(r => '<tr>' + head.map((_, k) => cell('td', r[k] || '', k)).join('') + '</tr>').join('') + '</tbody></table></div>');
+      continue;
+    }
+    if (reQuote.test(line)){
+      const inner = [];
+      while (i < lines.length && reQuote.test(lines[i])){ inner.push(lines[i].match(reQuote)[1]); i++; }
+      out.push('<blockquote' + D + '>' + mdBlocks(inner, codeBlocks) + '</blockquote>');
+      continue;
+    }
+    if (reList.test(line)){ out.push(parseList()); continue; }
+    const para = [line.trim()];
+    i++;
+    while (i < lines.length && !isBlank(lines[i]) && !startsBlock(lines[i], i)){ para.push(lines[i].trim()); i++; }
+    out.push('<p' + D + '>' + mdInline(para.join('\n')) + '</p>');
+  }
+  return out.join('');
+}
+function mdToHtml(src){
+  let text = String(src == null ? '' : src).replace(/\r\n?/g, '\n');
+  const codeBlocks = [];
+  text = text.replace(/```([\w+-]*)[ \t]*\n?([\s\S]*?)```/g, (m, lang, code) => {
+    codeBlocks.push({ lang, code: code.replace(/\n$/, '') });
+    return '\n\u0002' + (codeBlocks.length - 1) + '\u0002\n';
+  });
+  return mdBlocks(esc(text).split('\n'), codeBlocks);
+}
+// حزمة Fluent Emoji: تحويل رموز الإيموجي لصور (بدون المساس بكتل الكود)
+function withFluentEmoji(html){
+  if (!window.EmojiFluent) return html;
+  return String(html).split(/(<pre[\s\S]*?<\/pre>)/).map(part => part.startsWith('<pre') ? part : EmojiFluent.render(part)).join('');
+}
+function mdCopyCode(btn){
+  const code = btn.parentNode.querySelector('code');
+  if (!code) return;
+  const done = () => { btn.classList.add('copied'); setTimeout(() => btn.classList.remove('copied'), 1200); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code.textContent).then(done).catch(() => {});
+}
+try { window.mdCopyCode = mdCopyCode; } catch(e) {}
+
 function renderMsgs(){
   const area = document.getElementById('chatMain');
   if (!messages.length){ renderWelcome(); return; }
@@ -345,7 +494,9 @@ function renderMsgs(){
     html += `<div class="msg-row ${isMine ? 'mine' : 'theirs'}">
       <div class="msg-av ${isMine ? 'user' : 'shizi'}">${isMine ? (ME?.avatar ? `<img src="${esc(ME.avatar)}" alt="">` : `<img src="/default-avatar.jpg" alt="">`) : '<img src="shizi-icon.png" alt="Shizi AI">'}</div>
       <div class="bubble-wrap">
-        <div class="bubble">${esc(m.content)}</div>
+        ${isMine
+          ? `<div class="bubble" dir="auto">${withFluentEmoji(esc(m.content))}</div>`
+          : `<div class="bubble md">${withFluentEmoji(mdToHtml(m.content))}</div>`}
         ${m.created_at ? `<div class="msg-time">${fmtTime(m.created_at)}</div>` : ''}
       </div>
     </div>`;
@@ -491,3 +642,15 @@ try { window.autoResize = autoResize; } catch(e) {}
 try { window.sendMsg = sendMsg; } catch(e) {}
 try { window.clearChat = clearChat; } catch(e) {}
 try { window.init = init; } catch(e) {}
+
+// ===== Fluent Emoji: زر المنتقي + إعادة الرسم بعد تحميل الكتالوج =====
+function initShiziEmoji(){
+  if (!window.EmojiFluent) return;
+  const btn = document.getElementById('shiziEmojiBtn');
+  const input = document.getElementById('msgInput');
+  if (btn && input && !btn.dataset.bound){ btn.dataset.bound = '1'; EmojiFluent.attachButton(btn, input); }
+  EmojiFluent.loadCatalog().then(() => { if (messages && messages.length) renderMsgs(); }).catch(() => {});
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initShiziEmoji);
+else initShiziEmoji();
+window.addEventListener('load', initShiziEmoji);
