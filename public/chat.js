@@ -4,7 +4,7 @@
 const LANG = {
   ar: {
     back: 'Hostaka', title: 'الرسائل', sidebarTitle: 'الرسائل',
-    newGroup: 'جروب جديد', loading: 'جارٍ التحميل...',
+    newGroup: 'مجموعة جديدة', loading: 'جارٍ التحميل...',
     emptyState: 'اختر محادثة من القائمة',
     groups: 'المجموعات', conversations: 'المحادثات', allMembers: 'جميع الأعضاء',
     noMembers: 'لا يوجد أعضاء آخرون', startChat: 'ابدأ محادثة',

@@ -32,7 +32,7 @@ const LANG = {
     invalidFile: 'يُقبل JPG للصور و MP4 للفيديوهات',
     splashWelcomeTitle: 'أهلاً بك في Hostaka', splashWelcomeSub: 'سجّل دخولك أو أنشئ حسابًا جديدًا للانضمام إلى المجتمع',
     splashLoginBtn: 'تسجيل الدخول', splashRegisterBtn: 'إنشاء حساب جديد', splashSkip: 'تصفّح كزائر',
-    splashSubLoggedIn: 'فيه منشورات جديدة بانتظارك', splashContinue: 'متابعة', splashTapHint: 'اضغط في أي مكان للمتابعة',
+    splashSubLoggedIn: 'توجد منشورات جديدة بانتظارك', splashContinue: 'متابعة', splashTapHint: 'اضغط في أي مكان للمتابعة',
     reelDetected: 'فيديو عمودي — سيُنشر كريلز', reelTag: 'ريلز', reelsNav: 'الريلز',
     createStory: 'إنشاء قصة', storiesTitle: 'القصص', noStories: 'لا توجد قصص حالياً',
     storyCaptionPh: 'اكتب تعليقاً (اختياري)...', storyPublish: 'نشر القصة',
@@ -179,10 +179,10 @@ const LANG = {
 // ============================================================
 const SPLASH_GREETINGS = {
   ar: {
-    night:   ['لسا صاحي يا {name}؟', 'سهران يا {name}؟ الليل طويل', 'نور الليل يا {name}'],
-    morning: ['صباح الخير يا {name}', 'يوم جديد يا {name}، جاهز؟', 'صباحك سعيد يا {name}'],
-    noon:    ['أهلاً يا {name}', 'وحشتنا يا {name}!', 'شو أخبارك يا {name}؟'],
-    evening: ['مساء الخير يا {name}', 'مساك نور يا {name}', 'أهلاً بعودتك يا {name}']
+    night:   ['ما زلت مستيقظاً يا {name}؟', 'ساهر يا {name}؟ الليل طويل', 'ليلك سعيد يا {name}'],
+    morning: ['صباح الخير يا {name}', 'يوم جديد يا {name}، هل أنت مستعد؟', 'صباحك سعيد يا {name}'],
+    noon:    ['أهلاً يا {name}', 'اشتقنا إليك يا {name}!', 'كيف حالك يا {name}؟'],
+    evening: ['مساء الخير يا {name}', 'مساؤك سعيد يا {name}', 'أهلاً بعودتك يا {name}']
   },
   en: {
     night:   ['Up late, {name}?', 'Still awake, {name}?', 'Burning the midnight oil, {name}?'],
