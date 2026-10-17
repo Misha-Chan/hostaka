@@ -132,7 +132,7 @@
         '🔐',
         tr('تأمين رسائلك المشفّرة', 'Secure your encrypted messages'),
         tr(
-          'اختر رمز PIN من 6 أرقام. هذا الرمز يخوّلك استرجاع رسائلك القديمة لو غيّرت جهازك أو مسحت بيانات المتصفح — احتفظ فيه، ما فيه طريقة لاسترجاعه بدونه.',
+          'اختر رمز PIN من 6 أرقام. هذا الرمز يخوّلك استرجاع رسائلك القديمة إذا غيّرت جهازك أو مسحت بيانات المتصفح — فاحتفظ به، فلا توجد طريقة لاسترجاعه بدونه.',
           'Choose a 6-digit PIN. It lets you recover your message history if you switch devices or clear your browser data — keep it safe, there is no way to recover it without this PIN.'
         )
       );
@@ -181,7 +181,7 @@
           step = 1;
           firstPin = '';
           d.box.querySelector('.hst-pin-msg').textContent = tr(
-            'اختر رمز PIN من 6 أرقام. هذا الرمز يخوّلك استرجاع رسائلك القديمة لو غيّرت جهازك أو مسحت بيانات المتصفح — احتفظ فيه، ما فيه طريقة لاسترجاعه بدونه.',
+            'اختر رمز PIN من 6 أرقام. هذا الرمز يخوّلك استرجاع رسائلك القديمة إذا غيّرت جهازك أو مسحت بيانات المتصفح — فاحتفظ به، فلا توجد طريقة لاسترجاعه بدونه.',
             'Choose a 6-digit PIN. It lets you recover your message history if you switch devices or clear your browser data — keep it safe, there is no way to recover it without this PIN.'
           );
           clearDigits(inputs);

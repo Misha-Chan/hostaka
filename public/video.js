@@ -1,7 +1,7 @@
 const LANG = {
   ar: {
     untitled:'بدون عنوان', likeWord:'إعجاب', commentWord:'تعليق', shareWord:'مشاركة', savedWord:'محفوظ', saveWord:'حفظ',
-    otherVideos:'فيديوهات أخرى', noOtherVideosYet:'لا يوجد فيديوهات أخرى بعد', addCommentPlaceholder:'أضف تعليقاً...',
+    otherVideos:'فيديوهات أخرى', noOtherVideosYet:'لا توجد فيديوهات أخرى بعد', addCommentPlaceholder:'أضف تعليقاً...',
     deleteWord:'حذف', noCommentsYetFirst:'لا توجد تعليقات بعد — كن أول من يعلّق', cantFindVideo:'تعذر العثور على الفيديو',
     videoSaved:'تم حفظ الفيديو', videoUnsaved:'تم إلغاء حفظ الفيديو', videoLinkCopied:'تم نسخ رابط الفيديو',
     cantCopy:'تعذر النسخ', confirmDeleteComment:'حذف هذا التعليق؟', noVideosYet:'لا توجد فيديوهات بعد'

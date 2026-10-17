@@ -14,7 +14,7 @@ const LANG = {
     settingsSaved:'تم الحفظ', leftGroup:'تمت مغادرة المجموعة', groupDeleted:'تم حذف المجموعة',
     confirmLeave:'هل أنت متأكد من مغادرة المجموعة؟', confirmDelete:'هل أنت متأكد من حذف المجموعة؟ لا يمكن التراجع',
     error:'فشل', membersAdded:'تمت الإضافة', noOthers:'لا يوجد مستخدمون آخرون',
-    promote:'ترقية لمدير', demote:'تنزيل لعضو', remove:'إزالة من المجموعة',
+    promote:'ترقية إلى مدير', demote:'تنزيل إلى عضو', remove:'إزالة من المجموعة',
     setNickname:'تعيين كنية', setNicknamePromptTitle:'اكتب الكنية التي ستظهر لهذا العضو داخل المجموعة',
     blockUser:'حظر العضو', confirmBlockMember:'سيتم حظر هذا العضو من مراسلتك. متابعة؟',
     viewMedia:'عرض وسائط المحادثة', noMedia:'لا توجد وسائط', reportGroupChat:'الإبلاغ عن الدردشة الجماعية',

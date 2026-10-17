@@ -8,9 +8,9 @@ const LANG = {
     cantCreateCollection:'تعذر إنشاء المجموعة', collectionCreated:'تم إنشاء مجموعة "{name}"',
     confirmDeleteCollection:'حذف مجموعة "{name}"؟ المنشورات المحفوظة بداخلها ستبقى محفوظة بدون تصنيف.',
     cantDelete:'تعذر الحذف', collectionDeleted:'تم حذف المجموعة', noCollection:'بدون مجموعة', moveToCollectionLabel:'نقل إلى مجموعة',
-    cantMove:'تعذر النقل', movedSuccess:'تم النقل بنجاح', savedTitle:'المحفوظات', savedSub:'كل المنشورات والريلز اللي حفظتها بمكان واحد',
+    cantMove:'تعذر النقل', movedSuccess:'تم النقل بنجاح', savedTitle:'المحفوظات', savedSub:'جميع المنشورات والريلز التي حفظتها في مكان واحد',
     nothingSavedYet:'لا يوجد أي شيء محفوظ{scope} بعد', inThisCollection:' في هذه المجموعة',
-    savedMembersOnly:'المحفوظات متاحة للأعضاء المسجلين فقط', savedLoginHint:'سجّل الدخول لرؤية المنشورات والريلز اللي حفظتها', loginBtn:'تسجيل الدخول',
+    savedMembersOnly:'المحفوظات متاحة للأعضاء المسجلين فقط', savedLoginHint:'سجّل الدخول لرؤية المنشورات والريلز التي حفظتها', loginBtn:'تسجيل الدخول',
     draft:'مسودة', privateBadge:'خاص'
   },
   en: {
