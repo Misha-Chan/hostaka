@@ -572,7 +572,7 @@ app.post('/api/login', async(req,res)=>{
     const{email,password}=req.body||{};
     if(!email||!password) return res.status(400).json({error:'البريد وكلمة المرور مطلوبان'});
     const user=await q.getUserByEmail(email.trim().toLowerCase());
-    if(!user||!bcrypt.compareSync(password,user.password)) return res.status(401).json({error:'البريد أو كلمة المرور غير صريحة'});
+    if(!user||!bcrypt.compareSync(password,user.password)) return res.status(401).json({error:'البريد أو كلمة المرور غير صحيحة'});
     if(user.suspended) return res.status(403).json({ error:'تم تعليق حسابك' + (user.suspend_reason ? ': ' + user.suspend_reason : ''), suspended:true, reason:user.suspend_reason||'' });
     if (Number(user.totp_enabled) === 1) {
       return res.json({ success:true, requires2FA:true, pendingToken: sign2FAPendingToken(user.id) });
@@ -952,7 +952,7 @@ app.post('/api/account/close-friends/:username', requireAuth, async (req, res) =
   try {
     const friend = await q.getUserByUsername(req.params.username);
     if (!friend) return res.status(404).json({ error:'المستخدم غير موجود' });
-    if (friend.id === req.user.id) return res.status(400).json({ error:'ما تقدر تضيف نفسك' });
+    if (friend.id === req.user.id) return res.status(400).json({ error:'لا يمكنك إضافة نفسك' });
     await q.addCloseFriend(req.user.id, friend.id);
     res.json({ success:true });
   } catch(e) {
@@ -1788,7 +1788,7 @@ app.put('/api/wiki/posts/:token', requireAuth, async (req, res) => {
   try {
     const post = await q.getWikiPostByToken(req.params.token);
     if (!post) return res.status(404).json({ error: 'المنشور غير موجود' });
-    if (post.author_id !== req.user.id) return res.status(403).json({ error: 'ما تقدر تعدّل منشور مو لك' });
+    if (post.author_id !== req.user.id) return res.status(403).json({ error: 'لا يمكنك تعديل منشور ليس لك' });
 
     const title = post.parent_id ? '' : String(req.body?.title ?? post.title).trim().slice(0, 150);
     const body = String(req.body?.body ?? post.body).trim().slice(0, 5000);
@@ -1809,7 +1809,7 @@ app.delete('/api/wiki/posts/:token', requireAuth, async (req, res) => {
     if (!post) return res.status(404).json({ error: 'المنشور غير موجود' });
     const isOwner = post.author_id === req.user.id;
     const isStaff = req.user.role === 'admin' || req.user.role === 'moderator';
-    if (!isOwner && !isStaff) return res.status(403).json({ error: 'ما تقدر تحذف منشور مو لك' });
+    if (!isOwner && !isStaff) return res.status(403).json({ error: 'لا يمكنك حذف منشور ليس لك' });
     await q.deleteWikiPost(post.id);
     res.json({ success: true });
   } catch(e) {
