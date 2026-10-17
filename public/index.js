@@ -1648,7 +1648,7 @@ function renderPost(p){
         <div class="sw-actions">
           ${ME ? `<button class="btn-icon save-btn ${p.is_saved?'saved':''}" onclick="toggleSavePost(${p.id})" title="${p.is_saved?t('unsave'):t('save')}">${p.is_saved?SVG.bookmarkFilled:SVG.bookmark}</button>` : ''}
           <button class="btn-icon" onclick="sharePost(${p.id})" title="${t('share')}">${SVG.share}</button>
-          ${ME && p.user_id && p.user_id!=ME?.id ? `<button class="btn-icon" onclick="location.href='/chat?with=${esc(p.publisher_username||p.publisher)}'" title="${t('message')}">${SVG.comment}</button>` : ''}
+          ${ME && p.user_id && p.user_id!=ME?.id ? `<button class="btn-icon" onclick="location.href='/chat/${encodeURIComponent(p.publisher_username||p.publisher)}'" title="${t('message')}">${SVG.comment}</button>` : ''}
           ${canDel ? `<button class="btn-icon" onclick="delPost(${p.id})" title="${t('delete')}">${SVG.delete}</button>` : ''}
           ${ME && p.user_id && p.user_id!=ME?.id ? `
           <div class="post-opts-wrap">

@@ -564,7 +564,7 @@ function renderPublic(user, posts, followStatus) {
     actionsHtml = `<button class="btn-edit" onclick="switchTab('edit')">${SVG.edit}${t('editProfile')}</button>`;
   } else if (token) {
     actionsHtml = `
-      ${canMessage ? `<a href="/chat?with=${esc(user.username)}" class="btn-msg">${SVG.msg}${t('message')}</a>` : ''}
+      ${canMessage ? `<a href="/chat/${encodeURIComponent(user.username)}" class="btn-msg">${SVG.msg}${t('message')}</a>` : ''}
       <button class="btn-follow ${isFollowing ? 'following' : ''}" onclick="toggleFollow('${esc(user.username)}', this)">
         ${isFollowing ? SVG.check : SVG.follow}
         <span>${isFollowing ? t('unfollow') : t('follow')}</span>
