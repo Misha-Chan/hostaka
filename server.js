@@ -16,6 +16,8 @@ const sanitizeHtml = require('sanitize-html');
 // ===== استيراد node-fetch و crypto =====
 const fetch  = require('node-fetch');
 const crypto = require('crypto');
+const dns    = require('dns').promises;
+const net    = require('net');
 const { authenticator } = require('otplib');
 // otplib افتراضياً window:0 (بدون أي تسامح بفارق التوقيت)، وهذا يرفض الكود الصحيح
 // لأتفه فرق بتوقيت جهاز المستخدم أو تأخر بسيط بالشبكة. نسمح بنافذة ±60 ثانية (خطوة قبل وبعد).
@@ -215,7 +217,8 @@ function injectOG(html, meta) {
     tags += `  <meta property="og:video" content="${ogEscape(meta.video)}">\n  <meta property="og:video:type" content="video/mp4">\n`;
   }
   if (meta.jsonld) {
-    tags += `  <script type="application/ld+json">${JSON.stringify(meta.jsonld)}</script>\n`;
+    // نستبدل كل < بالتسلسل الآمن \u003c لمنع كسر وسم </script> (XSS مخزّن عبر JSON-LD)
+    tags += `  <script type="application/ld+json">${JSON.stringify(meta.jsonld).replace(/</g, '\\u003c')}</script>\n`;
   }
   // سكربت خفيف لردع النسخ العرضي (راجع public/protect.js لملاحظة حدوده)
   tags += `  <script src="/protect.js" defer></script>\n`;
@@ -293,6 +296,16 @@ const POST_SANITIZE_OPTIONS = {
 function sanitizePostContent(html) {
   try { return sanitizeHtml(String(html == null ? '' : html), POST_SANITIZE_OPTIONS); }
   catch (e) { console.error('sanitizePostContent failed:', e.message || e); return ''; }
+}
+
+// تنقية روابط الوسائط (صورة/فيديو) المُخزَّنة من أي محارف تسمح بكسر سمات HTML
+// أو سلاسل JS داخل on* handlers (اقتباس مفرد/مزدوج، أقواس، backtick، backslash، مسافات).
+function sanitizeMediaUrl(v) {
+  const s = String(v == null ? '' : v).trim();
+  if (!s || s.length > 2000) return '';
+  if (/["'<>`\\\s]/.test(s)) return '';
+  if (/^javascript:/i.test(s)) return '';
+  return s;
 }
 
 // ===== شخصية Shizi AI (مبنية على Gemini) =====
@@ -1224,15 +1237,70 @@ const linkPreviewCache = new Map(); // href -> { data, ts }
 const LINK_PREVIEW_TTL = 60 * 60 * 1000; // ساعة واحدة
 const LINK_PREVIEW_MAX = 500;            // أقصى عدد عناصر بالكاش
 
-function isPrivateOrLocalHost(hostname) {
-  const h = String(hostname || '').toLowerCase();
-  if (!h || h === 'localhost' || h === '0.0.0.0' || h === '::1') return true;
-  if (/^127\./.test(h)) return true;
-  if (/^10\./.test(h)) return true;
-  if (/^192\.168\./.test(h)) return true;
-  if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(h)) return true;
-  if (/^169\.254\./.test(h)) return true; // link-local / cloud metadata
+// هل هذا العنوان IP خاص/محلي/محجوز؟ (يدعم IPv4 و IPv6 و IPv4-mapped)
+function ipIsPrivate(ip) {
+  if (!net.isIP(ip)) return true; // غير قابل للتحليل = غير موثوق
+  if (net.isIPv4(ip)) {
+    const p = ip.split('.').map(Number);
+    const a = p[0], b = p[1];
+    if (a === 0 || a === 10 || a === 127) return true;
+    if (a === 169 && b === 254) return true;                 // link-local / cloud metadata
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 100 && b >= 64 && b <= 127) return true;       // CGNAT
+    if (a === 192 && b === 0 && p[2] === 0) return true;     // 192.0.0.0/24
+    if (a === 198 && (b === 18 || b === 19)) return true;    // benchmarking
+    if (a >= 224) return true;                               // multicast/reserved/broadcast
+    return false;
+  }
+  const x = ip.toLowerCase();
+  if (x === '::' || x === '::1') return true;
+  if (x.startsWith('fc') || x.startsWith('fd')) return true; // ULA
+  if (x.startsWith('fe80')) return true;                     // link-local
+  const m = x.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);        // IPv4-mapped
+  if (m) return ipIsPrivate(m[1]);
   return false;
+}
+
+function isPrivateOrLocalHost(hostname) {
+  const h = String(hostname || '').toLowerCase().replace(/^\[|\]$/g, '');
+  if (!h) return true;
+  if (h === 'localhost' || h.endsWith('.localhost')) return true;
+  if (net.isIP(h)) return ipIsPrivate(h);
+  return false;
+}
+
+// يتحقق أن العنوان عام بالكامل: لا يحلّ إلى أي نطاق خاص/محلي (كل عناوين النطاق).
+async function assertPublicUrl(u) {
+  if (!/^https?:$/.test(u.protocol)) throw new Error('unsupported-protocol');
+  const host = u.hostname.replace(/^\[|\]$/g, '');
+  if (isPrivateOrLocalHost(host)) throw new Error('private-host');
+  if (net.isIP(host)) { if (ipIsPrivate(host)) throw new Error('private-ip'); return; }
+  const addrs = await dns.lookup(host, { all: true, verbatim: true });
+  if (!addrs || !addrs.length) throw new Error('dns-failed');
+  for (const a of addrs) if (ipIsPrivate(a.address)) throw new Error('private-ip');
+}
+
+// جلب بأمان: كل قفزة تحويل تُتحقق قبل المتابعة (يمنع SSRF عبر redirects/عناوين IP مغلفة).
+async function safeFetchHtml(startUrl, signal, maxHops = 3) {
+  let current = String(startUrl);
+  for (let hop = 0; hop <= maxHops; hop++) {
+    const parsed = new URL(current);
+    await assertPublicUrl(parsed);
+    const r = await fetch(parsed.href, {
+      signal,
+      redirect: 'manual',
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HostakaLinkPreview/1.0)' }
+    });
+    if (r.status >= 300 && r.status < 400) {
+      const loc = r.headers.get('location');
+      if (!loc) return r;
+      current = new URL(loc, parsed.href).href;
+      continue;
+    }
+    return r;
+  }
+  throw new Error('too-many-redirects');
 }
 
 function metaTagPick(html, prop) {
@@ -1265,11 +1333,7 @@ app.get('/api/link-preview', async (req, res) => {
     const timeout = setTimeout(() => controller.abort(), 6000);
     let data;
     try {
-      const r = await fetch(u.href, {
-        signal: controller.signal,
-        redirect: 'follow',
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HostakaLinkPreview/1.0)' }
-      });
+      const r = await safeFetchHtml(u.href, controller.signal);
       const finalUrl = r.url && !isPrivateOrLocalHost(new URL(r.url).hostname) ? r.url : u.href;
       const ct = r.headers.get('content-type') || '';
       if (!ct.includes('text/html')) {
@@ -1435,8 +1499,8 @@ app.post('/api/records', requireAuth, async (req, res) => {
       publisherRole,
       publisherAvatar,
       sanitizePostContent(content?.trim() || ''),
-      image || '',
-      video || '',
+      sanitizeMediaUrl(image),
+      sanitizeMediaUrl(video),
       isReel,
       w,
       h,
@@ -2069,7 +2133,7 @@ app.put('/api/records/:id', requireAuth, async (req, res) => {
     if (!content?.trim() && !image && !rec.video) {
       return res.status(400).json({ error: 'المحتوى مطلوب' });
     }
-    await q.updateRecord(req.params.id, sanitizePostContent(content?.trim() || ''), image !== undefined ? image : rec.image);
+    await q.updateRecord(req.params.id, sanitizePostContent(content?.trim() || ''), image !== undefined ? sanitizeMediaUrl(image) : rec.image);
     if (privacy !== undefined || scheduled_at !== undefined) {
       const allowedPrivacy = ['public', 'private', 'draft'];
       const finalPrivacy = allowedPrivacy.includes(privacy) ? privacy : (rec.privacy || 'public');
@@ -2115,6 +2179,18 @@ app.post('/api/records/:id/save', requireAuth, async (req, res) => {
     const recordId = Number(req.params.id);
     const rec = await q.getRecord(recordId);
     if (!rec) return res.status(404).json({ error:'المنشور غير موجود' });
+    // منع حفظ/قراءة منشورات الآخرين غير المتاحة (مسودة/خاصة/مجدولة/الأصدقاء المقربين) — إصلاح IDOR
+    const isOwner = Number(req.user.id) === Number(rec.user_id);
+    if (!isOwner) {
+      const privacy = rec.privacy || 'public';
+      if (privacy === 'draft' || privacy === 'private') return res.status(403).json({ error:'هذا المنشور غير متاح' });
+      if (privacy === 'close_friends' && !(await q.isCloseFriend(rec.user_id, req.user.id))) {
+        return res.status(403).json({ error:'هذا المنشور غير متاح' });
+      }
+      if (rec.scheduled_at && new Date(String(rec.scheduled_at).replace(' ','T')+'Z').getTime() > Date.now()) {
+        return res.status(403).json({ error:'هذا المنشور غير متاح' });
+      }
+    }
     const already = await q.isPostSaved(req.user.id, recordId);
     if (already) {
       await q.unsavePost(req.user.id, recordId);
@@ -3352,7 +3428,7 @@ app.post('/api/messages/:username', requireAuth, async (req, res) => {
       me.display_name || me.username,
       other.display_name || other.username,
       content?.trim() || '',
-      image || '',
+      sanitizeMediaUrl(image),
       reply_to ? Number(reply_to) : null,
       iv || '',
       !!encrypted
@@ -3591,7 +3667,7 @@ app.post('/api/groups/:id/messages', requireAuth, async (req, res) => {
       user.display_name || user.username,
       user.avatar || '',
       content?.trim() || '',
-      image || '',
+      sanitizeMediaUrl(image),
       reply_to ? Number(reply_to) : null
     );
     res.json({ success: true });
