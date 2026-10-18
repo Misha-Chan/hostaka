@@ -739,7 +739,7 @@ async function openGroupMedia(){
       grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:30px;">${t('noMedia')}</div>`;
       return;
     }
-    grid.innerHTML = items.map(m => `<div class="media-grid-item" onclick="openImgViewer('${esc(m.image)}')"><img src="${esc(m.image)}" loading="lazy"></div>`).join('');
+    grid.innerHTML = items.map(m => `<div class="media-grid-item" onclick="openImgViewer('${escJs(m.image)}')"><img src="${esc(m.image)}" loading="lazy"></div>`).join('');
   } catch(e) { grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:20px;">${t('error')}</div>`; }
 }
 
