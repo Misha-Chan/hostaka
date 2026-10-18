@@ -517,11 +517,22 @@ async function initDB() {
   // تلقائياً بعد ذلك — يصبح حساباً عادياً بصلاحيات أدمن يمكنك تعديل
   // بريده أو كلمة مروره بحرية (مثلاً من صفحة /manager) دون أن يرجعه
   // السيرفر لقيم متغيرات البيئة عند كل إعادة تشغيل/نشر جديد.
-  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@hostaka.io';
-  const ADMIN_PASS  = process.env.ADMIN_PASS  || 'hostaka-admin-2026';
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+  const ADMIN_PASS  = process.env.ADMIN_PASS;
 
   const adminExists = await db.execute({ sql:"SELECT id FROM users WHERE role='admin' LIMIT 1", args:[] });
   if (adminExists.rows.length === 0) {
+    // لا بيانات أدمن افتراضية: لو ما فيه أدمن بعد، لازم تكون القيم مضبوطة
+    // بمتغيرات البيئة، وإلا نرفض بدل إنشاء حساب ببيانات معروفة للجميع (المستودع عام).
+    if (!ADMIN_EMAIL || !ADMIN_PASS) {
+      throw new Error(
+        '❌ لا يوجد حساب أدمن بعد، ويجب ضبط ADMIN_EMAIL و ADMIN_PASS لإنشاء أول حساب أدمن ' +
+        '(لا توجد بيانات افتراضية عمداً).'
+      );
+    }
+    if (ADMIN_PASS.length < 8) {
+      throw new Error('❌ ADMIN_PASS قصيرة جداً — استخدم 8 أحرف على الأقل.');
+    }
     const hash = bcrypt.hashSync(ADMIN_PASS, 10);
     try {
       await db.execute({

@@ -134,3 +134,82 @@ function setThemeIcon(html) {
   } catch (e) { /* التتبع لا يجب أن يكسر أي صفحة */ }
 })();
 
+/* ================= تهريب قيمة نصية للاستخدام داخل سلسلة JS بسمة HTML =================
+ * دالة esc() تُهرّب HTML لكنها تُترك ' كما هي؛ ولأن قيمة سمة onclick تُفكّ ترميز
+ * الـ HTML أولاً ثم تُحلّل كـ JS، فإن ' غير مهرّبة تسمح بكسر السلسلة وحقن كود
+ * (مثلاً اسم عرض يحوي: '); alert(1); //). هذه الدالة تُهرّب للسياقين معاً:
+ * HTML (& < > ") ثم JS (\ ' والسطور الجديدة).
+ */
+function escJs(s) {
+  var str = String(s == null ? '' : s);
+  return str
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+    .replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, '\\n');
+}
+window.escJs = escJs;
+
+/* ================= تنقية HTML المحتوى الغني (حماية من XSS مخزّن) =================
+ * محتوى المنشورات يُخزَّن كـ HTML من محرر contenteditable، ويُعرض عبر innerHTML
+ * (دالة linkifyContent) في كل صفحات العرض (index/post/profile/save). ننقّي هنا
+ * داخل المتصفح باستخدام محلّل الـ DOM نفسه (أدق وأأمن من أي regex)، بقائمة بيضاء
+ * ضيقة من وسوم التنسيق فقط وبلا أي سمات عدا href/title على <a>. هذا خط دفاع ثانٍ
+ * مكمّل للتنقية على السيرفر، ويحيّد أيضاً أي منشور قديم مخزّن قبل تطبيق التنقية.
+ */
+function sanitizeRichHtml(html) {
+  if (html == null) return '';
+  var ALLOWED = {
+    B: 1, STRONG: 1, I: 1, EM: 1, U: 1, S: 1, STRIKE: 1, DEL: 1, BR: 1, P: 1,
+    DIV: 1, SPAN: 1, A: 1, UL: 1, OL: 1, LI: 1, BLOCKQUOTE: 1,
+    H1: 1, H2: 1, H3: 1, H4: 1, H5: 1, H6: 1, CODE: 1, PRE: 1, HR: 1
+  };
+  var DROP_WITH_CONTENT = {
+    SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, TEMPLATE: 1, IFRAME: 1, OBJECT: 1,
+    EMBED: 1, SVG: 1, MATH: 1, LINK: 1, META: 1, BASE: 1, TITLE: 1, HEAD: 1,
+    BODY: 1, HTML: 1, FORM: 1, INPUT: 1, BUTTON: 1, TEXTAREA: 1, SELECT: 1,
+    OPTION: 1, VIDEO: 1, AUDIO: 1, IMG: 1, SOURCE: 1, TRACK: 1, CANVAS: 1,
+    APPLET: 1, FRAME: 1, FRAMESET: 1
+  };
+  var doc, host;
+  try {
+    doc = document.implementation.createHTMLDocument('');
+    host = doc.createElement('div');
+    host.innerHTML = String(html);
+  } catch (e) { return ''; }
+
+  var nodes = host.querySelectorAll('*');
+  for (var i = nodes.length - 1; i >= 0; i--) {
+    var el = nodes[i];
+    var parent = el.parentNode;
+    if (!parent) continue;
+    var tag = (el.tagName || '').toUpperCase();
+    // أي محتوى أجنبي (SVG/MathML مثل <svg onload>) نُزيله كاملاً — بؤرة XSS شائعة
+    if (el.namespaceURI && el.namespaceURI !== 'http://www.w3.org/1999/xhtml') { parent.removeChild(el); continue; }
+    if (DROP_WITH_CONTENT[tag]) { parent.removeChild(el); continue; }
+    if (!ALLOWED[tag]) {
+      // وسم غير مسموح لكنه غير خطير: نُبقي محتواه النصي فقط (unwap)
+      while (el.firstChild) parent.insertBefore(el.firstChild, el);
+      parent.removeChild(el);
+      continue;
+    }
+    // تنظيف السمات: فقط href/title على <a>، مع رفض أي مخطط غير آمن
+    var attrs = el.attributes;
+    for (var j = attrs.length - 1; j >= 0; j--) {
+      var name = attrs[j].name;
+      var lname = name.toLowerCase();
+      if (tag === 'A' && lname === 'href') {
+        var href = (el.getAttribute(name) || '').trim();
+        if (!/^(https?:\/\/|mailto:|\/(?!\/)|#)/i.test(href)) el.removeAttribute(name);
+        continue;
+      }
+      if (tag === 'A' && lname === 'title') continue;
+      el.removeAttribute(name);
+    }
+    if (tag === 'A') {
+      el.setAttribute('rel', 'noopener noreferrer');
+      el.setAttribute('target', '_blank');
+    }
+  }
+  return host.innerHTML;
+}
+window.sanitizeRichHtml = sanitizeRichHtml;
+

@@ -110,6 +110,8 @@ function stripEmojis(text) {
   return text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FEFF}\u{1F1E0}-\u{1F1FF}]/gu, '');
 }
 function linkifyContent(html){
+  // تنقية HTML المحتوى أولاً (منع XSS مخزّن) قبل أي معالجة/عرض — راجع shared.js
+  html = (typeof sanitizeRichHtml === 'function') ? sanitizeRichHtml(html || '') : (html || '');
   try {
     const wrapper = document.createElement('div');
     wrapper.innerHTML = (window.EmojiFluent ? EmojiFluent.render(html) : html);
@@ -251,7 +253,7 @@ function renderSavedCard(p){
     <div class="card-body">
       <div class="pub-row">
         <div class="pub-info">
-          <div class="pub-name" style="cursor:pointer;" onclick="goPublisher('${esc(p.publisher_username||p.publisher)}')">
+          <div class="pub-name" style="cursor:pointer;" onclick="goPublisher('${escJs(p.publisher_username||p.publisher)}')">
             ${esc(p.publisher_name || p.publisher)}
             ${(p.publisher_verified||p.user_verified) ? verifiedBadge() : ''}
             ${postStatusBadge(p)}
@@ -367,7 +369,7 @@ function collectionsBarHtml(){
     `<button class="collection-chip ${activeCollectionId===null?'active':''}" onclick="selectCollection(null)">${t('allCollections')}</button>`,
     ...collections.map(c => `<button class="collection-chip ${String(activeCollectionId)===String(c.id)?'active':''}" onclick="selectCollection(${c.id})">
         ${esc(c.name)} <span class="cc-count">${c.items_count||0}</span>
-        <span class="collection-chip-del" onclick="event.stopPropagation();deleteCollection(${c.id},'${esc(c.name).replace(/'/g,"")}')">
+        <span class="collection-chip-del" onclick="event.stopPropagation();deleteCollection(${c.id},'${escJs(c.name)}')">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </span>
       </button>`),

@@ -313,6 +313,8 @@ function extractFirstUrl(text){
   return m[0].replace(/[.,!?)\]]+$/, '');
 }
 function linkifyContent(html){
+  // تنقية HTML المحتوى أولاً (منع XSS مخزّن) قبل أي معالجة/عرض — راجع shared.js
+  html = (typeof sanitizeRichHtml === 'function') ? sanitizeRichHtml(html || '') : (html || '');
   try {
     const wrapper = document.createElement('div');
     wrapper.innerHTML = (window.EmojiFluent ? EmojiFluent.render(html) : html);
