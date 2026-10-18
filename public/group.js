@@ -620,7 +620,7 @@ function renderMembers(){
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
         </div>
         <div class="m-menu" id="mmenu-${m.user_id}">
-          <button onclick="setMemberNicknamePrompt(${m.user_id}, '${esc((m.nickname||'').replace(/'/g,"\\'"))}')">${t('setNickname')}</button>
+          <button onclick="setMemberNicknamePrompt(${m.user_id}, '${escJs(m.nickname||'')}')">${t('setNickname')}</button>
           ${roleBtn}
           ${removeBtn}
           <button class="danger" onclick="blockMemberConfirm('${esc(m.username)}')">${t('blockUser')}</button>

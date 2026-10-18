@@ -11,6 +11,7 @@ const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
 const { q, initDB } = require('./database');
 const { generateOgImage } = require('./ogimage');
+const sanitizeHtml = require('sanitize-html');
 
 // ===== استيراد node-fetch و crypto =====
 const fetch  = require('node-fetch');
@@ -55,6 +56,9 @@ process.on('unhandledRejection', (reason) => {
 });
 
 const app = express();
+// نثق بوكيل واحد فقط (بروكسي Vercel) قبل الطلب، بدل قراءة رأس X-Forwarded-For
+// مباشرةً (قابل للتزوير) — يجعل req.ip موثوقاً لحدّ المعدّل وسجلات الجلسات.
+app.set('trust proxy', 1);
 
 // فحص صحة خفيف — يستخدمه بروكسي orbithub (وأي مستودع فرعي آخر) للتأكد
 // إنه وصل فعلاً لنسخة السيرفر الحالية، وإنه ما فيه انقطاع بالشبكة بينهم.
@@ -92,7 +96,7 @@ const _rateBuckets = new Map();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // نافذة دقيقة واحدة
 const RATE_LIMIT_MAX = 240; // 240 طلب/دقيقة لكل IP على مسارات API
 app.use('/api', (req, res, next) => {
-  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+  const ip = req.ip || req.socket?.remoteAddress || 'unknown';
   const now = Date.now();
   let bucket = _rateBuckets.get(ip);
   if (!bucket || now - bucket.start > RATE_LIMIT_WINDOW_MS) {
@@ -251,8 +255,45 @@ function baseMeta(req, title) {
   };
 }
 
-const JWT_SECRET  = process.env.JWT_SECRET  || 'hostaka-secret-2026';
+const JWT_SECRET  = process.env.JWT_SECRET;
 const JWT_EXPIRES = '30d';
+
+// لا يوجد سر افتراضي إطلاقاً: أي سر مكتوب بالكود منشور للجميع (المستودع عام)
+// ويسمح بتزوير التوكنات وتخطي الصلاحيات. نرفض الإقلاع بدل التشغيل بشكل غير آمن.
+if (!JWT_SECRET || JWT_SECRET.length < 16) {
+  throw new Error(
+    '❌ JWT_SECRET غير مُعدّ (أو أقصر من 16 حرفاً). اضبطه بمتغير بيئة عشوائي طويل ' +
+    '(مثال: openssl rand -hex 32) قبل تشغيل الخادم. لا يوجد سر افتراضي عمداً.'
+  );
+}
+
+// ============================================================
+// تنقية HTML محتوى المنشورات — حماية من XSS المخزّن.
+// المحتوى يصل كـ HTML من محرر غني (contenteditable)، ويُعرض لاحقاً عبر innerHTML
+// بكل صفحات العرض، فبدون تنقية يمكن لأي مستخدم تخزين <img onerror>/<svg onload>/
+// <script> وتنفيذها بمتصفح كل من يشاهد المنشور (وسرقة توكن الجلسة من localStorage).
+// نسمح فقط بمجموعة ضيقة من وسوم التنسيق، وبلا أي سمات عدا href/title على <a>.
+// (الواجهة تعيد التنقية أيضاً كخط دفاع ثانٍ — راجع public/shared.js)
+// ============================================================
+const POST_SANITIZE_OPTIONS = {
+  allowedTags: [
+    'b','strong','i','em','u','s','strike','del','br','p','div','span',
+    'a','ul','ol','li','blockquote','h1','h2','h3','h4','h5','h6','code','pre','hr'
+  ],
+  allowedAttributes: { a: ['href', 'title', 'rel', 'target'] },
+  allowedSchemes: ['http', 'https', 'mailto'],
+  allowedSchemesAppliedToAttributes: ['href'],
+  allowProtocolRelative: false,
+  disallowedTagsMode: 'discard',
+  nonTextTags: ['script','style','textarea','option','noscript','iframe','object','embed','template'],
+  transformTags: {
+    a: sanitizeHtml.simpleTransform('a', { rel: 'noopener noreferrer', target: '_blank' })
+  }
+};
+function sanitizePostContent(html) {
+  try { return sanitizeHtml(String(html == null ? '' : html), POST_SANITIZE_OPTIONS); }
+  catch (e) { console.error('sanitizePostContent failed:', e.message || e); return ''; }
+}
 
 // ===== شخصية Shizi AI (مبنية على Gemini) =====
 const SHIZI_SYSTEM_PROMPT = `أنتِ "شيزي" (Shizi AI)، المساعدة الذكية الرسمية لمنصة Hostaka.
@@ -424,6 +465,7 @@ function signToken(user, jti) {
 }
 
 function getClientIp(req) {
+  if (req.ip) return req.ip;
   const fwd = req.headers['x-forwarded-for'];
   if (fwd) return fwd.split(',')[0].trim();
   return req.socket?.remoteAddress || '';
@@ -514,7 +556,14 @@ async function requireAuth(req,res,next) {
 function requireAdmin(req,res,next) {
   const u=verifyToken(req); if(!u) return res.status(401).json({error:'غير مصرح'});
   if(u.role!=='admin') return res.status(403).json({error:'تحتاج صلاحية admin'});
-  req.user=u; next();
+  // نتحقق من الدور/الحالة بقاعدة البيانات أيضاً (لا نكتفي بحقل role داخل التوكن):
+  // التوكن صالح 30 يوماً، فحساب أدمن مَحذوف/مُخفَّض الصلاحية/معلّق كان يبقى قادراً
+  // على كل عمليات الأدمن حتى انتهائه. التحقق من القاعدة يقطع ذلك فوراً.
+  q.getUserById(u.id).then(dbUser => {
+    if (!dbUser || dbUser.role !== 'admin') return res.status(403).json({error:'تحتاج صلاحية admin'});
+    if (dbUser.suspended) return res.status(403).json({ error:'تم تعليق حسابك' + (dbUser.suspend_reason ? ': ' + dbUser.suspend_reason : ''), suspended:true, reason: dbUser.suspend_reason||'' });
+    req.user=u; next();
+  }).catch(() => res.status(500).json({error:'خطأ في الخادم'}));
 }
 // صلاحية "مشرف" (moderator): رتبة محدودة يعيّنها الأدمن، تقدر بس تعلّق
 // حسابات/منشورات وترد على البلاغات — أضيق من admin اللي يقدر يسوي كل شي.
@@ -523,7 +572,11 @@ function requireAdmin(req,res,next) {
 function requireModerator(req,res,next) {
   const u=verifyToken(req); if(!u) return res.status(401).json({error:'غير مصرح'});
   if(u.role!=='admin' && u.role!=='moderator') return res.status(403).json({error:'تحتاج صلاحية admin أو moderator'});
-  req.user=u; next();
+  q.getUserById(u.id).then(dbUser => {
+    if (!dbUser || (dbUser.role !== 'admin' && dbUser.role !== 'moderator')) return res.status(403).json({error:'تحتاج صلاحية admin أو moderator'});
+    if (dbUser.suspended) return res.status(403).json({ error:'تم تعليق حسابك' + (dbUser.suspend_reason ? ': ' + dbUser.suspend_reason : ''), suspended:true, reason: dbUser.suspend_reason||'' });
+    req.user=u; next();
+  }).catch(() => res.status(500).json({error:'خطأ في الخادم'}));
 }
 
 // ============================================================
@@ -1381,7 +1434,7 @@ app.post('/api/records', requireAuth, async (req, res) => {
       publisher,
       publisherRole,
       publisherAvatar,
-      content?.trim() || '',
+      sanitizePostContent(content?.trim() || ''),
       image || '',
       video || '',
       isReel,
@@ -2016,7 +2069,7 @@ app.put('/api/records/:id', requireAuth, async (req, res) => {
     if (!content?.trim() && !image && !rec.video) {
       return res.status(400).json({ error: 'المحتوى مطلوب' });
     }
-    await q.updateRecord(req.params.id, content?.trim() || '', image !== undefined ? image : rec.image);
+    await q.updateRecord(req.params.id, sanitizePostContent(content?.trim() || ''), image !== undefined ? image : rec.image);
     if (privacy !== undefined || scheduled_at !== undefined) {
       const allowedPrivacy = ['public', 'private', 'draft'];
       const finalPrivacy = allowedPrivacy.includes(privacy) ? privacy : (rec.privacy || 'public');
