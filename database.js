@@ -1,5 +1,4 @@
 const { createClient } = require('@libsql/client');
-const bcrypt = require('bcryptjs');
 
 if (!global._tursoClient) {
   global._tursoClient = createClient({
@@ -512,42 +511,10 @@ async function initDB() {
   } catch(e) { /* الأعمدة/الجدول غير موجودة بعد على تركيبات قديمة جداً */ }
 
   // Admin — Hostaka
-  // ⚠️ يُنشأ حساب الأدمن من متغيرات البيئة مرة واحدة فقط عند عدم وجود
-  // أي حساب أدمن بعد. بعد إنشائه، لا تتم إعادة تعيين بريده/كلمة مروره
-  // تلقائياً بعد ذلك — يصبح حساباً عادياً بصلاحيات أدمن يمكنك تعديل
-  // بريده أو كلمة مروره بحرية (مثلاً من صفحة /manager) دون أن يرجعه
-  // السيرفر لقيم متغيرات البيئة عند كل إعادة تشغيل/نشر جديد.
-  const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
-  const ADMIN_PASS  = process.env.ADMIN_PASS;
+  // لا يوجد إنشاء تلقائي لحساب الأدمن إطلاقاً (ولا بيانات افتراضية). حساب
+  // الأدمن يُسجَّل يدوياً في قاعدة البيانات، وهذا أكثر أماناً: لا أسرار مكتوبة
+  // في الكود ولا حقن تلقائي لحساب بصلاحيات عليا عند أي إقلاع/نشر جديد.
 
-  const adminExists = await db.execute({ sql:"SELECT id FROM users WHERE role='admin' LIMIT 1", args:[] });
-  if (adminExists.rows.length === 0) {
-    // لا بيانات أدمن افتراضية: لو ما فيه أدمن بعد، لازم تكون القيم مضبوطة
-    // بمتغيرات البيئة، وإلا نرفض بدل إنشاء حساب ببيانات معروفة للجميع (المستودع عام).
-    if (!ADMIN_EMAIL || !ADMIN_PASS) {
-      throw new Error(
-        '❌ لا يوجد حساب أدمن بعد، ويجب ضبط ADMIN_EMAIL و ADMIN_PASS لإنشاء أول حساب أدمن ' +
-        '(لا توجد بيانات افتراضية عمداً).'
-      );
-    }
-    if (ADMIN_PASS.length < 8) {
-      throw new Error('❌ ADMIN_PASS قصيرة جداً — استخدم 8 أحرف على الأقل.');
-    }
-    const hash = bcrypt.hashSync(ADMIN_PASS, 10);
-    try {
-      await db.execute({
-        sql:"INSERT INTO users (username,email,password,role,display_name) VALUES (?,?,?,?,?)",
-        args:['admin', ADMIN_EMAIL, hash, 'admin', 'Admin']
-      });
-      console.log('✅ Admin user created');
-    } catch (e) {
-      if (e.message?.includes('UNIQUE constraint failed')) {
-        console.log('⚠️ Admin email already exists in users table, skipping insert');
-      } else {
-        throw e;
-      }
-    }
-  }
   console.log('✅ Hostaka DB ready');
 }
 
