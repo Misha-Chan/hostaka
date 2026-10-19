@@ -79,7 +79,7 @@ app.use((req, res, next) => {
   res.removeHeader('X-Powered-By');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'");
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
   next();
@@ -181,11 +181,18 @@ function ogTruncate(str, len = 160) {
 }
 
 // يحول رابطًا نسبيًا (أو رابطًا كاملًا بالفعل) إلى رابط مطلق
+// نطاقات مسموح بها لبناء روابط مطلقة (منع تلويث OG/canonical عبر Host header).
+// نسمح بتطوير محلي ومعاينات Vercel، ونرفض أي نطاق آخر ونستبدله بالنطاق الرسمي.
+const ALLOWED_HOST_RE = /^(?:[a-z0-9-]+\.)?(?:hostaka\.fun|vercel\.app|localhost|127\.0\.0\.1)(?::\d+)?$/i;
+function requestOrigin(req) {
+  let host = String(req.get('host') || '').trim();
+  if (!ALLOWED_HOST_RE.test(host)) host = 'hostaka.fun';
+  return `${req.protocol}://${host}`;
+}
 function absUrl(req, p) {
   if (!p) return '';
   if (/^https?:\/\//i.test(p)) return p;
-  const origin = `${req.protocol}://${req.get('host')}`;
-  return origin + (p.startsWith('/') ? p : '/' + p);
+  return requestOrigin(req) + (p.startsWith('/') ? p : '/' + p);
 }
 
 // يحقن وسوم Open Graph / Twitter Card داخل ملف HTML قبل إرساله
@@ -637,12 +644,44 @@ async function notifyMentions(content, actorUser, recordId, commentId, link) {
 }
 
 // Auth
+// بصمة bcrypt وهمية (تُحسب مرة عند الإقلاع) تُقارن بها كلمة المرور حتى لو
+// البريد غير موجود — كي لا يكشف زمن الرد وجود الحساب (user enumeration بالتوقيت).
+const DUMMY_BCRYPT_HASH = bcrypt.hashSync(crypto.randomBytes(18).toString('hex'), 10);
+
+// حدّ محاولات الدخول لكل بريد (يمنع تخمين كلمة المرور الموزّع عبر عدة IPs).
+// ملاحظة: الحدّ لكل IP (240/دقيقة) موجود مسبقاً، هذا حدّ إضافي لكل حساب.
+const LOGIN_MAX_ATTEMPTS = 10;
+const LOGIN_LOCK_MS = 15 * 60 * 1000;
+const _loginAttempts = new Map(); // email -> { count, first, lockedUntil }
+function _loginBlockedFor(email) {
+  const rec = _loginAttempts.get(email);
+  if (!rec) return 0;
+  if (rec.lockedUntil && rec.lockedUntil > Date.now()) return Math.ceil((rec.lockedUntil - Date.now()) / 1000);
+  if (rec.lockedUntil) _loginAttempts.delete(email);
+  return 0;
+}
+function _recordLoginFail(email) {
+  const now = Date.now();
+  let rec = _loginAttempts.get(email);
+  if (!rec || now - rec.first > LOGIN_LOCK_MS) rec = { count: 0, first: now, lockedUntil: 0 };
+  rec.count += 1;
+  if (rec.count >= LOGIN_MAX_ATTEMPTS) rec.lockedUntil = now + LOGIN_LOCK_MS;
+  _loginAttempts.set(email, rec);
+  if (_loginAttempts.size > 10000) _loginAttempts.clear();
+}
+
 app.post('/api/login', async(req,res)=>{
   try{
     const{email,password}=req.body||{};
     if(!email||!password) return res.status(400).json({error:'البريد وكلمة المرور مطلوبان'});
-    const user=await q.getUserByEmail(email.trim().toLowerCase());
-    if(!user||!bcrypt.compareSync(password,user.password)) return res.status(401).json({error:'البريد أو كلمة المرور غير صحيحة'});
+    const mail = String(email).trim().toLowerCase();
+    const wait = _loginBlockedFor(mail);
+    if (wait > 0) return res.status(429).json({ error:`الرجاء الانتظار ${wait} ثانية قبل المحاولة مجدداً`, locked:true, retry_after:wait });
+    const user=await q.getUserByEmail(mail);
+    // مقارنة دائمًا (حتى لو البريد غير موجود) لتفادي كشف الحساب عبر التوقيت
+    const passOk = bcrypt.compareSync(password, user ? user.password : DUMMY_BCRYPT_HASH);
+    if(!user || !passOk) { _recordLoginFail(mail); return res.status(401).json({error:'البريد أو كلمة المرور غير صحيحة'}); }
+    _loginAttempts.delete(mail);
     if(user.suspended) return res.status(403).json({ error:'تم تعليق حسابك' + (user.suspend_reason ? ': ' + user.suspend_reason : ''), suspended:true, reason:user.suspend_reason||'' });
     if (Number(user.totp_enabled) === 1) {
       return res.json({ success:true, requires2FA:true, pendingToken: sign2FAPendingToken(user.id) });
@@ -4349,7 +4388,7 @@ app.get('/api/og-image', async (req, res) => {
 // ويمنع الزحف على المسارات الخاصة/الإدارية وواجهة الـ API
 // ============================================================
 app.get('/robots.txt', (req, res) => {
-  const origin = `${req.protocol}://${req.get('host')}`;
+  const origin = requestOrigin(req);
   res.type('text/plain').send(
 `User-agent: *
 Allow: /
@@ -4387,7 +4426,7 @@ Sitemap: ${origin}/sitemap.xml
 // ============================================================
 app.get('/sitemap.xml', async (req, res) => {
   try {
-    const origin = `${req.protocol}://${req.get('host')}`;
+    const origin = requestOrigin(req);
     const urls = [];
     const addUrl = (loc, lastmod, priority) => {
       urls.push(`  <url><loc>${ogEscape(loc)}</loc>${lastmod ? `<lastmod>${new Date(lastmod).toISOString()}</lastmod>` : ''}<priority>${priority}</priority></url>`);
@@ -4428,7 +4467,7 @@ app.get('*', async (req, res) => {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: SITE_NAME,
-    url: `${req.protocol}://${req.get('host')}/`,
+    url: requestOrigin(req) + '/',
     description: 'Hostaka — social media platform, and the flagship of the Hostaka Ecosystem.',
     sameAs: [
       'https://orbithub.hostaka.fun/',
