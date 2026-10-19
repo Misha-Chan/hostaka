@@ -137,7 +137,6 @@ body.page-chat .typing-dot:nth-child(3), body.page-group .typing-dot:nth-child(3
   position:relative; width:100%; border-radius:var(--radius-lg); overflow:hidden;
   background:#000; cursor:pointer; box-shadow:var(--shadow); display:block;
 }
-.video-card .video-thumb-video {width:100%;aspect-ratio:16/9;object-fit:cover;display:block;pointer-events:none;background:#000;}
 .video-card .video-play-badge {
   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
   width:54px; height:54px; border-radius:50%; background:rgba(0,0,0,0.5); color:#fff;
@@ -151,12 +150,8 @@ body.page-chat .typing-dot:nth-child(3), body.page-group .typing-dot:nth-child(3
   backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:5px;
 }
 .video-card .video-tag svg {width:12px;height:12px;}
-/* الفيديو المضمّن داخل المنشور — تشغيل عند الضغط مع أدوات التحكم */
+/* الفيديو المضمّن داخل المنشور — مشغّل video.js بثيم المنصة */
 .video-card.video-inline {cursor:default;}
-.video-card.video-inline .video-thumb-video {
-  pointer-events:auto; aspect-ratio:auto; height:auto; max-height:75vh;
-  object-fit:contain; background:#000;
-}
 @keyframes video-spin {to {transform:rotate(360deg);}}
 /* ============================================================
    PHASE 2 — Global Responsive & Touch-Target Safety Net

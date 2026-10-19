@@ -1,0 +1,147 @@
+/* ============================================================
+   Hostaka Player — video.js skin that follows the platform theme.
+
+   video-js.min.css is injected by hostaka-player.js; every rule
+   below uses the `.video-js.vjs-hostaka` prefix so it always wins
+   over the default skin regardless of stylesheet order.
+
+   Colors come only from the platform tokens in theme.css, so the
+   player flips with light/dark and every accent variant:
+     --card, --text, --bg, --accent, --border, --muted,
+     --radius-sm, --radius-lg, --font-family
+   ============================================================ */
+
+.video-js.vjs-hostaka {
+  width: 100%;
+  background: #000;
+  color: var(--text);
+  font-family: var(--font-family);
+}
+
+/* ---------- Control bar: glassy surface that follows the theme ---------- */
+.video-js.vjs-hostaka .vjs-control-bar {
+  height: 3.4em;
+  background: var(--card);
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--card) 96%, transparent),
+    color-mix(in srgb, var(--card) 72%, transparent)
+  );
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+}
+
+/* ---------- Icons, times, buttons ---------- */
+.video-js.vjs-hostaka .vjs-button > .vjs-icon-placeholder::before,
+.video-js.vjs-hostaka .vjs-time-control,
+.video-js.vjs-hostaka .vjs-remaining-time,
+.video-js.vjs-hostaka .vjs-current-time,
+.video-js.vjs-hostaka .vjs-duration {
+  color: var(--text);
+}
+.video-js.vjs-hostaka .vjs-time-control {
+  font-family: var(--font-family);
+  font-variant-numeric: tabular-nums;
+}
+.video-js.vjs-hostaka .vjs-button:hover > .vjs-icon-placeholder::before,
+.video-js.vjs-hostaka .vjs-button:focus-visible > .vjs-icon-placeholder::before {
+  color: var(--accent);
+}
+
+/* Show current time / duration (video.js hides these by default in
+   favour of a single remaining-time label). */
+.video-js.vjs-hostaka .vjs-remaining-time { display: none; }
+.video-js.vjs-hostaka .vjs-current-time,
+.video-js.vjs-hostaka .vjs-time-divider,
+.video-js.vjs-hostaka .vjs-duration { display: block; }
+
+/* ---------- Progress + volume ---------- */
+.video-js.vjs-hostaka .vjs-play-progress,
+.video-js.vjs-hostaka .vjs-volume-level {
+  background: var(--accent);
+}
+.video-js.vjs-hostaka .vjs-play-progress::before {
+  color: var(--accent);
+}
+.video-js.vjs-hostaka .vjs-slider {
+  background-color: var(--border);
+  background-color: color-mix(in srgb, var(--text) 20%, transparent);
+}
+.video-js.vjs-hostaka .vjs-load-progress,
+.video-js.vjs-hostaka .vjs-load-progress div {
+  background: color-mix(in srgb, var(--text) 32%, transparent);
+}
+
+/* ---------- Big play button: accent pill that matches the theme ---------- */
+.video-js.vjs-hostaka .vjs-big-play-button {
+  top: 50%;
+  left: 50%;
+  margin: 0;
+  width: 68px;
+  height: 68px;
+  line-height: 68px;
+  transform: translate(-50%, -50%);
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg);
+  box-shadow: 0 10px 30px -8px color-mix(in srgb, var(--accent) 70%, transparent);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.video-js.vjs-hostaka .vjs-big-play-button .vjs-icon-placeholder::before {
+  line-height: 68px;
+  color: var(--bg);
+}
+.video-js.vjs-hostaka:hover .vjs-big-play-button,
+.video-js.vjs-hostaka .vjs-big-play-button:focus {
+  background: color-mix(in srgb, var(--accent) 82%, #000);
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+/* ---------- Menus (quality / speed / captions) ---------- */
+.video-js.vjs-hostaka .vjs-menu-content {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.video-js.vjs-hostaka .vjs-menu li {
+  color: var(--text);
+}
+.video-js.vjs-hostaka .vjs-menu li:hover,
+.video-js.vjs-hostaka .vjs-menu li:focus {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.video-js.vjs-hostaka .vjs-menu li.vjs-selected,
+.video-js.vjs-hostaka .vjs-menu li.vjs-selected:focus,
+.video-js.vjs-hostaka .vjs-menu li.vjs-selected:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* ---------- Spinner ---------- */
+.video-js.vjs-hostaka .vjs-loading-spinner {
+  border-color: color-mix(in srgb, var(--text) 28%, transparent);
+}
+.video-js.vjs-hostaka .vjs-loading-spinner::before,
+.video-js.vjs-hostaka .vjs-loading-spinner::after {
+  border-color: var(--accent) transparent transparent;
+}
+
+/* ---------- Layout hooks ---------- */
+.video-card.video-inline .video-js {
+  width: 100%;
+}
+body.page-video .video-player-wrap .video-js {
+  width: 100%;
+}
+
+/* Before video.js boots (or if it fails), keep the native element tidy
+   and already in the final 16:9 box so there is no layout jump. */
+video.vjs-hostaka:not(.vjs-booted) {
+  width: 100%;
+  display: block;
+  background: #000;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+}
