@@ -550,18 +550,22 @@ function verifyToken(req) {
 async function requireAuth(req,res,next) {
   const u=verifyToken(req); if(!u) return res.status(401).json({error:'غير مصرح'});
   try {
-    // فحص الجلسة (لو مفعّل) يتم بشكل غير معطّل تماماً: لا ننتظره قبل إكمال الطلب،
-    // لأن أي طلب استغراقه أطول (خصوصاً مع بطء عرضي بقاعدة البيانات) قد يتسبب
-    // بمشاكل حقيقية بميزات حساسة للوقت مثل كود المصادقة الثنائية. الجلسة الملغاة
-    // ستتوقف فعلياً عند انتهاء صلاحية التوكن نفسه (30 يوم) كحد أقصى.
+    // فحص الجلسة: لو التوكن يحمل jti وله صف بقاعدة البيانات مُعلَّم revoked → نرفضه
+    // فوراً. سابقاً كان الإلغاء بلا أثر فعلي (fire-and-forget)، فيبقى التوكن المسروق
+    // صالحاً حتى انتهاء صلاحيته (30 يوماً).
     if (u.jti) {
-      q.getSessionByJti(u.jti).then(session => {
-        if (session) q.touchSession(u.jti);
-      }).catch(()=>{});
+      const session = await q.getSessionByJti(u.jti);
+      if (session && Number(session.revoked) === 1) {
+        return res.status(401).json({ error:'تم إنهاء هذه الجلسة، الرجاء تسجيل الدخول من جديد', session_revoked:true });
+      }
+      if (session) q.touchSession(u.jti).catch(()=>{});
     }
     const dbUser = await q.getUserById(u.id);
     if (!dbUser) return res.status(401).json({error:'غير مصرح'});
     if (dbUser.suspended) return res.status(403).json({ error:'تم تعليق حسابك' + (dbUser.suspend_reason ? ': ' + dbUser.suspend_reason : ''), suspended:true, reason: dbUser.suspend_reason||'' });
+    // الدور من قاعدة البيانات لا من التوكن: حساب أدمن مُجرَّد الصلاحية لا يبقى قادراً
+    // على عمليات إدارية عبر توكنه القديم حتى انتهائه.
+    u.role = dbUser.role;
     q.touchLastSeen(dbUser.id); // تحديث آخر ظهور بدون انتظار (fire-and-forget)
     req.user=u; next();
   } catch(e) { res.status(500).json({error:'خطأ في الخادم'}); }
@@ -4323,6 +4327,12 @@ app.get('/api/og-image', async (req, res) => {
       const post = await q.getWikiPostByToken(req.query.token);
       if (post && post.image) imageUrl = absUrl(req, post.image);
       else if (post && post.author_avatar) { imageUrl = absUrl(req, post.author_avatar); imageIsSquare = true; }
+    }
+
+    // حماية SSRF: لا نجلب صورة إلا من عنوان عام (نمنع استهداف الشبكة الداخلية/ميتاداتا السحابة).
+    if (imageUrl) {
+      try { await assertPublicUrl(new URL(imageUrl)); }
+      catch (e) { imageUrl = null; }
     }
 
     const png = await generateOgImage({ brand, type, imageUrl, imageIsSquare });
