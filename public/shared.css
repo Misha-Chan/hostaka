@@ -151,6 +151,12 @@ body.page-chat .typing-dot:nth-child(3), body.page-group .typing-dot:nth-child(3
   backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:5px;
 }
 .video-card .video-tag svg {width:12px;height:12px;}
+/* الفيديو المضمّن داخل المنشور — تشغيل عند الضغط مع أدوات التحكم */
+.video-card.video-inline {cursor:default;}
+.video-card.video-inline .video-thumb-video {
+  pointer-events:auto; aspect-ratio:auto; height:auto; max-height:75vh;
+  object-fit:contain; background:#000;
+}
 @keyframes video-spin {to {transform:rotate(360deg);}}
 /* ============================================================
    PHASE 2 — Global Responsive & Touch-Target Safety Net

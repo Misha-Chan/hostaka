@@ -12,7 +12,6 @@
   var SERVICES = [
     { key: 'hostaka',    name: 'Hostaka',      url: 'https://hostaka.fun/',              icon: '/icon/hostaka-icon.png' },
     { key: 'orbithub',   name: 'Orbithub',     url: 'https://orbithub.hostaka.fun/',     icon: '/icon/orbithub-icon.png' },
-    { key: 'aethercast', name: 'aethercast',   url: 'https://aethercast.hostaka.fun/',   icon: '/icon/aethercast-icon.png' },
     { key: 'apps',       name: 'Hostaka Apps', url: 'https://apps.hostaka.fun/',         icon: '/icon/apps-icon.png' },
     { key: 'wiki',       name: 'Wiki',         url: 'https://wiki.hostaka.fun/',         icon: '/icon/wiki-icon.png' },
     { key: 'laps',       name: 'Laps',         url: 'https://laps.hostaka.fun/',         icon: '/icon/laps-icon.png' },

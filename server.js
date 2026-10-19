@@ -4172,32 +4172,10 @@ app.get('/page', async (req, res) => {
 });
 
 // ============================================================
-// الفيديو والريلز انتقلا لمستودع/نطاق مستقل: aethercast.hostaka.fun
-// نفس فكرة /chat و/group: نُبقي المسارين هنا كصفحتي تحويل، لكن بفارق
-// مهم — الفيديو محتوى عام يُشارَك على مواقع التواصل، فلازم نحافظ على
-// وسوم Open Graph (العنوان/الوصف/الصورة المصغّرة/الفيديو) عشان روابط
-// المشاركة تطلع بمعاينة صحيحة على واتساب/تويتر/ديسكورد. لذلك:
-// 1) نبني نفس بيانات الميتا كما كان (بالاستعلام عن السجل من قاعدة البيانات)
-// 2) نحقنها بصفحة HTML خفيفة عبر injectOG (بوتات المعاينة تقرأ الـ <head>
-//    فقط، ما تنفّذ جافاسكريبت، فتشوف الميتا الصحيحة)
-// 3) جسم الصفحة يحوّل الزائر الحقيقي (متصفح ينفّذ JS) لـ aethercast مع
-//    توكن الدخول، لأن localStorage ما ينشارك بين النطاقين الفرعيين
-const AETHERCAST_BASE = process.env.AETHERCAST_BASE || 'https://aethercast.hostaka.fun';
-function sendAethercastRedirect(req, res, path, meta) {
-  const baseHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
-<script>
-(function () {
-  var token = localStorage.getItem('hostaka_token') || '';
-  var qs = new URLSearchParams(window.location.search);
-  if (token) qs.set('token', token);
-  var q = qs.toString();
-  window.location.replace('${AETHERCAST_BASE}${path}' + (q ? '?' + q : ''));
-})();
-</script>
-</body></html>`;
-  res.set('Content-Type', 'text/html; charset=utf-8').send(injectOG(baseHtml, meta || {}));
-}
-
+// /short (الريلز) و /video (معرض الفيديوهات) — أصبحا داخل هوستاكا
+// نفسها بعد إيقاف aethercast. نُبقي المسارين ونحقن وسوم Open Graph
+// من السجل المطلوب (إن وُجد id) حتى تبقى معاينات المشاركة صحيحة.
+// ============================================================
 app.get('/short', async (req, res) => {
   const meta = baseMeta(req, 'ريلز');
   meta.type = 'video.other';
@@ -4210,16 +4188,16 @@ app.get('/short', async (req, res) => {
         meta.title = `${who} على ${SITE_NAME}`;
         meta.description = ogTruncate(rec.content) || DEFAULT_DESC;
         if (rec.image) meta.image = absUrl(req, rec.image);
-        else meta.image = absUrl(req, `/api/og-image?type=video&brand=aethercast&id=${encodeURIComponent(id)}`);
+        else meta.image = absUrl(req, `/api/og-image?type=video&brand=hostaka&id=${encodeURIComponent(id)}`);
         if (rec.video) meta.video = absUrl(req, rec.video);
       }
     } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
   }
-  sendAethercastRedirect(req, res, '/short', meta);
+  sendOG(req, res, 'short.html', meta);
 });
 
 app.get('/video', async (req, res) => {
-  const meta = baseMeta(req, 'aethercast');
+  const meta = baseMeta(req, 'الفيديوهات');
   meta.type = 'video.other';
   const id = (req.query.id || '').trim();
   if (id) {
@@ -4227,15 +4205,15 @@ app.get('/video', async (req, res) => {
       const rec = await q.getRecordById(id);
       if (rec) {
         const who = rec.publisher_name || rec.publisher;
-        meta.title = `${who} على aethercast`;
+        meta.title = `${who} على ${SITE_NAME}`;
         meta.description = ogTruncate(rec.content) || DEFAULT_DESC;
         if (rec.image) meta.image = absUrl(req, rec.image);
-        else meta.image = absUrl(req, `/api/og-image?type=video&brand=aethercast&id=${encodeURIComponent(id)}`);
+        else meta.image = absUrl(req, `/api/og-image?type=video&brand=hostaka&id=${encodeURIComponent(id)}`);
         if (rec.video) meta.video = absUrl(req, rec.video);
       }
     } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
   }
-  sendAethercastRedirect(req, res, '/video', meta);
+  sendOG(req, res, 'video.html', meta);
 });
 
 // ============================================================
@@ -4338,9 +4316,9 @@ app.get('/wiki/:extension/:token', async (req, res) => {
 // ============================================================
 // /api/og-image — dynamic Open Graph preview image (see ogimage.js).
 // Used by hostaka.fun's own routes below, and referenced by absolute
-// URL from the other Hostaka Ecosystem subdomains (aethercast, apps,
-// wiki) whenever the shared content has no image/thumbnail/avatar of
-// its own to show as a "screenshot" preview when shared on social apps.
+// URL from the other Hostaka Ecosystem subdomains (apps, wiki, laps,
+// console, orbithub) whenever the shared content has no image or
+// thumbnail of its own to show as a "screenshot" preview when shared.
 // ============================================================
 app.get('/api/og-image', async (req, res) => {
   try {
@@ -4418,7 +4396,6 @@ Sitemap: ${origin}/sitemap.xml
 // already indexed by Google — kept as-is below, only this note is new.
 // Sibling services, each with its own auto-generated sitemap.xml:
 //   Orbithub      (orbithub.hostaka.fun)  — private & group messaging
-//   aethercast    (aethercast.hostaka.fun) — video & reels platform
 //   Hostaka Apps  (apps.hostaka.fun)       — Hostaka's app store
 //   Wiki          (wiki.hostaka.fun)       — Hostaka's community wiki
 //   Laps          (laps.hostaka.fun)       — Hostaka's experiments page
@@ -4471,7 +4448,6 @@ app.get('*', async (req, res) => {
     description: 'Hostaka — social media platform, and the flagship of the Hostaka Ecosystem.',
     sameAs: [
       'https://orbithub.hostaka.fun/',
-      'https://aethercast.hostaka.fun/',
       'https://apps.hostaka.fun/',
       'https://wiki.hostaka.fun/',
       'https://laps.hostaka.fun/',
