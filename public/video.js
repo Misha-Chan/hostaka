@@ -106,8 +106,8 @@ function vgCardHtml(v){
   </div>`;
 }
 function stripHtmlV(html){
-  try { const d = document.createElement('div'); d.innerHTML = html||''; return d.textContent || d.innerText || ''; }
-  catch(e){ return html||''; }
+  try { const d = new DOMParser().parseFromString(String(html || ''), 'text/html'); return d.body.textContent || d.body.innerText || ''; }
+  catch(e){ return String(html || ''); }
 }
 
 function vunCardHtml(v){

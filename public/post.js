@@ -181,10 +181,8 @@ function renderPostCard(p){
       <div class="reel-tag">${t('reelsTag')}</div>
     </div>`;
   } else if (p.video) {
-    mediaHtml = `<div class="video-card" onclick="location.href='/video?id=${p.id}'">
-      <video class="video-thumb-video" muted playsinline preload="metadata"><source src="${esc(p.video)}#t=0.1" type="video/mp4"></video>
-      <div class="video-play-badge"><svg width="22" height="22" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="6 4 20 12 6 20"/></svg></div>
-      <div class="video-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="2" y="5" width="15" height="14" rx="3"/><polygon points="17 9 22 6 22 18 17 15" fill="currentColor" stroke="none"/></svg>VIDEO</div>
+    mediaHtml = `<div class="video-card video-inline">
+      <video class="video-thumb-video" controls playsinline preload="metadata"><source src="${esc(p.video)}#t=0.1" type="video/mp4"></video>
     </div>`;
   } else if (p.image) {
     mediaHtml = `<img class="card-img" src="${esc(p.image)}" loading="lazy" onerror="this.style.display='none'">`;

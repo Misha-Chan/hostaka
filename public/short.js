@@ -109,8 +109,10 @@ function reelSlideHtml(r){
 }
 
 function stripHtml(html){
-  const d = document.createElement('div'); d.innerHTML = html;
-  return (d.textContent || d.innerText || '').trim();
+  try {
+    const d = new DOMParser().parseFromString(String(html || ''), 'text/html');
+    return (d.body.textContent || d.body.innerText || '').trim();
+  } catch (e) { return String(html || '').trim(); }
 }
 
 async function loadReels(){
