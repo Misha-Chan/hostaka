@@ -112,7 +112,7 @@ function postCardHtml(post){
         <div class="post-date">${fmtDate(post.created_at)}${Number(post.edited)===1 ? ' · ' + t('edited') : ''}</div>
       </div>
     </div>
-    ${post.content ? `<div class="post-content">${esc(post.content)}</div>` : ''}
+    ${post.content ? `<div class="post-content" data-collapse>${esc(post.content)}</div>` : ''}
     ${mediaHtml}
   </div>`;
 }

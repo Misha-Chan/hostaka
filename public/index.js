@@ -1669,7 +1669,7 @@ function renderPost(p){
         </div>
       </div>
       ${mediaHtml}
-      <div class="sw-text post-html">${linkifyContent(p.content)}</div>
+      <div class="sw-text post-html" data-collapse>${linkifyContent(p.content)}</div>
       ${extractFirstUrl(p.content) ? `<div class="link-preview-slot" data-lp-url="${esc(extractFirstUrl(p.content))}"></div>` : ''}
       <div class="sw-reactions">
         ${reactionHtml}

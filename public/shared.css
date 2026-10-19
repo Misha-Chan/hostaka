@@ -247,3 +247,48 @@ html[dir="rtl"] .wp-check input[type="checkbox"]:checked::before { transform: tr
      on the simple pages (manager/save/post/video/support) that share `.wrap`. */
   .wrap { padding-left: 12px; padding-right: 12px; }
 }
+
+/* ============================================================
+   Collapsible post text — long posts show a short preview plus a
+   "Show more" button. The clamp is applied by hostaka-collapse.js
+   (`.post-collapse`), so visitors without JavaScript still get the
+   full text.
+   ============================================================ */
+:root { --collapse-lines: 7; }
+@media (max-width: 640px) { :root { --collapse-lines: 5; } }
+
+.post-collapse {
+  overflow: hidden;
+  max-height: 14em; /* fallback for browsers without the `lh` unit */
+  max-height: calc(var(--collapse-lines, 7) * 1lh);
+}
+.post-collapse.is-collapsed {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 3.2em), transparent);
+          mask-image: linear-gradient(to bottom, #000 calc(100% - 3.2em), transparent);
+}
+.post-collapse.is-expanded {
+  max-height: none;
+  -webkit-mask-image: none;
+          mask-image: none;
+}
+/* Page styles use a `body.page-x * { margin:0; padding:0 }` reset,
+   so the button selectors need a little extra specificity. */
+html body .post-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: -4px 0 12px;
+  padding: 5px 2px;
+  background: none;
+  border: 0;
+  color: var(--primary);
+  font-family: var(--font-family);
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+html body.page-page .post-more-btn { margin-top: 6px; }
+html body .post-more-btn:hover { color: var(--primary-h); text-decoration: underline; }
+html body .post-more-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }

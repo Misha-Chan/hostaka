@@ -84,6 +84,8 @@
     "loading": "جارٍ التحميل...",
     "password": "كلمة المرور",
     "save": "حفظ",
+    "showLess": "عرض أقل",
+    "showMore": "عرض المزيد",
     "themes": "الثيمات",
     "toggleTheme": "تبديل الثيم"
   },

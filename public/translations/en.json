@@ -84,6 +84,8 @@
     "loading": "Loading...",
     "password": "Password",
     "save": "Save",
+    "showLess": "Show less",
+    "showMore": "Show more",
     "themes": "Themes",
     "toggleTheme": "Toggle theme"
   },

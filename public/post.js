@@ -252,7 +252,7 @@ function renderPostCard(p){
         </div>
       </div>
       <div class="pub-date">${fmtDate(p.created_at)}</div>
-      <div class="post-text post-html">${linkifyContent(p.content||'')}</div>
+      <div class="post-text post-html" data-collapse>${linkifyContent(p.content||'')}</div>
       <div class="reactions-row">
         ${reactionHtml}
         <button class="react-btn" onclick="toggleComments(${p.id})" id="cmtToggle-${p.id}">
