@@ -194,7 +194,7 @@ function renderSavedCard(p){
     </div>`;
   } else if (p.video) {
     mediaHtml = `<div class="video-card video-inline">
-      <video class="video-thumb-video" controls playsinline preload="metadata"><source src="${esc(p.video)}#t=0.1" type="video/mp4"></video>
+      <video class="video-js vjs-hostaka" controls playsinline preload="metadata"><source src="${esc(p.video)}#t=0.1" type="video/mp4"></video>
     </div>`;
   } else if (p.image) {
     mediaHtml = `<img class="card-img" src="${esc(p.image)}" loading="lazy" onerror="this.style.display='none'">`;

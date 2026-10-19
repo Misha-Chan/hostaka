@@ -136,7 +136,7 @@ function renderWatch(v){
     <div class="video-watch-layout">
       <div>
         <div class="video-player-wrap">
-          <video class="video-player" controls autoplay playsinline><source src="${esc(v.video)}" type="video/mp4"></video>
+          <video class="video-js vjs-hostaka" controls autoplay playsinline preload="auto"><source src="${esc(v.video)}" type="video/mp4"></video>
         </div>
         <div class="video-watch-title">${esc(stripHtmlV(v.content)) || t('untitled')}</div>
         <div class="video-watch-pubrow">

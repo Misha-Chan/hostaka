@@ -102,7 +102,7 @@ function verifiedBadge(){
 function postCardHtml(post){
   const avatarHtml = pageData.avatar ? `<img src="${esc(pageData.avatar)}" alt="">` : esc((pageData.name||'?').charAt(0).toUpperCase());
   let mediaHtml = '';
-  if (post.video) mediaHtml = `<div class="post-media"><video controls src="${esc(post.video)}"></video></div>`;
+  if (post.video) mediaHtml = `<div class="post-media"><video class="video-js vjs-hostaka" controls preload="metadata" src="${esc(post.video)}"></video></div>`;
   else if (post.image) mediaHtml = `<div class="post-media"><img src="${esc(post.image)}" loading="lazy"></div>`;
   return `<div class="post-card">
     <div class="post-head">
