@@ -29,6 +29,20 @@ let ME = null;
 try { const s = localStorage.getItem('hostaka_user'); if (s) ME = JSON.parse(s); } catch(e) {}
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function showToast(msg, type='success'){
+  let host = document.getElementById('toastHost');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'toastHost';
+    document.body.appendChild(host);
+  }
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  el.textContent = msg;
+  host.appendChild(el);
+  setTimeout(()=>el.classList.add('show'), 20);
+  setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=>el.remove(),300); }, 3200);
+}
 async function apiFetch(url, method='GET', body=null){
   const opts = { method, headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN} };
   if (body) opts.body = JSON.stringify(body);

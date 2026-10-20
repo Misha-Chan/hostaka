@@ -54,3 +54,6 @@ body.page-page .field input:focus, body.page-page .field textarea:focus {outline
 body.page-page .field textarea {min-height:80px;resize:vertical;}
 body.page-page .modal-footer {display:flex;gap:10px;justify-content:flex-end;margin-top:16px;position:sticky;bottom:0;padding-top:10px;background:var(--modal-bg);z-index:2;}
 body.page-page .err {color:var(--danger);font-size:0.8rem;margin-bottom:8px;display:none;}
+body.page-page .toast {position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;padding:11px 22px;border-radius:var(--radius-sm);font-size:0.85rem;font-weight:700;z-index:999;opacity:0;transition:opacity var(--transition-base);pointer-events:none;box-shadow:var(--shadow-lg);max-width:90vw;text-align:center;}
+body.page-page .toast.show {opacity:1;}
+body.page-page .toast.toast-error {background:var(--danger);color:#fff;}
