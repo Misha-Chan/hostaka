@@ -173,6 +173,11 @@ function ogEscape(str) {
   return String(str == null ? '' : str)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+function escapeEmailHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 function ogTruncate(str, len = 160) {
   const clean = String(str || '').replace(/\s+/g, ' ').trim();
@@ -315,6 +320,91 @@ function sanitizeMediaUrl(v) {
   return s;
 }
 
+// روابط خارجية (تحميل تطبيق، صورة، فيديو...) يجب أن تكون http/https فقط.
+// نستخدمها في الحقول التي تُمرَّر لـ location.href أو href، حيث يقبل المتصفح
+// javascript: وينفّذها — لذلك لا يكفي مجرد الهروب من علامات الاقتباس.
+function sanitizeExternalUrl(v) {
+  const s = String(v == null ? '' : v).trim();
+  if (!s || s.length > 2000) return '';
+  if (/["'<>`\\\s]/.test(s)) return '';
+  try {
+    const u = new URL(s);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return '';
+    return u.href;
+  } catch (e) { return ''; }
+}
+
+// نصوص قصيرة (اسم/وصف/بلاغ...) بحد أقصى واضح، مع إزالة محارف التحكم.
+function sanitizeText(v, max = 500) {
+  return String(v == null ? '' : v)
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+    .trim()
+    .slice(0, max);
+}
+function sanitizeSlug(v, fallback = 'default') {
+  const s = String(v == null ? '' : v).trim();
+  return /^[a-z0-9_-]{1,40}$/i.test(s) ? s : fallback;
+}
+
+// تفاعلات المنشورات/الرسائل — قائمة مغلقة. بدونها يمكن تخزين أي HTML في
+// حقل emoji ثم عرضه بـ innerHTML في بعض الواجهات (XSS مخزّن).
+const ALLOWED_REACTIONS = new Set(['like', 'heart', 'haha', 'sad', 'angry', '😂', '😮']);
+function normalizeReaction(v, fallback = 'heart') {
+  const r = String(v == null ? '' : v).trim();
+  return ALLOWED_REACTIONS.has(r) ? r : fallback;
+}
+function filterReactions(list) {
+  return (Array.isArray(list) ? list : []).filter(r => r && ALLOWED_REACTIONS.has(String(r.emoji || '')));
+}
+
+// هل يمكن لهذا المستخدم رؤية المنشور؟ نستخدمها في النقاط التي كانت تُرجع
+// تعليقات/تفاعلات منشور بالمعرّف فقط (IDOR) وفي عرض المنشور المفرد.
+async function canViewRecord(rec, viewer) {
+  if (!rec) return false;
+  const viewerId = viewer && viewer.id ? Number(viewer.id) : 0;
+  const isOwner = viewerId && Number(rec.user_id) === viewerId;
+  if (isOwner) return true;
+  if (Number(rec.suspended) === 1) return false;
+  const privacy = rec.privacy || 'public';
+  if (privacy === 'draft' || privacy === 'private') return false;
+  if (privacy === 'close_friends') {
+    if (!viewerId || !(await q.isCloseFriend(rec.user_id, viewerId))) return false;
+  }
+  if (rec.scheduled_at) {
+    const when = parseSqliteUTC(rec.scheduled_at).getTime();
+    if (!Number.isNaN(when) && when > Date.now()) return false;
+  }
+  // حساب خاص: منشوراته «العامة» تبقى ظاهرة للمتابعين فقط (وليس لأي زائر
+  // يملك الرابط/المعرّف). منشورات الصفحات العامة لا تتأثر بخصوصية المالك.
+  if (!rec.page_id && rec.user_id) {
+    const author = await q.getUserById(rec.user_id);
+    if (author && Number(author.is_private) === 1) {
+      if (!viewerId || !(await q.isFollowing(viewerId, author.id))) return false;
+    }
+  }
+  return true;
+}
+
+// مؤشر الكتابة يعتمد على chat_key يرسله العميل. بدون التحقق كان أي مستخدم
+// يستطيع كتابة/قراءة «يكتب...» في محادثة لا يشارك بها (انتحال/إزعاج).
+async function canUseChatKey(chatKey, user) {
+  const key = String(chatKey || '').trim();
+  if (!key || key.length > 120 || !user) return false;
+  if (key.startsWith('group:')) {
+    const gid = Number(key.slice(6));
+    if (!Number.isInteger(gid) || gid <= 0) return false;
+    return !!(await q.isMember(gid, user.id));
+  }
+  if (key.startsWith('dm:')) {
+    const parts = key.slice(3).split('|');
+    if (parts.length !== 2 || !parts[0] || !parts[1] || parts[0] === parts[1]) return false;
+    if (parts[0] !== user.username && parts[1] !== user.username) return false;
+    const otherName = parts[0] === user.username ? parts[1] : parts[0];
+    return !!(await q.getUserByUsername(otherName));
+  }
+  return false;
+}
+
 // ===== شخصية Shizi AI (مبنية على Gemini) =====
 const SHIZI_SYSTEM_PROMPT = `أنتِ "شيزي" (Shizi AI)، المساعدة الذكية الرسمية لمنصة Hostaka.
 Hostaka هي منصة تواصل اجتماعي ناشئة (وليست منصة استضافة/hosting رغم تشابه الاسم). طورك مجموعة من المبرمجين المستقلين.
@@ -368,7 +458,7 @@ async function sendVerificationEmail(email, username, code) {
   const html = `
   <div style="font-family:'Cairo',Tahoma,sans-serif;background:#f7f7f8;padding:32px 0;direction:rtl">
     <div style="max-width:420px;margin:0 auto;background:#ffffff;border-radius:16px;padding:32px;border:1px solid #eee">
-      <h2 style="margin:0 0 8px;color:#111;font-size:20px;">أهلاً ${username} 👋</h2>
+      <h2 style="margin:0 0 8px;color:#111;font-size:20px;">أهلاً ${escapeEmailHtml(username)} 👋</h2>
       <p style="margin:0 0 20px;color:#555;font-size:14px;line-height:1.7">
         شكراً لتسجيلك في <b>Hostaka</b>. لإكمال إنشاء حسابك، استخدم كود التأكيد التالي:
       </p>
@@ -402,7 +492,7 @@ async function sendPasswordResetEmail(email, username, code) {
   const html = `
   <div style="font-family:'Cairo',Tahoma,sans-serif;background:#f7f7f8;padding:32px 0;direction:rtl">
     <div style="max-width:420px;margin:0 auto;background:#ffffff;border-radius:16px;padding:32px;border:1px solid #eee">
-      <h2 style="margin:0 0 8px;color:#111;font-size:20px;">مرحباً ${username || ''} 🔒</h2>
+      <h2 style="margin:0 0 8px;color:#111;font-size:20px;">مرحباً ${escapeEmailHtml(username || '')} 🔒</h2>
       <p style="margin:0 0 20px;color:#555;font-size:14px;line-height:1.7">
         وصلنا طلب لإعادة تعيين كلمة المرور لحسابك في <b>Hostaka</b>. استخدم الكود التالي لإتمام العملية:
       </p>
@@ -445,7 +535,7 @@ async function sendAccountChangeEmail(email, username, code, purpose) {
   const html = `
   <div style="font-family:'Cairo',Tahoma,sans-serif;background:#f7f7f8;padding:32px 0;direction:rtl">
     <div style="max-width:420px;margin:0 auto;background:#ffffff;border-radius:16px;padding:32px;border:1px solid #eee">
-      <h2 style="margin:0 0 8px;color:#111;font-size:20px;">مرحباً ${username || ''} 🔐</h2>
+      <h2 style="margin:0 0 8px;color:#111;font-size:20px;">مرحباً ${escapeEmailHtml(username || '')} 🔐</h2>
       <p style="margin:0 0 20px;color:#555;font-size:14px;line-height:1.7">${label.desc}</p>
       <div style="text-align:center;margin:20px 0;">
         <span style="display:inline-block;background:#f5f5f5;border-radius:12px;padding:14px 28px;font-size:30px;font-weight:800;letter-spacing:8px;color:#111;">${code}</span>
@@ -552,7 +642,34 @@ function generateBackupCodes(count = 5) {
 function verifyToken(req) {
   const token = (req.headers['authorization']||'').replace('Bearer ','').trim();
   if (!token) return null;
-  try { return jwt.verify(token, JWT_SECRET); } catch(e) { return null; }
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    // توكن 2FA المؤقت ليس توكن دخول كامل. قبل هذا الفحص كان أي شخص يملك
+    // كلمة المرور فقط يستطيع استخدام pendingToken كـ Bearer token ويتجاوز
+    // خطوة رمز المصادقة الثنائية بالكامل.
+    if (!decoded || decoded.purpose) return null;
+    return decoded;
+  } catch(e) { return null; }
+}
+// نسخة للقراءة العامة (اختيارية): تتأكد أن الجلسة غير ملغاة وأن الحساب غير
+// معلّق، وإلا تعامل مع التوكن كأنه غير موجود. بدونها كانت مسارات مثل
+// /api/records/:id/single و/api/pages/:username تعتبر توكن مسجّل خروجه
+// صالحاً وترى المسودات/الخاص.
+async function verifyTokenLive(req) {
+  const u = verifyToken(req);
+  if (!u) return null;
+  try {
+    if (u.jti) {
+      const session = await q.getSessionByJti(u.jti);
+      if (session && Number(session.revoked) === 1) return null;
+    }
+    const dbUser = await q.getUserById(u.id);
+    if (!dbUser || dbUser.suspended) return null;
+    u.role = dbUser.role;
+    u.username = dbUser.username;
+    u.avatar = dbUser.avatar || '';
+    return u;
+  } catch (e) { return null; }
 }
 async function requireAuth(req,res,next) {
   const u=verifyToken(req); if(!u) return res.status(401).json({error:'غير مصرح'});
@@ -573,34 +690,35 @@ async function requireAuth(req,res,next) {
     // الدور من قاعدة البيانات لا من التوكن: حساب أدمن مُجرَّد الصلاحية لا يبقى قادراً
     // على عمليات إدارية عبر توكنه القديم حتى انتهائه.
     u.role = dbUser.role;
+    // الاسم والصورة من القاعدة أيضاً: بعد تغيير اسم المستخدم يبقى التوكن
+    // القديم صالحاً، وكانت بعض المسارات (الرسائل/الكتابة/التنبيهات) تعتمد
+    // على الاسم الموجود داخل التوكن فينتج انتحال أو أخطاء بعد التغيير.
+    u.username = dbUser.username;
+    u.avatar = dbUser.avatar || '';
     q.touchLastSeen(dbUser.id); // تحديث آخر ظهور بدون انتظار (fire-and-forget)
     req.user=u; next();
   } catch(e) { res.status(500).json({error:'خطأ في الخادم'}); }
 }
 function requireAdmin(req,res,next) {
-  const u=verifyToken(req); if(!u) return res.status(401).json({error:'غير مصرح'});
-  if(u.role!=='admin') return res.status(403).json({error:'تحتاج صلاحية admin'});
-  // نتحقق من الدور/الحالة بقاعدة البيانات أيضاً (لا نكتفي بحقل role داخل التوكن):
-  // التوكن صالح 30 يوماً، فحساب أدمن مَحذوف/مُخفَّض الصلاحية/معلّق كان يبقى قادراً
-  // على كل عمليات الأدمن حتى انتهائه. التحقق من القاعدة يقطع ذلك فوراً.
-  q.getUserById(u.id).then(dbUser => {
-    if (!dbUser || dbUser.role !== 'admin') return res.status(403).json({error:'تحتاج صلاحية admin'});
-    if (dbUser.suspended) return res.status(403).json({ error:'تم تعليق حسابك' + (dbUser.suspend_reason ? ': ' + dbUser.suspend_reason : ''), suspended:true, reason: dbUser.suspend_reason||'' });
-    req.user=u; next();
-  }).catch(() => res.status(500).json({error:'خطأ في الخادم'}));
+  // نمرّ عبر requireAuth أولاً حتى تُفحص الجلسة (revoked) والحساب (suspended)
+  // والدور من قاعدة البيانات. سابقاً كان فحص الإلغاء غير موجود هنا، فتوكن
+  // أدمن مسروق/مسجّل خروجه يبقى قادراً على عمليات الأدمن 30 يوماً.
+  return requireAuth(req, res, () => {
+    if (req.user.role !== 'admin') return res.status(403).json({error:'تحتاج صلاحية admin'});
+    next();
+  });
 }
 // صلاحية "مشرف" (moderator): رتبة محدودة يعيّنها الأدمن، تقدر بس تعلّق
 // حسابات/منشورات وترد على البلاغات — أضيق من admin اللي يقدر يسوي كل شي.
 // أي endpoint يسمح لـ admin يسمح تلقائياً لـ moderator هنا كمان (admin
 // يقدر يسوي كل شي يقدر عليه moderator وأكثر).
 function requireModerator(req,res,next) {
-  const u=verifyToken(req); if(!u) return res.status(401).json({error:'غير مصرح'});
-  if(u.role!=='admin' && u.role!=='moderator') return res.status(403).json({error:'تحتاج صلاحية admin أو moderator'});
-  q.getUserById(u.id).then(dbUser => {
-    if (!dbUser || (dbUser.role !== 'admin' && dbUser.role !== 'moderator')) return res.status(403).json({error:'تحتاج صلاحية admin أو moderator'});
-    if (dbUser.suspended) return res.status(403).json({ error:'تم تعليق حسابك' + (dbUser.suspend_reason ? ': ' + dbUser.suspend_reason : ''), suspended:true, reason: dbUser.suspend_reason||'' });
-    req.user=u; next();
-  }).catch(() => res.status(500).json({error:'خطأ في الخادم'}));
+  return requireAuth(req, res, () => {
+    if (req.user.role !== 'admin' && req.user.role !== 'moderator') {
+      return res.status(403).json({error:'تحتاج صلاحية admin أو moderator'});
+    }
+    next();
+  });
 }
 
 // ============================================================
@@ -934,6 +1052,9 @@ app.post('/api/auth/password/reset', async (req, res) => {
 
     const hash = bcrypt.hashSync(newPassword, 10);
     await q.updateUserPasswordByEmail(mail, hash);
+    // إعادة تعيين كلمة المرور يجب أن تُبطل كل الجلسات القديمة — وإلا بقي
+    // المهاجم الذي سرق الجلسة قادراً على استخدامها رغم تغيير الضحية لكلمة المرور.
+    await q.revokeAllSessions(user.id, '');
     await q.deletePasswordReset(mail);
 
     res.json({ success:true, token: await createLoginSession(user, req), username:user.username, role:user.role, avatar:user.avatar||'', id:user.id, message:'تم تحديث كلمة المرور بنجاح' });
@@ -943,8 +1064,8 @@ app.post('/api/auth/password/reset', async (req, res) => {
   }
 });
 
-app.get('/api/auth/me',(req,res)=>{
-  const u=verifyToken(req); if(!u) return res.status(401).json({error:'غير مصرح'});
+app.get('/api/auth/me', requireAuth, (req,res)=>{
+  const u=req.user;
   res.json({id:u.id,username:u.username,role:u.role,avatar:u.avatar||''});
 });
 
@@ -960,19 +1081,21 @@ app.get('/api/me', requireAuth, async (req, res) => {
   }
 });
 
-app.post('/api/logout',(_,res)=>res.json({success:true}));
+app.post('/api/logout', async (req, res) => {
+  try {
+    const u = verifyToken(req);
+    // قبل هذا الإصلاح كان الخروج يحذف التوكن من المتصفح فقط، بينما يبقى
+    // صالحاً على السيرفر حتى 30 يوماً. الآن نُلغي صف الجلسة نفسه بواسطة jti.
+    if (u && u.jti) await q.revokeSessionByJti(u.jti);
+  } catch(e) { /* لا نُفشل الخروج بسبب خطأ في الإلغاء */ }
+  res.json({ success: true });
+});
 
 // Profile
 app.get('/api/profile/:username', async (req, res) => {
   try {
-    const token = (req.headers['authorization'] || '').replace('Bearer ', '').trim();
-    let viewerId = null;
-    if (token) {
-      try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        viewerId = decoded.id;
-      } catch (e) { /* تجاهل */ }
-    }
+    const decoded = await verifyTokenLive(req);
+    const viewerId = decoded ? decoded.id : null;
     const user = await q.getPublicProfile(req.params.username, viewerId);
     if (!user) return res.status(404).json({ error: 'غير موجود' });
     res.json(user);
@@ -983,26 +1106,47 @@ app.get('/api/profile/:username', async (req, res) => {
 app.put('/api/profile', requireAuth, async (req, res) => {
   try {
     const { display_name, bio, game_id, avatar, cover, cover_type, country, favorite_song, school, certificates } = req.body || {};
-    // نتحقق من نوع الغلاف: يُقبل فقط 'image' أو 'video'، وأي قيمة أخرى تُهمل
-    // وترجع 'image' افتراضياً كإجراء أمان بسيط ضد قيم غير متوقعة من العميل
     const safeCoverType = (cover_type === 'video') ? 'video' : 'image';
-    // فحص حجم فيديو الغلاف على مستوى السيرفر أيضاً (وليس فقط بالمتصفح) — أي
-    // تحقق بالعميل وحده يمكن تجاوزه، فنطلب رأس الملف (HEAD) من Cloudinary
-    // ونتأكد من حجمه الفعلي قبل حفظ الرابط بحساب المستخدم
-    if (safeCoverType === 'video' && cover) {
+
+    const safeDisplayName = sanitizeText(display_name, 80);
+    const safeBio = sanitizeText(bio, 600);
+    const safeGameId = sanitizeText(game_id, 60);
+    const safeCountry = sanitizeText(country, 60);
+    const safeFavoriteSong = sanitizeText(favorite_song, 120);
+    const safeSchool = sanitizeText(school, 120);
+    const safeCertificates = sanitizeText(certificates, 300);
+    const safeAvatar = sanitizeMediaUrl(avatar);
+    const safeCover = sanitizeMediaUrl(cover);
+
+    if (avatar && !safeAvatar) return res.status(400).json({ error: 'رابط الصورة الشخصية غير صالح' });
+    if (cover && !safeCover) return res.status(400).json({ error: 'رابط الغلاف غير صالح' });
+
+    // فحص فيديو الغلاف من جهة السيرفر: الرابط يتحكم به المستخدم، لذا نمرّ
+    // عبر safeHead (تحقق من العناوين العامة + مهلة + تحويلات يدوية) بدل
+    // fetch المباشر الذي كان يسمح بـ SSRF على الشبكة الداخلية.
+    if (safeCoverType === 'video' && safeCover) {
       try {
-        const head = await fetch(cover, { method: 'HEAD' });
+        const head = await safeHead(safeCover);
         const len = Number(head.headers.get('content-length') || 0);
+        const ct = String(head.headers.get('content-type') || '').toLowerCase();
         if (len > 5 * 1024 * 1024) {
           return res.status(400).json({ error: 'حجم فيديو الغلاف يتجاوز 5 ميغابايت' });
+        }
+        if (ct && !ct.startsWith('video/')) {
+          return res.status(400).json({ error: 'رابط الغلاف ليس ملف فيديو' });
         }
       } catch(e) {
         return res.status(400).json({ error: 'تعذر التحقق من ملف فيديو الغلاف' });
       }
     }
-    await q.updateProfile(display_name || '', bio || '', game_id || '', avatar || '', cover || '', req.user.id, country || '', favorite_song || '', school || '', certificates || '', safeCoverType);
+
+    await q.updateProfile(
+      safeDisplayName, safeBio, safeGameId, safeAvatar, safeCover, req.user.id,
+      safeCountry, safeFavoriteSong, safeSchool, safeCertificates, safeCoverType
+    );
     res.json({ success: true });
   } catch(e) {
+    console.error('❌ update profile error:', e.message || e);
     res.status(500).json({ error: 'خطأ في الخادم' });
   }
 });
@@ -1128,7 +1272,7 @@ app.get('/api/user/:username/posts', async (req, res) => {
   try {
     const u = await q.getPublicProfile(req.params.username);
     if (!u) return res.status(404).json({ error: 'غير موجود' });
-    const viewer = verifyToken(req);
+    const viewer = await verifyTokenLive(req);
     const isOwner = viewer && Number(viewer.id) === Number(u.id);
     if (Number(u.is_private) === 1 && !isOwner && !u.is_following) {
       return res.json({ private: true, posts: [] });
@@ -1346,6 +1490,71 @@ async function safeFetchHtml(startUrl, signal, maxHops = 3) {
   throw new Error('too-many-redirects');
 }
 
+// HEAD آمن لروابط يتحكم بها المستخدم (مثل فيديو الغلاف): نتحقق من كل عنوان
+// (ومن كل تحويل) أنه عام، ونضع مهلة، ولا نتابع redirects تلقائياً حتى لا
+// تُستخدم الخدمة كـ SSRF للوصول إلى الشبكة الداخلية/بيانات الاعتماد السحابية.
+async function safeHead(startUrl, timeoutMs = 6000, maxHops = 3) {
+  let current = String(startUrl);
+  for (let hop = 0; hop <= maxHops; hop++) {
+    const parsed = new URL(current);
+    await assertPublicUrl(parsed);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const r = await fetch(parsed.href, {
+        method: 'HEAD',
+        redirect: 'manual',
+        signal: controller.signal,
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HostakaMediaCheck/1.0)' }
+      });
+      if (r.status >= 300 && r.status < 400) {
+        const loc = r.headers.get('location');
+        if (!loc) return r;
+        current = new URL(loc, parsed.href).href;
+        continue;
+      }
+      return r;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw new Error('too-many-redirects');
+}
+
+// جلب صورة OG مع منع SSRF عبر التحويلات: نتحقق من كل عنوان قبل طلبه،
+// ونضع حداً للحجم حتى لا تُستخدم الصورة الضخمة لاستهلاك الذاكرة.
+async function safeFetchImage(startUrl, timeoutMs = 6000, maxHops = 3, maxBytes = 8 * 1024 * 1024) {
+  let current = String(startUrl);
+  for (let hop = 0; hop <= maxHops; hop++) {
+    const parsed = new URL(current);
+    await assertPublicUrl(parsed);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const r = await fetch(parsed.href, {
+        method: 'GET',
+        redirect: 'manual',
+        signal: controller.signal,
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; HostakaOgImage/1.0)' }
+      });
+      if (r.status >= 300 && r.status < 400) {
+        const loc = r.headers.get('location');
+        if (!loc) return null;
+        current = new URL(loc, parsed.href).href;
+        continue;
+      }
+      if (!r.ok) return null;
+      const len = Number(r.headers.get('content-length') || 0);
+      if (len > maxBytes) return null;
+      const buf = await r.buffer();
+      return buf && buf.length <= maxBytes ? buf : null;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return null;
+}
+
 function metaTagPick(html, prop) {
   const re1 = new RegExp(`<meta[^>]+(?:property|name)=["']${prop}["'][^>]+content=["']([^"']*)["']`, 'i');
   const re2 = new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]+(?:property|name)=["']${prop}["']`, 'i');
@@ -1422,27 +1631,16 @@ app.get('/api/link-preview', async (req, res) => {
 // عرض منشور واحد بشكل انفرادي (صفحة /post)
 app.get('/api/records/:id/single', async (req, res) => {
   try {
-    const u = verifyToken(req);
+    const u = await verifyTokenLive(req);
     const rec = await q.getRecordById(req.params.id);
     if (!rec) return res.status(404).json({ error: 'المنشور غير موجود' });
 
-    const isOwner = u && Number(u.id) === Number(rec.user_id);
-    const privacy = rec.privacy || 'public';
-    if (!isOwner) {
-      if (privacy === 'draft' || privacy === 'private') {
-        return res.status(403).json({ error: 'هذا المنشور غير متاح' });
-      }
-      if (privacy === 'close_friends') {
-        const isCF = u ? await q.isCloseFriend(rec.user_id, u.id) : false;
-        if (!isCF) return res.status(403).json({ error: 'هذا المنشور خاص بالأصدقاء المقربين فقط' });
-      }
-      if (rec.scheduled_at && new Date(rec.scheduled_at.replace(' ','T')+'Z').getTime() > Date.now()) {
-        return res.status(403).json({ error: 'هذا المنشور لم يُنشر بعد' });
-      }
+    if (!(await canViewRecord(rec, u))) {
+      return res.status(403).json({ error: 'هذا المنشور غير متاح' });
     }
 
     const [reactions, comments, userReaction, isSaved] = await Promise.all([
-      q.getReactions(rec.id),
+      q.getReactions(rec.id).then(filterReactions),
       q.getComments(rec.id),
       u ? q.getUserReaction(rec.id, u.id) : Promise.resolve(null),
       u ? q.isPostSaved(u.id, rec.id) : Promise.resolve(false)
@@ -1456,7 +1654,7 @@ app.get('/api/records/:id/single', async (req, res) => {
 
 app.get('/api/records', async (req, res) => {
   try {
-    const u = verifyToken(req);
+    const u = await verifyTokenLive(req);
     // تحميل تدريجي: ?limit=10&offset=0[&q=بحث]. بدون limit يرجع كل المنشورات (للتوافق مع القديم).
     const limit  = Math.min(Math.max(parseInt(req.query.limit, 10) || 0, 0), 30);
     const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0);
@@ -1476,7 +1674,7 @@ app.get('/api/records', async (req, res) => {
     const rMap = {}, cMap = {}, urMap = {};
     allR.forEach(r => {
       if (!rMap[r.record_id]) rMap[r.record_id] = [];
-      rMap[r.record_id].push({ emoji: r.emoji, count: r.count });
+      if (ALLOWED_REACTIONS.has(String(r.emoji || ''))) rMap[r.record_id].push({ emoji: r.emoji, count: r.count });
     });
     allC.forEach(c => {
       if (!cMap[c.record_id]) cMap[c.record_id] = [];
@@ -1579,12 +1777,15 @@ app.get('/api/pages/mine', requireAuth, async (req, res) => {
 app.post('/api/pages', requireAuth, async (req, res) => {
   try {
     const { name, username, avatar, bio, category } = req.body || {};
-    if (!name?.trim()) return res.status(400).json({ error: 'اسم الصفحة مطلوب' });
+    const safeName = sanitizeText(name, 80);
+    if (!safeName) return res.status(400).json({ error: 'اسم الصفحة مطلوب' });
     let handle = slugifyPageUsername(username || name);
     if (!handle) return res.status(400).json({ error: 'معرّف الصفحة غير صالح' });
     const existing = await q.getPageByUsername(handle);
     if (existing) return res.status(409).json({ error: 'هذا المعرّف مستخدم لصفحة أخرى، جرّب معرّفاً آخر' });
-    const result = await q.createPage(req.user.id, handle, name.trim(), avatar || '', (bio || '').trim(), (category || '').trim());
+    const safeAvatar = sanitizeMediaUrl(avatar);
+    if (avatar && !safeAvatar) return res.status(400).json({ error: 'رابط صورة الصفحة غير صالح' });
+    const result = await q.createPage(req.user.id, handle, safeName, safeAvatar, sanitizeText(bio, 600), sanitizeText(category, 60));
     res.json({ success: true, id: Number(result.lastInsertRowid), username: handle });
   } catch(e) {
     console.error('Create page error:', e);
@@ -1596,8 +1797,13 @@ app.get('/api/pages/:username', async (req, res) => {
   try {
     const page = await q.getPageByUsername(req.params.username);
     if (!page) return res.status(404).json({ error: 'الصفحة غير موجودة' });
+    const u = await verifyTokenLive(req);
+    const isOwner = !!(u && Number(u.id) === Number(page.owner_id));
     const [rawPosts, followerCount] = await Promise.all([
-      q.getPagePosts(page.id),
+      // المالك يرى كل منشورات صفحته (مسودات/مجدولة/معلّقة)، أما الزائر فلا
+      // يرى إلا المنشورات العامة المنشورة فعلاً. قبل الإصلاح كان المسار
+      // يُرجع كل الصفوف لأي زائر قبل حتى التحقق من هويته.
+      q.getPagePosts(page.id, isOwner),
       q.getPageFollowerCount(page.id)
     ]);
     // نحدّث اسم/صورة الصفحة بكل منشوراتها من بيانات الصفحة الحية (بدل الاسم/الصورة
@@ -1609,10 +1815,9 @@ app.get('/api/pages/:username', async (req, res) => {
       publisher_username: page.username,
       user_avatar: page.avatar || ''
     }));
-    const u = verifyToken(req);
     let isFollowing = false;
     if (u) isFollowing = !!(await q.isFollowingPage(page.id, u.id));
-    res.json({ ...page, posts, followerCount, isFollowing, isOwner: !!(u && Number(u.id) === Number(page.owner_id)) });
+    res.json({ ...page, posts, followerCount, isFollowing, isOwner });
   } catch(e) {
     res.status(500).json({ error: 'خطأ في الخادم' });
   }
@@ -1624,7 +1829,20 @@ app.put('/api/pages/:id', requireAuth, async (req, res) => {
     if (!page) return res.status(404).json({ error: 'غير موجود' });
     if (Number(page.owner_id) !== Number(req.user.id)) return res.status(403).json({ error: 'غير مسموح' });
     const { name, avatar, cover, bio, category } = req.body || {};
-    await q.updatePage(req.params.id, name?.trim() || page.name, avatar !== undefined ? avatar : page.avatar, cover !== undefined ? cover : page.cover, bio !== undefined ? bio.trim() : page.bio, category !== undefined ? category.trim() : page.category);
+    const safeName = name !== undefined ? sanitizeText(name, 80) : page.name;
+    if (!safeName) return res.status(400).json({ error: 'اسم الصفحة مطلوب' });
+    const safeAvatar = avatar !== undefined ? sanitizeMediaUrl(avatar) : page.avatar;
+    const safeCover = cover !== undefined ? sanitizeMediaUrl(cover) : page.cover;
+    if (avatar !== undefined && avatar && !safeAvatar) return res.status(400).json({ error: 'رابط صورة الصفحة غير صالح' });
+    if (cover !== undefined && cover && !safeCover) return res.status(400).json({ error: 'رابط غلاف الصفحة غير صالح' });
+    await q.updatePage(
+      req.params.id,
+      safeName,
+      safeAvatar,
+      safeCover,
+      bio !== undefined ? sanitizeText(bio, 600) : page.bio,
+      category !== undefined ? sanitizeText(category, 60) : page.category
+    );
     res.json({ success: true });
   } catch(e) { res.status(500).json({ error: 'خطأ في الخادم' }); }
 });
@@ -1665,7 +1883,7 @@ app.post('/api/pages/:id/unfollow', requireAuth, async (req, res) => {
 // ============================================================
 app.get('/api/reels', async (req, res) => {
   try {
-    const u = verifyToken(req);
+    const u = await verifyTokenLive(req);
     const records = await q.listReels(u ? u.id : 0);
     if (!records.length) return res.json([]);
     const [allR, allC, urList] = await Promise.all([
@@ -1676,7 +1894,7 @@ app.get('/api/reels', async (req, res) => {
     const rMap = {}, cMap = {}, urMap = {};
     allR.forEach(r => {
       if (!rMap[r.record_id]) rMap[r.record_id] = [];
-      rMap[r.record_id].push({ emoji: r.emoji, count: r.count });
+      if (ALLOWED_REACTIONS.has(String(r.emoji || ''))) rMap[r.record_id].push({ emoji: r.emoji, count: r.count });
     });
     allC.forEach(c => {
       if (!cMap[c.record_id]) cMap[c.record_id] = [];
@@ -1716,7 +1934,7 @@ app.get('/api/apps/:token', async (req, res) => {
     if (!app_) return res.status(404).json({ error: 'التطبيق غير موجود' });
     if (app_.status !== 'approved') {
       // تطبيق غير معتمد بعد: يظهر فقط لصاحبه أو للإدارة (معاينة قبل الموافقة)
-      const u = verifyToken(req);
+      const u = await verifyTokenLive(req);
       const isOwner = u && u.id === app_.publisher_id;
       const isStaff = u && (u.role === 'admin' || u.role === 'moderator');
       if (!isOwner && !isStaff) return res.status(404).json({ error: 'التطبيق غير موجود' });
@@ -1734,7 +1952,14 @@ app.post('/api/apps', requireAuth, async (req, res) => {
     if (!name?.trim() || !download_url?.trim()) {
       return res.status(400).json({ error: 'الاسم ورابط التحميل مطلوبان' });
     }
-    if (!Array.isArray(screenshots) || !screenshots.length) {
+    // رابط التحميل يُفتح عبر window.location.href في واجهة apps، لذا يجب أن
+    // يكون http/https فقط. تخزين javascript: كان يسمح بـ XSS مخزّن لكل زائر
+    // بعد موافقة المشرف على التطبيق.
+    const safeDownloadUrl = sanitizeExternalUrl(download_url);
+    if (!safeDownloadUrl) return res.status(400).json({ error: 'رابط التحميل يجب أن يبدأ بـ http:// أو https://' });
+    const safeScreenshots = (Array.isArray(screenshots) ? screenshots : [])
+      .map(sanitizeExternalUrl).filter(Boolean).slice(0, 8);
+    if (!safeScreenshots.length) {
       return res.status(400).json({ error: 'صورة واحدة على الأقل من التطبيق مطلوبة' });
     }
     const user = await q.getUserById(req.user.id);
@@ -1746,9 +1971,9 @@ app.post('/api/apps', requireAuth, async (req, res) => {
       name: name.trim().slice(0, 100),
       description: (description || '').trim().slice(0, 2000),
       category: APP_CATEGORIES.includes(category) ? category : 'Other',
-      icon: icon || '',
-      screenshots: screenshots.slice(0, 8),
-      download_url: download_url.trim()
+      icon: sanitizeExternalUrl(icon),
+      screenshots: safeScreenshots,
+      download_url: safeDownloadUrl
     });
     res.json({ success: true, token });
   } catch(e) {
@@ -1761,8 +1986,12 @@ app.post('/api/apps/:token/download', async (req, res) => {
   try {
     const app_ = await q.getAppByToken(req.params.token);
     if (!app_ || app_.status !== 'approved') return res.status(404).json({ error: 'التطبيق غير موجود' });
+    // فحص الروابط القديمة/المخزّنة قبل الإصلاح أيضاً، حتى لا يبقى رابط
+    // javascript: قابلاً للتنفيذ عند الضغط على «تحميل».
+    const safeDownloadUrl = sanitizeExternalUrl(app_.download_url);
+    if (!safeDownloadUrl) return res.status(400).json({ error: 'رابط تحميل التطبيق غير صالح' });
     q.incrementAppDownloads(app_.id).catch(()=>{}); // fire-and-forget، ما نوقف الرد بسببه
-    res.json({ success: true, download_url: app_.download_url });
+    res.json({ success: true, download_url: safeDownloadUrl });
   } catch(e) {
     console.error('App download error:', e);
     res.status(500).json({ error: 'خطأ في الخادم' });
@@ -1911,9 +2140,9 @@ app.get('/api/wiki/posts/:token/comments', async (req, res) => {
 app.post('/api/wiki/posts', requireAuth, async (req, res) => {
   try {
     const extension = normalizeExtension(req.body?.extension);
-    const title = String(req.body?.title || '').trim().slice(0, 150);
-    const body = String(req.body?.body || '').trim().slice(0, 5000);
-    const image = String(req.body?.image || '').trim();
+    const title = sanitizeText(req.body?.title, 150);
+    const body = sanitizeText(req.body?.body, 5000);
+    const image = sanitizeMediaUrl(req.body?.image);
     if (!extension) return res.status(400).json({ error: 'اسم الامتداد مطلوب' });
     if (!title) return res.status(400).json({ error: 'عنوان المنشور مطلوب' });
     if (!body) return res.status(400).json({ error: 'تفاصيل المنشور مطلوبة' });
@@ -1931,8 +2160,8 @@ app.post('/api/wiki/posts/:token/comments', requireAuth, async (req, res) => {
   try {
     const parent = await q.getWikiPostByToken(req.params.token);
     if (!parent) return res.status(404).json({ error: 'المنشور غير موجود' });
-    const body = String(req.body?.body || '').trim().slice(0, 5000);
-    const image = String(req.body?.image || '').trim();
+    const body = sanitizeText(req.body?.body, 5000);
+    const image = sanitizeMediaUrl(req.body?.image);
     if (!body) return res.status(400).json({ error: 'نص الرد مطلوب' });
 
     const token = generateWikiToken();
@@ -1950,9 +2179,9 @@ app.put('/api/wiki/posts/:token', requireAuth, async (req, res) => {
     if (!post) return res.status(404).json({ error: 'المنشور غير موجود' });
     if (post.author_id !== req.user.id) return res.status(403).json({ error: 'لا يمكنك تعديل منشور ليس لك' });
 
-    const title = post.parent_id ? '' : String(req.body?.title ?? post.title).trim().slice(0, 150);
-    const body = String(req.body?.body ?? post.body).trim().slice(0, 5000);
-    const image = String(req.body?.image ?? post.image).trim();
+    const title = post.parent_id ? '' : sanitizeText(req.body?.title ?? post.title, 150);
+    const body = sanitizeText(req.body?.body ?? post.body, 5000);
+    const image = sanitizeMediaUrl(req.body?.image ?? post.image);
     if (!post.parent_id && !title) return res.status(400).json({ error: 'عنوان المنشور مطلوب' });
     if (!body) return res.status(400).json({ error: 'تفاصيل المنشور مطلوبة' });
 
@@ -2028,9 +2257,9 @@ app.get('/api/news', async (req, res) => {
 
 app.post('/api/admin/news', requireAdmin, async (req, res) => {
   try {
-    const title = String(req.body?.title || '').trim().slice(0, 150);
-    const body = String(req.body?.body || '').trim().slice(0, 5000);
-    const image = String(req.body?.image || '').trim();
+    const title = sanitizeText(req.body?.title, 150);
+    const body = sanitizeText(req.body?.body, 5000);
+    const image = sanitizeMediaUrl(req.body?.image);
     if (!title) return res.status(400).json({ error: 'عنوان الخبر مطلوب' });
     if (!body) return res.status(400).json({ error: 'نص الخبر مطلوب' });
 
@@ -2057,7 +2286,7 @@ app.delete('/api/admin/news/:id', requireAdmin, async (req, res) => {
 // ============================================================
 app.get('/api/videos', async (req, res) => {
   try {
-    const u = verifyToken(req);
+    const u = await verifyTokenLive(req);
     const records = await q.listVideos(u ? u.id : 0);
     if (!records.length) return res.json([]);
     const [allR, allC, urList] = await Promise.all([
@@ -2068,7 +2297,7 @@ app.get('/api/videos', async (req, res) => {
     const rMap = {}, cMap = {}, urMap = {};
     allR.forEach(r => {
       if (!rMap[r.record_id]) rMap[r.record_id] = [];
-      rMap[r.record_id].push({ emoji: r.emoji, count: r.count });
+      if (ALLOWED_REACTIONS.has(String(r.emoji || ''))) rMap[r.record_id].push({ emoji: r.emoji, count: r.count });
     });
     allC.forEach(c => {
       if (!cMap[c.record_id]) cMap[c.record_id] = [];
@@ -2093,7 +2322,7 @@ app.get('/api/videos', async (req, res) => {
 app.get('/api/stories', async (req, res) => {
   try {
     await q.deleteExpiredStories();
-    const u = verifyToken(req);
+    const u = await verifyTokenLive(req);
     const rowsList = await q.listActiveStories(u ? u.id : 0);
     // تجميع القصص حسب المستخدم للعرض كحلقات (مثل الستوري)
     const groups = {};
@@ -2128,10 +2357,11 @@ app.get('/api/stories', async (req, res) => {
 app.post('/api/stories', requireAuth, async (req, res) => {
   try {
     const { media, media_type, caption } = req.body || {};
-    if (!media) return res.status(400).json({ error: 'الوسائط مطلوبة' });
+    const safeMedia = sanitizeMediaUrl(media);
+    if (!safeMedia) return res.status(400).json({ error: 'الوسائط مطلوبة أو غير صالحة' });
     const user = await q.getUserById(req.user.id);
     if (!user) return res.status(404).json({ error: 'المستخدم غير موجود' });
-    const result = await q.createStory(user.id, media, media_type === 'video' ? 'video' : 'image', (caption || '').trim());
+    const result = await q.createStory(user.id, safeMedia, media_type === 'video' ? 'video' : 'image', sanitizeText(caption, 300));
     res.json({ success: true, id: Number(result.lastInsertRowid) });
   } catch(e) {
     console.error('Create story error:', e);
@@ -2222,17 +2452,10 @@ app.post('/api/records/:id/save', requireAuth, async (req, res) => {
     const recordId = Number(req.params.id);
     const rec = await q.getRecord(recordId);
     if (!rec) return res.status(404).json({ error:'المنشور غير موجود' });
-    // منع حفظ/قراءة منشورات الآخرين غير المتاحة (مسودة/خاصة/مجدولة/الأصدقاء المقربين) — إصلاح IDOR
-    const isOwner = Number(req.user.id) === Number(rec.user_id);
-    if (!isOwner) {
-      const privacy = rec.privacy || 'public';
-      if (privacy === 'draft' || privacy === 'private') return res.status(403).json({ error:'هذا المنشور غير متاح' });
-      if (privacy === 'close_friends' && !(await q.isCloseFriend(rec.user_id, req.user.id))) {
-        return res.status(403).json({ error:'هذا المنشور غير متاح' });
-      }
-      if (rec.scheduled_at && new Date(String(rec.scheduled_at).replace(' ','T')+'Z').getTime() > Date.now()) {
-        return res.status(403).json({ error:'هذا المنشور غير متاح' });
-      }
+    // منع حفظ/قراءة منشورات الآخرين غير المتاحة (مسودة/خاصة/مجدولة/الأصدقاء المقربين/
+    // حساب خاص) — إصلاح IDOR
+    if (!(await canViewRecord(rec, req.user))) {
+      return res.status(403).json({ error:'هذا المنشور غير متاح' });
     }
     const already = await q.isPostSaved(req.user.id, recordId);
     if (already) {
@@ -2264,7 +2487,7 @@ app.get('/api/saved', requireAuth, async (req, res) => {
       q.getUserAllReactions(req.user.id)
     ]);
     const rMap = {}, cMap = {}, urMap = {};
-    allR.forEach(r => { if (!rMap[r.record_id]) rMap[r.record_id] = []; rMap[r.record_id].push({ emoji:r.emoji, count:r.count }); });
+    allR.forEach(r => { if (!ALLOWED_REACTIONS.has(String(r.emoji || ''))) return; if (!rMap[r.record_id]) rMap[r.record_id] = []; rMap[r.record_id].push({ emoji:r.emoji, count:r.count }); });
     allC.forEach(c => { if (!cMap[c.record_id]) cMap[c.record_id] = []; cMap[c.record_id].push(c); });
     urList.forEach(r => { urMap[r.record_id] = r.emoji; });
     res.json(records.map(r => ({
@@ -2371,14 +2594,20 @@ app.post('/api/records/:id/pin', requireAuth, async (req, res) => {
 
 app.post('/api/records/:id/react', requireAuth, async (req, res) => {
   try {
-    const { emoji } = req.body || {};
+    const rec = await q.getRecord(req.params.id);
+    if (!rec) return res.status(404).json({ error: 'المنشور غير موجود' });
+    if (!(await canViewRecord(rec, req.user))) return res.status(403).json({ error: 'هذا المنشور غير متاح' });
+
+    const reaction = String(req.body?.emoji || 'like').trim();
+    if (!ALLOWED_REACTIONS.has(reaction)) return res.status(400).json({ error: 'تفاعل غير معروف' });
+
     const ex = await q.getUserReaction(req.params.id, req.user.id);
-    if (ex && ex.emoji === emoji) {
+    if (ex && ex.emoji === reaction) {
       await q.removeReaction(req.params.id, req.user.id);
     } else {
-      await q.addReaction(req.params.id, req.user.id, emoji || 'like');
+      await q.addReaction(req.params.id, req.user.id, reaction);
     }
-    const reactions = await q.getReactions(req.params.id);
+    const reactions = filterReactions(await q.getReactions(req.params.id));
     const userReaction = (await q.getUserReaction(req.params.id, req.user.id))?.emoji || null;
     res.json({ success: true, reactions, userReaction });
   } catch(e) {
@@ -2388,6 +2617,10 @@ app.post('/api/records/:id/react', requireAuth, async (req, res) => {
 
 app.get('/api/records/:id/comments', async (req, res) => {
   try {
+    const u = await verifyTokenLive(req);
+    const rec = await q.getRecord(req.params.id);
+    if (!rec) return res.status(404).json({ error: 'المنشور غير موجود' });
+    if (!(await canViewRecord(rec, u))) return res.status(403).json({ error: 'هذا المنشور غير متاح' });
     res.json(await q.getComments(req.params.id));
   } catch(e) {
     res.status(500).json({ error: 'خطأ في الخادم' });
@@ -2398,8 +2631,13 @@ app.post('/api/records/:id/comments', requireAuth, async (req, res) => {
   try {
     const { content, parent_id } = req.body || {};
     if (!content?.trim()) return res.status(400).json({ error: 'فارغ' });
-    const user = await q.getUserById(req.user.id);
     const recordId = Number(req.params.id);
+    const rec = await q.getRecord(recordId);
+    if (!rec) return res.status(404).json({ error: 'المنشور غير موجود' });
+    if (!(await canViewRecord(rec, req.user))) return res.status(403).json({ error: 'هذا المنشور غير متاح' });
+    const safeContent = sanitizeText(content, 2000);
+    if (!safeContent) return res.status(400).json({ error: 'فارغ' });
+    const user = await q.getUserById(req.user.id);
     const result = await q.addComment(
       recordId,
       user.id,
@@ -2407,23 +2645,22 @@ app.post('/api/records/:id/comments', requireAuth, async (req, res) => {
       user.display_name || '',
       user.avatar || '',
       user.role === 'admin' ? 'Admin' : 'Member',
-      content.trim(),
+      safeContent,
       parent_id ? Number(parent_id) : null
     );
     const commentId = Number(result.lastInsertRowid);
     const link = '/?p=' + recordId;
 
     // إشعار صاحب المنشور بتعليق جديد (إن لم يكن هو نفسه المعلّق)
-    const rec = await q.getRecord(recordId);
     if (rec && rec.user_id && Number(rec.user_id) !== user.id) {
       q.createNotification(
         rec.user_id, 'comment', user.id,
         user.display_name || user.username, user.avatar || '',
-        recordId, commentId, content.trim().slice(0, 140), link
+        recordId, commentId, safeContent.slice(0, 140), link
       );
     }
     // إشعار كل من تم ذكره بـ @ داخل التعليق
-    notifyMentions(content, user, recordId, commentId, link);
+    notifyMentions(safeContent, user, recordId, commentId, link);
 
     const comments = await q.getComments(recordId);
     res.json({ success: true, comments });
@@ -2679,6 +2916,8 @@ app.post('/api/account/change/verify', requireAuth, async (req, res) => {
       await q.logSecurityEvent(req.user.id, 'email_changed', maskEmail(payload.newEmail), getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
     } else if (purpose === 'password') {
       await q.updateUserPassword(req.user.id, payload.newPasswordHash);
+      // نُبقي الجلسة الحالية (التي غيّرت كلمة المرور) ونُلغي كل الجلسات الأخرى.
+      await q.revokeAllSessions(req.user.id, req.user.jti || '');
       await q.logSecurityEvent(req.user.id, 'password_changed', '', getClientIp(req), parseUserAgent(req.headers['user-agent']).device);
     } else if (purpose === 'delete') {
       await q.deleteAccountChange(req.user.id, purpose);
@@ -2737,12 +2976,14 @@ app.post('/api/account/2fa/enable', requireAuth, async (req, res) => {
     if (Number(fullUser.totp_enabled) === 1) return res.status(400).json({ error:'المصادقة الثنائية مفعّلة بالفعل' });
 
     const cleanCode = String(code||'').trim();
-    if (!/^\d{6}$/.test(cleanCode)) return res.status(400).json({ error:`الكود يجب أن يكون 6 أرقام فقط (استلمت: "${cleanCode}")`, code:'BAD_FORMAT' });
+    if (!/^\d{6}$/.test(cleanCode)) return res.status(400).json({ error:'الكود يجب أن يكون 6 أرقام فقط', code:'BAD_FORMAT' });
 
     const ok = authenticator.verify({ token: cleanCode, secret: fullUser.totp_secret });
     if (!ok) {
-      const expected = authenticator.generate(fullUser.totp_secret);
-      console.error(`❌ 2FA verify mismatch — user:${req.user.id} received:${cleanCode} serverExpected:${expected} secretPrefix:${fullUser.totp_secret.slice(0,4)}... serverTime:${new Date().toISOString()}`);
+      // لا نكتب الكود المُدخل ولا الكود المتوقّع ولا أي جزء من السر في السجلات:
+      // السجلات تُحفظ بقاعدة البيانات وتُعرض بلوحة الإدارة، وقد تُسرَّب مع النسخ
+      // الاحتياطية. معرفة السر/الكود تسمح بتجاوز 2FA مباشرة.
+      console.error(`❌ 2FA verify mismatch — user:${req.user.id} serverTime:${new Date().toISOString()}`);
       return res.status(400).json({ error:'الكود غير صحيح، تأكد من التطبيق وحاول مجدداً', code:'MISMATCH' });
     }
 
@@ -3043,14 +3284,8 @@ app.delete('/api/follow/:username', requireAuth, async (req, res) => {
 
 app.get('/api/follow/status/:username', async (req, res) => {
   try {
-    const token = (req.headers['authorization'] || '').replace('Bearer ', '').trim();
-    let viewerId = null;
-    if (token) {
-      try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        viewerId = decoded.id;
-      } catch (e) { /* تجاهل */ }
-    }
+    const decoded = await verifyTokenLive(req);
+    const viewerId = decoded ? decoded.id : null;
     const user = await q.getPublicProfile(req.params.username, viewerId);
     if (!user) return res.status(404).json({ error: 'المستخدم غير موجود' });
     res.json({
@@ -3134,7 +3369,8 @@ app.get('/api/block/status/:username', requireAuth, async (req, res) => {
 app.post('/api/reports', requireAuth, async (req, res) => {
   try {
     const { type, target_id, target_owner_username, subject, reason } = req.body || {};
-    if (!reason?.trim()) return res.status(400).json({ error: 'الرجاء كتابة تفاصيل البلاغ' });
+    const safeReason = sanitizeText(reason, 3000);
+    if (!safeReason) return res.status(400).json({ error: 'الرجاء كتابة تفاصيل البلاغ' });
     const me = await q.getUserById(req.user.id);
     let ownerId = null, ownerName = '';
     if (target_owner_username) {
@@ -3143,8 +3379,8 @@ app.post('/api/reports', requireAuth, async (req, res) => {
     }
     await q.createReport(
       me.id, me.display_name || me.username,
-      type || 'general', target_id || null, ownerId, ownerName,
-      subject?.trim() || '', reason.trim()
+      sanitizeText(type, 40) || 'general', target_id != null ? String(target_id).slice(0, 80) : null, ownerId, ownerName,
+      sanitizeText(subject, 200), safeReason
     );
     res.json({ success: true });
   } catch(e) {
@@ -3171,13 +3407,14 @@ app.put('/api/admin/reports/:id', requireModerator, async (req, res) => {
     const { status, admin_reply } = req.body || {};
     const report = await q.getReportById(req.params.id);
     if (!report) return res.status(404).json({ error: 'البلاغ غير موجود' });
-    await q.updateReport(req.params.id, status || report.status, admin_reply ?? report.admin_reply);
-    if (admin_reply?.trim() && report.reporter_id) {
+    const safeReply = admin_reply === undefined ? report.admin_reply : sanitizeText(admin_reply, 3000);
+    await q.updateReport(req.params.id, sanitizeText(status, 20) || report.status, safeReply);
+    if (safeReply?.trim() && report.reporter_id) {
       const admin = await q.getUserById(req.user.id);
       await q.createNotification(
         report.reporter_id, 'report_reply', admin.id,
         admin.display_name || admin.username, admin.avatar || '',
-        null, null, admin_reply.trim().slice(0, 140), '/support'
+        null, null, safeReply.trim().slice(0, 140), '/support'
       );
     }
     res.json({ success: true });
@@ -3199,6 +3436,28 @@ app.get('/api/messages/unread', requireAuth, async (req, res) => {
 app.get('/api/messages/conversations', requireAuth, async (req, res) => {
   try {
     res.json(await q.getConversations(req.user.id));
+  } catch(e) {
+    res.status(500).json({ error: 'خطأ في الخادم' });
+  }
+});
+// لازم يكون قبل /api/messages/:username وإلا Express يعتبر "reactions" اسم مستخدم.
+app.get('/api/messages/reactions', requireAuth, async (req, res) => {
+  try {
+    const ids = (req.query.ids || '').split(',').map(Number).filter(n => Number.isInteger(n) && n > 0).slice(0, 100);
+    if (!ids.length) return res.json({});
+    const result = {};
+    for (const mid of ids) {
+      // لا نكشف تفاعلات رسائل لا يشارك بها المستخدم (IDOR)
+      const msg = await q.getMessage(mid);
+      if (!msg) continue;
+      if (Number(msg.from_id) !== Number(req.user.id) && Number(msg.to_id) !== Number(req.user.id)) continue;
+      const reactions = filterReactions(await q.getMsgReactions(mid));
+      const userReaction = (await q.getUserMsgReaction(mid, req.user.id))?.emoji || null;
+      if (reactions.length || userReaction) {
+        result[mid] = { reactions, userReaction };
+      }
+    }
+    res.json(result);
   } catch(e) {
     res.status(500).json({ error: 'خطأ في الخادم' });
   }
@@ -3282,6 +3541,7 @@ app.post('/api/typing', requireAuth, async (req, res) => {
   try {
     const chatKey = (req.body?.chat_key || '').trim();
     if (!chatKey) return res.status(400).json({ error: 'chat_key مطلوب' });
+    if (!(await canUseChatKey(chatKey, req.user))) return res.status(403).json({ error: 'غير مسموح' });
     if (req.body?.stop) await q.clearTyping(chatKey, req.user.id);
     else await q.setTyping(chatKey, req.user.id);
     res.json({ success: true });
@@ -3291,6 +3551,7 @@ app.post('/api/typing', requireAuth, async (req, res) => {
 });
 app.get('/api/typing/:chatKey', requireAuth, async (req, res) => {
   try {
+    if (!(await canUseChatKey(req.params.chatKey, req.user))) return res.status(403).json({ error: 'غير مسموح' });
     const users = await q.getTypingUsers(req.params.chatKey, req.user.id);
     res.json({ typing: users });
   } catch(e) {
@@ -3470,10 +3731,10 @@ app.post('/api/messages/:username', requireAuth, async (req, res) => {
       other.id,
       me.display_name || me.username,
       other.display_name || other.username,
-      content?.trim() || '',
+      sanitizeText(content, 5000),
       sanitizeMediaUrl(image),
       reply_to ? Number(reply_to) : null,
-      iv || '',
+      String(iv || '').slice(0, 200),
       !!encrypted
     );
     res.json({ success: true });
@@ -3487,8 +3748,9 @@ app.put('/api/messages/:id', requireAuth, async (req, res) => {
     if (!msg) return res.status(404).json({ error: 'غير موجود' });
     if (msg.from_id != req.user.id) return res.status(403).json({ error: 'غير مسموح' });
     const { content, iv } = req.body || {};
-    if (!content?.trim()) return res.status(400).json({ error: 'الرسالة فارغة' });
-    await q.updateMessage(req.params.id, content.trim(), iv || '');
+    const safeContent = sanitizeText(content, 5000);
+    if (!safeContent) return res.status(400).json({ error: 'الرسالة فارغة' });
+    await q.updateMessage(req.params.id, safeContent, String(iv || '').slice(0, 200));
     res.json({ success: true });
   } catch(e) {
     res.status(500).json({ error: 'خطأ في الخادم' });
@@ -3512,34 +3774,21 @@ app.delete('/api/messages/:id', requireAuth, async (req, res) => {
 
 app.post('/api/messages/react/:id', requireAuth, async (req, res) => {
   try {
-    const { emoji } = req.body || {};
+    const msg = await q.getMessage(req.params.id);
+    if (!msg) return res.status(404).json({ error: 'غير موجود' });
+    if (Number(msg.from_id) !== Number(req.user.id) && Number(msg.to_id) !== Number(req.user.id)) {
+      return res.status(403).json({ error: 'غير مسموح' });
+    }
+    const reaction = normalizeReaction(req.body?.emoji, 'heart');
     const ex = await q.getUserMsgReaction(req.params.id, req.user.id);
-    if (ex && ex.emoji === emoji) {
+    if (ex && ex.emoji === reaction) {
       await q.removeMsgReaction(req.params.id, req.user.id);
     } else {
-      await q.addMsgReaction(req.params.id, req.user.id, emoji || 'heart');
+      await q.addMsgReaction(req.params.id, req.user.id, reaction);
     }
-    const reactions = await q.getMsgReactions(req.params.id);
+    const reactions = filterReactions(await q.getMsgReactions(req.params.id));
     const userReaction = (await q.getUserMsgReaction(req.params.id, req.user.id))?.emoji || null;
     res.json({ success: true, reactions, userReaction });
-  } catch(e) {
-    res.status(500).json({ error: 'خطأ في الخادم' });
-  }
-});
-
-app.get('/api/messages/reactions', requireAuth, async (req, res) => {
-  try {
-    const ids = (req.query.ids || '').split(',').map(Number).filter(Boolean);
-    if (!ids.length) return res.json({});
-    const result = {};
-    for (const mid of ids) {
-      const reactions = await q.getMsgReactions(mid);
-      const userReaction = (await q.getUserMsgReaction(mid, req.user.id))?.emoji || null;
-      if (reactions.length || userReaction) {
-        result[mid] = { reactions, userReaction };
-      }
-    }
-    res.json(result);
   } catch(e) {
     res.status(500).json({ error: 'خطأ في الخادم' });
   }
@@ -3558,20 +3807,26 @@ app.get('/api/groups', requireAuth, async (req, res) => {
 app.post('/api/groups', requireAuth, async (req, res) => {
   try {
     const { name, description, avatar, theme, background, members } = req.body || {};
-    if (!name?.trim()) return res.status(400).json({ error: 'الاسم مطلوب' });
+    const safeName = sanitizeText(name, 80);
+    if (!safeName) return res.status(400).json({ error: 'الاسم مطلوب' });
+    const safeAvatar = sanitizeMediaUrl(avatar);
+    if (avatar && !safeAvatar) return res.status(400).json({ error: 'رابط صورة المجموعة غير صالح' });
     const result = await q.createGroup(
-      name.trim(),
-      description || '',
-      avatar || '',
-      theme || 'default',
-      background || 'default',
+      safeName,
+      sanitizeText(description, 600),
+      safeAvatar,
+      sanitizeSlug(theme, 'default'),
+      sanitizeSlug(background, 'default'),
       req.user.id
     );
     const gid = Number(result.lastInsertRowid);
     await q.addGroupMember(gid, req.user.id, 'admin');
     if (Array.isArray(members)) {
-      for (const uid of members) {
-        if (uid != req.user.id) await q.addGroupMember(gid, uid, 'member');
+      for (const rawUid of members.slice(0, 50)) {
+        const uid = Number(rawUid);
+        if (!Number.isInteger(uid) || uid <= 0 || uid === Number(req.user.id)) continue;
+        if (!(await q.getUserById(uid))) continue;
+        await q.addGroupMember(gid, uid, 'member');
       }
     }
     res.json({ success: true, id: gid });
@@ -3597,13 +3852,17 @@ app.put('/api/groups/:id', requireAuth, async (req, res) => {
     const m = await q.isMember(req.params.id, req.user.id);
     if (!m || m.role === 'member') return res.status(403).json({ error: 'غير مسموح' });
     const { name, description, avatar, theme, background } = req.body || {};
+    const safeName = sanitizeText(name, 80);
+    if (!safeName) return res.status(400).json({ error: 'الاسم مطلوب' });
+    const safeAvatar = sanitizeMediaUrl(avatar);
+    if (avatar && !safeAvatar) return res.status(400).json({ error: 'رابط صورة المجموعة غير صالح' });
     await q.updateGroup(
       req.params.id,
-      name || '',
-      description || '',
-      avatar || '',
-      theme || 'default',
-      background || 'default'
+      safeName,
+      sanitizeText(description, 600),
+      safeAvatar,
+      sanitizeSlug(theme, 'default'),
+      sanitizeSlug(background, 'default')
     );
     res.json({ success: true });
   } catch(e) {
@@ -3624,8 +3883,13 @@ app.post('/api/groups/:id/members', requireAuth, async (req, res) => {
   try {
     const m = await q.isMember(req.params.id, req.user.id);
     if (!m || m.role === 'member') return res.status(403).json({ error: 'غير مسموح' });
-    const { user_id, role } = req.body || {};
-    await q.addGroupMember(req.params.id, user_id, role || 'member');
+    const uid = Number(req.body?.user_id);
+    const role = req.body?.role === 'admin' ? 'admin' : 'member';
+    if (!Number.isInteger(uid) || uid <= 0) return res.status(400).json({ error: 'معرّف مستخدم غير صالح' });
+    if (!(await q.getUserById(uid))) return res.status(404).json({ error: 'المستخدم غير موجود' });
+    // ترقية لعضو جديد إلى admin تبقى حصراً بيد admin، لا moderator.
+    if (role === 'admin' && m.role !== 'admin') return res.status(403).json({ error: 'فقط admin يستطيع تعيين admin' });
+    await q.addGroupMember(req.params.id, uid, role);
     res.json({ success: true });
   } catch(e) {
     res.status(500).json({ error: 'خطأ في الخادم' });
@@ -3634,11 +3898,17 @@ app.post('/api/groups/:id/members', requireAuth, async (req, res) => {
 app.delete('/api/groups/:id/members/:uid', requireAuth, async (req, res) => {
   try {
     const m = await q.isMember(req.params.id, req.user.id);
-    const isSelf = parseInt(req.params.uid) === req.user.id;
-    if (!isSelf && (!m || m.role === 'member')) {
-      return res.status(403).json({ error: 'غير مسموح' });
+    if (!m) return res.status(403).json({ error: 'لست عضواً' });
+    const targetUid = Number(req.params.uid);
+    const isSelf = targetUid === Number(req.user.id);
+    const target = await q.isMember(req.params.id, targetUid);
+    if (!target) return res.status(404).json({ error: 'العضو غير موجود' });
+    // المشرف (moderator) لا يستطيع إزالة admin؛ الأدمن يستطيع إزالة أي عضو.
+    if (!isSelf && m.role !== 'admin' && target.role === 'admin') {
+      return res.status(403).json({ error: 'لا يمكن إزالة أدمن' });
     }
-    await q.removeGroupMember(req.params.id, req.params.uid);
+    if (!isSelf && m.role === 'member') return res.status(403).json({ error: 'غير مسموح' });
+    await q.removeGroupMember(req.params.id, targetUid);
     res.json({ success: true });
   } catch(e) {
     res.status(500).json({ error: 'خطأ في الخادم' });
@@ -3648,7 +3918,18 @@ app.put('/api/groups/:id/members/:uid/role', requireAuth, async (req, res) => {
   try {
     const m = await q.isMember(req.params.id, req.user.id);
     if (!m || m.role !== 'admin') return res.status(403).json({ error: 'فقط admin' });
-    await q.updateMemberRole(req.params.id, req.params.uid, req.body?.role || 'member');
+    const role = req.body?.role;
+    if (!['admin', 'member'].includes(role)) return res.status(400).json({ error: 'دور غير صحيح' });
+    const targetUid = Number(req.params.uid);
+    const target = await q.isMember(req.params.id, targetUid);
+    if (!target) return res.status(404).json({ error: 'العضو غير موجود' });
+    if (target.role === 'admin' && role === 'member') {
+      const members = await q.getGroupMembers(req.params.id);
+      if (members.filter(x => x.role === 'admin').length <= 1) {
+        return res.status(400).json({ error: 'لا يمكن إزالة آخر أدمن في المجموعة' });
+      }
+    }
+    await q.updateMemberRole(req.params.id, targetUid, role);
     res.json({ success: true });
   } catch(e) {
     res.status(500).json({ error: 'خطأ في الخادم' });
@@ -3658,7 +3939,18 @@ app.put('/api/groups/:id/members/:uid/nickname', requireAuth, async (req, res) =
   try {
     const m = await q.isMember(req.params.id, req.user.id);
     if (!m) return res.status(403).json({ error: 'لست عضواً' });
-    await q.updateMemberNick(req.params.id, req.params.uid, req.body?.nickname || '');
+    const targetUid = Number(req.params.uid);
+    const target = await q.isMember(req.params.id, targetUid);
+    if (!target) return res.status(404).json({ error: 'العضو غير موجود' });
+    // العضو يغيّر كنيته فقط؛ تغيير كنية عضو آخر يتطلب admin/moderator،
+    // ولا يسمح لـ moderator بتغيير كنية admin (منع انتحال الهوية).
+    if (targetUid !== Number(req.user.id) && m.role === 'member') {
+      return res.status(403).json({ error: 'غير مسموح' });
+    }
+    if (target.role === 'admin' && m.role !== 'admin' && targetUid !== Number(req.user.id)) {
+      return res.status(403).json({ error: 'غير مسموح' });
+    }
+    await q.updateMemberNick(req.params.id, targetUid, sanitizeText(req.body?.nickname, 40));
     res.json({ success: true });
   } catch(e) {
     res.status(500).json({ error: 'خطأ في الخادم' });
@@ -3709,7 +4001,7 @@ app.post('/api/groups/:id/messages', requireAuth, async (req, res) => {
       user.id,
       user.display_name || user.username,
       user.avatar || '',
-      content?.trim() || '',
+      sanitizeText(content, 5000),
       sanitizeMediaUrl(image),
       reply_to ? Number(reply_to) : null
     );
@@ -3723,9 +4015,9 @@ app.put('/api/groups/:id/messages/:mid', requireAuth, async (req, res) => {
     const msg = await q.getGroupMessage(req.params.mid);
     if (!msg || Number(msg.group_id) !== Number(req.params.id)) return res.status(404).json({ error: 'غير موجود' });
     if (msg.user_id != req.user.id) return res.status(403).json({ error: 'غير مسموح' });
-    const { content } = req.body || {};
-    if (!content?.trim()) return res.status(400).json({ error: 'الرسالة فارغة' });
-    await q.updateGroupMessage(req.params.mid, content.trim());
+    const safeContent = sanitizeText(req.body?.content, 5000);
+    if (!safeContent) return res.status(400).json({ error: 'الرسالة فارغة' });
+    await q.updateGroupMessage(req.params.mid, safeContent);
     res.json({ success: true });
   } catch(e) {
     res.status(500).json({ error: 'خطأ في الخادم' });
@@ -3753,14 +4045,20 @@ app.delete('/api/groups/:id/messages/:mid', requireAuth, async (req, res) => {
 
 app.post('/api/groups/:gid/messages/:mid/react', requireAuth, async (req, res) => {
   try {
-    const { emoji } = req.body || {};
+    const m = await q.isMember(req.params.gid, req.user.id);
+    if (!m) return res.status(403).json({ error: 'لست عضواً' });
+    const msg = await q.getGroupMessage(req.params.mid);
+    if (!msg || Number(msg.group_id) !== Number(req.params.gid)) {
+      return res.status(404).json({ error: 'غير موجود' });
+    }
+    const reaction = normalizeReaction(req.body?.emoji, 'heart');
     const ex = await q.getUserGroupMsgReaction(req.params.mid, req.user.id);
-    if (ex && ex.emoji === emoji) {
+    if (ex && ex.emoji === reaction) {
       await q.removeGroupMsgReaction(req.params.mid, req.user.id);
     } else {
-      await q.addGroupMsgReaction(req.params.mid, req.user.id, emoji || 'heart');
+      await q.addGroupMsgReaction(req.params.mid, req.user.id, reaction);
     }
-    const reactions = await q.getGroupMsgReactions(req.params.mid);
+    const reactions = filterReactions(await q.getGroupMsgReactions(req.params.mid));
     const userReaction = (await q.getUserGroupMsgReaction(req.params.mid, req.user.id))?.emoji || null;
     res.json({ success: true, reactions, userReaction });
   } catch(e) {
@@ -3771,11 +4069,14 @@ app.get('/api/groups/:id/messages/reactions', requireAuth, async (req, res) => {
   try {
     const m = await q.isMember(req.params.id, req.user.id);
     if (!m) return res.status(403).json({ error: 'لست عضواً' });
-    const ids = (req.query.ids || '').split(',').map(Number).filter(Boolean);
+    const ids = (req.query.ids || '').split(',').map(Number).filter(n => Number.isInteger(n) && n > 0).slice(0, 100);
     if (!ids.length) return res.json({});
     const result = {};
     for (const mid of ids) {
-      const reactions = await q.getGroupMsgReactions(mid);
+      // لا نكشف تفاعلات رسالة من مجموعة أخرى عبر تمرير معرّفها هنا.
+      const msg = await q.getGroupMessage(mid);
+      if (!msg || Number(msg.group_id) !== Number(req.params.id)) continue;
+      const reactions = filterReactions(await q.getGroupMsgReactions(mid));
       const userReaction = (await q.getUserGroupMsgReaction(mid, req.user.id))?.emoji || null;
       if (reactions.length || userReaction) {
         result[mid] = { reactions, userReaction };
@@ -4329,8 +4630,10 @@ app.get('/api/og-image', async (req, res) => {
 
     if (type === 'post' || type === 'video') {
       const rec = await q.getRecordById(req.query.id);
-      if (rec && rec.image) imageUrl = absUrl(req, rec.image);
-      else if (rec && rec.user_avatar) { imageUrl = absUrl(req, rec.user_avatar); imageIsSquare = true; }
+      if (rec && await canViewRecord(rec, await verifyTokenLive(req))) {
+        if (rec.image) imageUrl = absUrl(req, rec.image);
+        else if (rec.user_avatar) { imageUrl = absUrl(req, rec.user_avatar); imageIsSquare = true; }
+      }
     } else if (type === 'profile') {
       const user = await q.getUserByUsername(req.query.u);
       if (user && user.avatar) { imageUrl = absUrl(req, user.avatar); imageIsSquare = true; }
@@ -4346,13 +4649,16 @@ app.get('/api/og-image', async (req, res) => {
       else if (post && post.author_avatar) { imageUrl = absUrl(req, post.author_avatar); imageIsSquare = true; }
     }
 
-    // حماية SSRF: لا نجلب صورة إلا من عنوان عام (نمنع استهداف الشبكة الداخلية/ميتاداتا السحابة).
+    // حماية SSRF: لا نجلب صورة إلا من عنوان عام (نمنع استهداف الشبكة الداخلية/
+    // ميتاداتا السحابة)، ونتحقق من كل تحويل يدوياً بدل ترك fetch يتابعها.
+    let imageBuffer = null;
     if (imageUrl) {
-      try { await assertPublicUrl(new URL(imageUrl)); }
-      catch (e) { imageUrl = null; }
+      try { imageBuffer = await safeFetchImage(imageUrl); }
+      catch (e) { imageBuffer = null; }
+      imageUrl = null;
     }
 
-    const png = await generateOgImage({ brand, type, imageUrl, imageIsSquare });
+    const png = await generateOgImage({ brand, type, imageUrl: null, imageBuffer, imageIsSquare });
     res.set('Cache-Control', 'public, max-age=86400, s-maxage=86400');
     res.type('image/png').send(png);
   } catch (e) {
@@ -4458,7 +4764,9 @@ app.get('*', async (req, res) => {
   if (pid) {
     try {
       const rec = await q.getRecordById(pid);
-      if (rec) {
+      // لا نُسرّب عنوان/وصف/صورة منشور خاص أو مسودة أو مجدول أو معلّق عبر
+      // وسوم Open Graph (كان /?p=ID يعرض محتوى أي منشور لأي زائر).
+      if (rec && await canViewRecord(rec, await verifyTokenLive(req))) {
         const who = rec.publisher_name || rec.publisher;
         meta.title = `منشور ${who} | ${SITE_NAME}`;
         meta.description = ogTruncate(rec.content) || DEFAULT_DESC;

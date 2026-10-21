@@ -638,6 +638,7 @@ const q = {
   touchSession: (jti) => db.execute({ sql:"UPDATE user_sessions SET last_active=datetime('now') WHERE jti=?", args:[jti] }),
   getUserSessions: (userId) => db.execute({ sql:'SELECT * FROM user_sessions WHERE user_id=? AND revoked=0 ORDER BY last_active DESC', args:[userId] }).then(rows),
   revokeSession: (userId, sessionId) => db.execute({ sql:'UPDATE user_sessions SET revoked=1 WHERE id=? AND user_id=?', args:[sessionId, userId] }),
+  revokeSessionByJti: (jti) => db.execute({ sql:'UPDATE user_sessions SET revoked=1 WHERE jti=?', args:[jti] }),
   revokeAllSessions: (userId, exceptJti) => db.execute({ sql:'UPDATE user_sessions SET revoked=1 WHERE user_id=? AND jti!=?', args:[userId, exceptJti||''] }),
 
   // ── تنبيهات الأمان ──
@@ -677,10 +678,13 @@ const q = {
     "SELECT username, created_at FROM pages ORDER BY created_at DESC LIMIT 2000"
   ).then(rows),
   listPublicPostIds: () => db.execute(
-    `SELECT id, created_at FROM records
-     WHERE COALESCE(privacy,'public')='public'
-       AND (scheduled_at IS NULL OR scheduled_at='' OR scheduled_at <= datetime('now'))
-     ORDER BY created_at DESC LIMIT 3000`
+    `SELECT r.id, r.created_at FROM records r
+     LEFT JOIN users u ON u.id = r.user_id
+     WHERE COALESCE(r.privacy,'public')='public'
+       AND COALESCE(r.suspended,0)=0
+       AND (r.scheduled_at IS NULL OR r.scheduled_at='' OR r.scheduled_at <= datetime('now'))
+       AND (r.page_id IS NOT NULL OR u.id IS NULL OR COALESCE(u.is_private,0)=0)
+     ORDER BY r.created_at DESC LIMIT 3000`
   ).then(rows),
   deleteUser:       (id) => db.execute({ sql:"DELETE FROM users WHERE id=? AND role!='admin'", args:[id] }),
   updateUserRole:   (role,id) => db.execute({ sql:'UPDATE users SET role=? WHERE id=?', args:[role,id] }),
@@ -831,8 +835,30 @@ const q = {
     FROM saved_posts sp
     JOIN records r ON r.id = sp.record_id
     LEFT JOIN users u ON (u.id = r.user_id) OR (r.user_id IS NULL AND TRIM(LOWER(u.username)) = TRIM(LOWER(r.publisher)))
-    WHERE sp.user_id = ?`;
-    const args = [userId];
+    WHERE sp.user_id = ?
+      AND COALESCE(r.suspended,0)=0
+      AND (
+        r.user_id = ?
+        OR (
+          COALESCE(r.suspended,0)=0
+          AND (r.scheduled_at IS NULL OR TRIM(r.scheduled_at)='' OR datetime(r.scheduled_at) <= datetime('now'))
+          AND (
+            (
+              COALESCE(r.privacy,'public')='public'
+              AND (
+                r.page_id IS NOT NULL
+                OR COALESCE(u.is_private,0)=0
+                OR EXISTS (SELECT 1 FROM follows f WHERE f.follower_id=? AND f.followed_id=r.user_id)
+              )
+            )
+            OR (
+              r.privacy='close_friends'
+              AND EXISTS (SELECT 1 FROM close_friends cf WHERE cf.user_id=r.user_id AND cf.friend_id=?)
+            )
+          )
+        )
+      )`;
+    const args = [userId, userId, userId, userId];
     if (collectionId === 'uncategorized') {
       sql += ' AND sp.collection_id IS NULL';
     } else if (collectionId) {
@@ -1145,9 +1171,19 @@ const q = {
       JOIN users u ON u.id = s.user_id
       LEFT JOIN story_views sv ON sv.story_id = s.id AND sv.user_id = ?
       WHERE s.expires_at > datetime('now')
+        AND (
+          COALESCE(u.is_private,0)=0
+          OR u.id = ?
+          OR EXISTS (SELECT 1 FROM follows f WHERE f.follower_id=? AND f.followed_id=u.id)
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM blocks b
+          WHERE (b.user_id=? AND b.blocked_id=s.user_id)
+             OR (b.user_id=s.user_id AND b.blocked_id=?)
+        )
       ORDER BY s.user_id, s.created_at ASC
     `,
-    args: [viewerId || 0]
+    args: [viewerId || 0, viewerId || 0, viewerId || 0, viewerId || 0, viewerId || 0]
   }).then(rows),
   getStory: (id) => db.execute({ sql:'SELECT * FROM stories WHERE id=?', args:[id] }).then(first),
   deleteStory: (id) => db.execute({ sql:'DELETE FROM stories WHERE id=?', args:[id] }),
@@ -1169,7 +1205,17 @@ const q = {
     args: [name, avatar || '', cover || '', bio || '', category || '', id]
   }),
   deletePage: (id) => db.execute({ sql:'DELETE FROM pages WHERE id=?', args:[id] }),
-  getPagePosts: (page_id) => db.execute({ sql:'SELECT * FROM records WHERE page_id=? ORDER BY created_at DESC', args:[page_id] }).then(rows),
+  getPagePosts: (page_id, includeAll = false) => db.execute({
+    sql: `SELECT * FROM records
+          WHERE page_id=?
+            AND (?=1 OR (
+              COALESCE(privacy,'public')='public'
+              AND COALESCE(suspended,0)=0
+              AND (scheduled_at IS NULL OR TRIM(scheduled_at)='' OR datetime(scheduled_at) <= datetime('now'))
+            ))
+          ORDER BY created_at DESC`,
+    args: [page_id, includeAll ? 1 : 0]
+  }).then(rows),
   followPage:   (page_id, user_id) => db.execute({
     sql: 'INSERT INTO page_follows (page_id,user_id) VALUES (?,?) ON CONFLICT(page_id,user_id) DO NOTHING',
     args: [page_id, user_id]

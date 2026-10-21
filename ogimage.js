@@ -135,7 +135,7 @@ function drawTypeGlyph(ctx, type, cx, cy, size) {
  * @param {boolean} [opts.imageIsSquare] true للأفاتار/الأيقونات (تُرسم بحواف مدوّرة)، false/undefined لصور المنشورات (تُرسم بعرض كامل كخلفية)
  * @returns {Promise<Buffer>} PNG buffer
  */
-async function generateOgImage({ brand = 'hostaka', type = 'post', imageUrl, imageIsSquare }) {
+async function generateOgImage({ brand = 'hostaka', type = 'post', imageUrl, imageBuffer, imageIsSquare }) {
   const b = BRANDS[brand] || BRANDS.hostaka;
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext('2d');
@@ -147,7 +147,7 @@ async function generateOgImage({ brand = 'hostaka', type = 'post', imageUrl, ima
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 
-  const img = await remoteImage(imageUrl);
+  const img = imageBuffer ? await loadImage(imageBuffer) : await remoteImage(imageUrl);
 
   if (img && !imageIsSquare) {
     // صورة منشور/فيديو حقيقية — تُملأ كخلفية كاملة (تشبه "لقطة شاشة" فعلية للمشاركة)
