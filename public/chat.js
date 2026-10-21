@@ -1145,7 +1145,7 @@ function renderMsgs(msgs, scroll = true) {
     const rc = msgReactions[m.id] || { reactions: [], userReaction: null };
     const totalReacts = rc.reactions && rc.reactions.length ? rc.reactions.reduce((s, r) => s + Number(r.count || 0), 0) : 0;
     const reactionHtml = totalReacts > 0 ?
-      `<div class="msg-reaction" onclick="togglePicker(${m.id})">${rc.reactions.map(r => r.icon || r.emoji).join('')} <span style="font-size:0.7rem;color:var(--muted);">${totalReacts}</span></div>` : '';
+      `<div class="msg-reaction" onclick="togglePicker(${m.id})">${rc.reactions.map(r => (REACTIONS.find(x => x.emoji === r.emoji) || {}).icon || '').join('')} <span style="font-size:0.7rem;color:var(--muted);">${totalReacts}</span></div>` : '';
     const firstUrl = extractFirstUrl(m.content);
     const replySrc = m.reply_to ? msgs.find(x => x.id === m.reply_to) : null;
     const replyQuoteHtml = replySrc ? `<div class="msg-reply-quote">${(window.EmojiFluent ? EmojiFluent.render(esc((replySrc.content || (replySrc.image ? '📷 صورة' : '')).slice(0,80))) : esc((replySrc.content || (replySrc.image ? '📷 صورة' : '')).slice(0,80)))}</div>` : (m.reply_to ? `<div class="msg-reply-quote">${t('reply')}</div>` : '');
