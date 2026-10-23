@@ -1,6 +1,9 @@
 {
   "name": "hostaka",
   "version": "1.0.0",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js"
