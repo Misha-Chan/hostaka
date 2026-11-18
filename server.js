@@ -4427,6 +4427,19 @@ app.get('/manager', (req, res) => sendOG(req, res, 'manager.html', privateMeta(r
 app.get('/save', (req, res) => sendOG(req, res, 'save.html', privateMeta(req, 'المحفوظات')));
 app.get('/post', (req, res) => sendOG(req, res, 'post.html', baseMeta(req, 'منشور')));
 
+// صفحة الهاشتاق: نفس تطبيق الصفحة الرئيسية لكن بمسار مستقل ووسوم OG صحيحة،
+// حتى يصير لكل هاشتاق رابط قابل للمشاركة (/tag?t=foo) بدل ?tag= القديم.
+app.get('/tag', (req, res) => {
+  const tag = String(req.query.t || req.query.tag || '').trim().replace(/^#+/, '').replace(/\s+/g, '').slice(0, 32);
+  const meta = baseMeta(req, tag ? `#${tag}` : 'هاشتاق');
+  if(tag){
+    meta.title = `#${tag} | ${SITE_NAME}`;
+    meta.description = `منشورات الهاشتاق #${tag} على ${SITE_NAME}`;
+    meta.url = absUrl(req, `/tag?t=${encodeURIComponent(tag)}`);
+  }
+  sendOG(req, res, 'index.html', meta);
+});
+
 app.get('/profile', async (req, res) => {
   const meta = baseMeta(req, 'الملف الشخصي');
   const uname = (req.query.u || '').trim();
@@ -4776,6 +4789,19 @@ app.get('*', async (req, res) => {
         delete meta.jsonld;
       }
     } catch (e) { /* نستمر بالميتاداتا الافتراضية عند أي خطأ */ }
+  }
+  const tag = String(req.query.t || req.query.tag || '').trim().replace(/^#+/, '').replace(/\s+/g, '').slice(0, 32);
+  const search = String(req.query.q || '').trim().slice(0, 100);
+  if(tag){
+    meta.title = `#${tag} | ${SITE_NAME}`;
+    meta.description = `منشورات الهاشتاق #${tag} على ${SITE_NAME}`;
+    meta.url = absUrl(req, `/tag?t=${encodeURIComponent(tag)}`);
+    delete meta.jsonld;
+  } else if(search){
+    meta.title = `بحث: ${search} | ${SITE_NAME}`;
+    meta.description = `نتائج البحث عن "${search}" على ${SITE_NAME}`;
+    meta.robots = 'noindex, follow';
+    delete meta.jsonld;
   }
   sendOG(req, res, 'index.html', meta);
 });

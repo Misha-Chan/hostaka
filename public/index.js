@@ -17,6 +17,10 @@ const LANG = {
   ar: {
     title: 'Hostaka', subtitle: 'منصة تواصل اجتماعي مفتوحة للجميع',
     search: 'ابحث في المنشورات...', newPost: 'منشور جديد', login: 'دخول / تسجيل',
+    searchResultsFor: 'نتائج البحث عن "{q}"', searchCount: 'النتائج: {n}', searchCountMore: 'النتائج: {n}+',
+    searchEmpty: 'لا توجد نتائج لـ "{q}"', clearSearch: 'مسح البحث', searching: 'جارٍ البحث...',
+    allPosts: 'كل المنشورات', hashtagMeta: 'المنشورات: {n}', hashtagMetaMore: 'المنشورات: {n}+',
+    hashtagEmpty: 'لا توجد منشورات بهذا الهاشتاق بعد',
     loginTab: 'دخول', registerTab: 'حساب جديد',
     email: 'البريد الإلكتروني', password: 'كلمة المرور', username: 'اسم المستخدم',
     loginSubmit: 'دخول', registerSubmit: 'إنشاء الحساب',
@@ -56,6 +60,10 @@ const LANG = {
   en: {
     title: 'Hostaka', subtitle: 'An open social platform for everyone',
     search: 'Search posts...', newPost: 'New Post', login: 'Login / Register',
+    searchResultsFor: 'Search results for "{q}"', searchCount: 'Results: {n}', searchCountMore: 'Results: {n}+',
+    searchEmpty: 'No results for "{q}"', clearSearch: 'Clear search', searching: 'Searching...',
+    allPosts: 'All posts', hashtagMeta: 'Posts: {n}', hashtagMetaMore: 'Posts: {n}+',
+    hashtagEmpty: 'No posts with this hashtag yet',
     loginTab: 'Login', registerTab: 'Register',
     email: 'Email', password: 'Password', username: 'Username',
     loginSubmit: 'Login', registerSubmit: 'Create Account',
@@ -95,6 +103,10 @@ const LANG = {
   fr: {
     title: 'Hostaka', subtitle: 'Une plateforme sociale ouverte à tous',
     search: 'Rechercher...', newPost: 'Nouvelle publication', login: 'Connexion / Inscription',
+    searchResultsFor: 'Résultats pour "{q}"', searchCount: 'Résultats : {n}', searchCountMore: 'Résultats : {n}+',
+    searchEmpty: 'Aucun résultat pour "{q}"', clearSearch: 'Effacer la recherche', searching: 'Recherche...',
+    allPosts: 'Toutes les publications', hashtagMeta: 'Publications : {n}', hashtagMetaMore: 'Publications : {n}+',
+    hashtagEmpty: 'Aucune publication avec ce hashtag',
     loginTab: 'Connexion', registerTab: 'S\'inscrire',
     email: 'Email', password: 'Mot de passe', username: 'Nom d\'utilisateur',
     loginSubmit: 'Se connecter', registerSubmit: 'Créer un compte',
@@ -115,6 +127,10 @@ const LANG = {
   ru: {
     title: 'Hostaka', subtitle: 'Открытая социальная платформа для всех',
     search: 'Поиск...', newPost: 'Новый пост', login: 'Вход / Регистрация',
+    searchResultsFor: 'Результаты по "{q}"', searchCount: 'Результатов: {n}', searchCountMore: 'Результатов: {n}+',
+    searchEmpty: 'Нет результатов по "{q}"', clearSearch: 'Очистить поиск', searching: 'Поиск...',
+    allPosts: 'Все посты', hashtagMeta: 'Постов: {n}', hashtagMetaMore: 'Постов: {n}+',
+    hashtagEmpty: 'Пока нет постов с этим хэштегом',
     loginTab: 'Вход', registerTab: 'Регистрация',
     email: 'Эл. почта', password: 'Пароль', username: 'Имя пользователя',
     loginSubmit: 'Войти', registerSubmit: 'Создать аккаунт',
@@ -135,6 +151,10 @@ const LANG = {
   zh: {
     title: 'Hostaka', subtitle: '面向所有人的开放社交平台',
     search: '搜索帖子...', newPost: '新帖子', login: '登录 / 注册',
+    searchResultsFor: '"{q}" 的搜索结果', searchCount: '结果：{n}', searchCountMore: '结果：{n}+',
+    searchEmpty: '未找到 "{q}" 的结果', clearSearch: '清除搜索', searching: '搜索中...',
+    allPosts: '所有帖子', hashtagMeta: '帖子：{n}', hashtagMetaMore: '帖子：{n}+',
+    hashtagEmpty: '此话题标签下暂无帖子',
     loginTab: '登录', registerTab: '注册',
     email: '电子邮箱', password: '密码', username: '用户名',
     loginSubmit: '登录', registerSubmit: '创建账户',
@@ -155,6 +175,10 @@ const LANG = {
   ja: {
     title: 'Hostaka', subtitle: '誰でも参加できるオープンソーシャルプラットフォーム',
     search: '投稿を検索...', newPost: '新規投稿', login: 'ログイン / 登録',
+    searchResultsFor: '"{q}" の検索結果', searchCount: '結果: {n}', searchCountMore: '結果: {n}+',
+    searchEmpty: '"{q}" の結果はありません', clearSearch: '検索をクリア', searching: '検索中...',
+    allPosts: 'すべての投稿', hashtagMeta: '投稿: {n}', hashtagMetaMore: '投稿: {n}+',
+    hashtagEmpty: 'このハッシュタグの投稿はまだありません',
     loginTab: 'ログイン', registerTab: '登録',
     email: 'メールアドレス', password: 'パスワード', username: 'ユーザー名',
     loginSubmit: 'ログイン', registerSubmit: 'アカウント作成',
@@ -333,11 +357,17 @@ function applyLang() {
   setText('.drop-download', t('downloadAndroid'), false);
   setText('.drop-logout', t('logout'), false);
   setText('loadingText', t('loading'));
-  if (feedOrder.length) renderFeed(feedOrder);
+  updateHashtagHero();
+  updateSearchInfo();
+  updateSearchClear();
+  if(activeHashtag) document.title = '#' + activeHashtag + ' | ' + t('title');
+  else if(searchQuery) document.title = t('searchResultsFor',{q:searchQuery}) + ' | ' + t('title');
+  else document.title = t('title');
+  if (feedOrder.length) renderFeed(feedOrder, currentEmptyHtml());
   else {
     const feed = document.getElementById('feed');
     if (feed && !feed.querySelector('.sw-post')) {
-      feed.innerHTML = `<div class="empty">${getEmptySvg()}<br>${t('empty')}</div>`;
+      feed.innerHTML = currentEmptyHtml() || `<div class="empty">${getEmptySvg()}<br>${t('empty')}</div>`;
     }
   }
 }
@@ -781,7 +811,6 @@ function setLang(lang) {
   if (window.setHostakaLang) window.setHostakaLang(lang);
   document.getElementById('langMenu').classList.remove('show');
   applyLang();
-  if (feedOrder.length) renderFeed(feedOrder);
 }
 
 // ============================================================
@@ -1282,8 +1311,12 @@ function linkifyContent(html){
           a.href = '/profile?u=' + encodeURIComponent(word);
         } else {
           a.className = 'hashtag-tag';
-          a.href = 'javascript:void(0)';
-          a.onclick = (ev)=>{ ev.preventDefault(); ev.stopPropagation(); filterByHashtag(word); };
+          a.href = '/tag?t=' + encodeURIComponent(word);
+          a.onclick = (ev)=>{
+            // نترك Ctrl/Cmd/Shift/الزر الأوسط يفتح الرابط في تبويب جديد كالمعتاد
+            if(ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey || ev.button !== 0) return;
+            ev.preventDefault(); ev.stopPropagation(); openHashtag(word);
+          };
         }
         frag.appendChild(a);
         last = start + full.length;
@@ -1337,12 +1370,69 @@ async function loadLinkPreviews(scope){
   });
 }
 
-function filterByHashtag(tag){
-  const input = document.getElementById('searchInput');
-  input.value = '#' + tag;
-  input.dispatchEvent(new Event('input'));
-  window.scrollTo({ top: document.getElementById('feed').offsetTop - 120, behavior:'smooth' });
+function filterByHashtag(tag){ openHashtag(tag); }
+
+async function openHashtag(tag, opts = {}){
+  tag = normalizeHashtag(tag);
+  if(!tag){ resetFeedView(opts); return; }
+  beginFeedLoad();
+  activeHashtag = tag;
+  searchQuery = ''; searchResultCount = 0; searchHasMore = false;
+  activeHashtagCount = 0; activeHashtagHasMore = false;
+  const input = document.getElementById('searchInput'); if(input) input.value = '';
+  document.body.classList.add('hashtag-mode');
+  updateSearchClear(); updateHashtagHero(); updateSearchInfo();
+  document.title = '#' + tag + ' | ' + t('title');
+  const feed = document.getElementById('feed');
+  if(feed) feed.innerHTML = '<div class="loading"><div class="spinner"></div><div>'+esc(t('searching'))+'</div></div>';
+  const seq = ++searchSeq;
+  if(!opts.skipHistory){
+    const url = '/tag?t=' + encodeURIComponent(tag);
+    if(opts.history === 'replace') history.replaceState({tag}, '', url);
+    else history.pushState({tag}, '', url);
+  }
+  try {
+    const pg = await fetchFeedPage(0, '#' + tag);
+    if(seq !== searchSeq) return;
+    const list = pg.posts.filter(p => contentHasHashtag(p.content, tag));
+    feedOrder = list;
+    mergeIntoAll(list);
+    feedOffset = pg.next;
+    feedHasMore = pg.hasMore;
+    activeHashtagCount = list.length;
+    activeHashtagHasMore = pg.hasMore;
+    renderFeed(list, hashtagEmptyHtml(tag));
+    updateHashtagHero();
+    // أول صفحة ممكن تكون كلها نتائج غير مطابقة (مثلاً #test مقابل #testing)
+    // فنتابع الصفحة التالية بدل ما نوقف على حالة فارغة.
+    if(!list.length && pg.hasMore) loadMoreFeed();
+    if(!opts.instant) window.scrollTo({top:0, behavior:'smooth'});
+  } catch(e){
+    if(seq !== searchSeq) return;
+    feedOrder = []; feedHasMore = false;
+    activeHashtagCount = 0; activeHashtagHasMore = false;
+    renderFeed([], hashtagEmptyHtml(tag));
+    updateHashtagHero();
+    showToast(t('requestFail'), 'error');
+  }
 }
+
+function resetFeedView(opts = {}){
+  activeHashtag = ''; activeHashtagCount = 0; activeHashtagHasMore = false;
+  searchQuery = ''; searchResultCount = 0; searchHasMore = false;
+  document.body.classList.remove('hashtag-mode');
+  const input = document.getElementById('searchInput'); if(input) input.value = '';
+  updateSearchClear(); updateHashtagHero(); updateSearchInfo();
+  document.title = t('title');
+  if(!opts.skipHistory){
+    if(opts.history === 'replace') history.replaceState({}, '', '/');
+    else history.pushState({}, '', '/');
+  }
+  loadPosts();
+  if(!opts.instant) window.scrollTo({top:0, behavior:'smooth'});
+}
+function closeHashtag(opts = {}){ resetFeedView(opts); }
+function clearSearch(opts = {}){ resetFeedView(opts); }
 
 // ----- خيارات المنشور: الإبلاغ والحظر -----
 let blockedUsernames = new Set();
@@ -1452,16 +1542,31 @@ let feedHasMore = false;   // في منشورات إضافية؟
 let feedLoading = false;
 let feedObserver = null;
 let searchQuery = '';
+let searchResultCount = 0;
+let searchHasMore = false;
+let activeHashtag = '';
+let activeHashtagCount = 0;
+let activeHashtagHasMore = false;
 const FEED_PAGE_SIZE = 10;
 
 function mergeIntoAll(posts){
   posts.forEach(p => { if(!allPosts.some(x => x.id === p.id)) allPosts.push(p); });
 }
 
+// نبدأ طلب فيد جديد: نوقف مراقب التمرير القديم ونصفّر حالة التحميل
+// حتى ما يقدر طلب قديم (هاشتاق/بحث) يكمّل ويضيف نتائج فوق العرض الجديد.
+function beginFeedLoad(){
+  if(feedObserver){ feedObserver.disconnect(); feedObserver = null; }
+  feedLoading = false;
+  feedHasMore = false;
+  feedOffset = 0;
+  feedOrder = [];
+}
+
 // صفحة واحدة من السيرفر (تتوافق مع السيرفر القديم اللي يرجّع مصفوفة كاملة)
 async function fetchFeedPage(offset, search){
   let url = '/api/records?limit=' + FEED_PAGE_SIZE + '&offset=' + offset;
-  if(search) url = '/api/records?limit=30&offset=0&q=' + encodeURIComponent(search);
+  if(search) url += '&q=' + encodeURIComponent(search);
   const d = await apiFetch(url);
   if(d && d.error && !Array.isArray(d)) throw new Error(d.error);
   const list = Array.isArray(d) ? d : ((d && d.records) || []);
@@ -1474,11 +1579,88 @@ async function fetchFeedPage(offset, search){
 
 function feedEmptyHtml(){ return '<div class="empty">'+SVG.empty+'<br>'+t('empty')+'</div>'; }
 
+// ----- Hashtag / search helpers -----
+function normalizeHashtag(tag){
+  return String(tag || '').trim().replace(/^#+/, '').replace(/\s+/g, '').slice(0, 32);
+}
+function contentPlainText(html){
+  const d = document.createElement('div');
+  d.innerHTML = html || '';
+  return d.textContent || '';
+}
+function contentHasHashtag(html, tag){
+  const text = contentPlainText(html);
+  const escaped = String(tag).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp('(^|[^A-Za-z0-9_\\u0600-\\u06FF])#' + escaped + '(?![A-Za-z0-9_\\u0600-\\u06FF])', 'i');
+  return re.test(text);
+}
+function currentFeedQuery(){ return activeHashtag ? ('#' + activeHashtag) : (searchQuery || ''); }
+function hashtagEmptyHtml(tag){
+  return '<div class="empty">'+SVG.empty+'<br>'+esc(t('hashtagEmpty'))+
+    '<br><button class="load-more-btn" style="margin-top:14px;" onclick="closeHashtag()">'+esc(t('allPosts'))+'</button></div>';
+}
+function searchEmptyHtml(q){
+  return '<div class="empty">'+SVG.empty+'<br>'+esc(t('searchEmpty',{q:q}))+
+    '<br><button class="load-more-btn" style="margin-top:14px;" onclick="clearSearch()">'+esc(t('clearSearch'))+'</button></div>';
+}
+function currentEmptyHtml(){
+  if(activeHashtag) return hashtagEmptyHtml(activeHashtag);
+  if(searchQuery) return searchEmptyHtml(searchQuery);
+  return '';
+}
+function updateHashtagHero(){
+  const hero = document.getElementById('hashtagHero');
+  if(!hero) return;
+  hero.hidden = !activeHashtag;
+  if(!activeHashtag) return;
+  const title = document.getElementById('hashtagTitle');
+  if(title) title.textContent = '#' + activeHashtag;
+  const meta = document.getElementById('hashtagMeta');
+  if(meta){
+    const key = activeHashtagHasMore ? 'hashtagMetaMore' : 'hashtagMeta';
+    meta.textContent = t(key, {n: activeHashtagCount});
+  }
+  const backText = document.getElementById('hashtagBackText');
+  if(backText) backText.textContent = t('allPosts');
+  const back = document.getElementById('hashtagBack');
+  if(back) back.setAttribute('aria-label', t('allPosts'));
+}
+function updateSearchInfo(){
+  const info = document.getElementById('searchInfo');
+  if(!info) return;
+  const active = !!searchQuery && !activeHashtag;
+  info.hidden = !active;
+  if(!active) return;
+  const text = document.getElementById('searchInfoText');
+  if(text){
+    const key = searchHasMore ? 'searchCountMore' : 'searchCount';
+    text.textContent = t('searchResultsFor', {q: searchQuery}) + ' · ' + t(key, {n: searchResultCount});
+  }
+  const clear = document.getElementById('searchInfoClear');
+  if(clear) clear.setAttribute('aria-label', t('clearSearch'));
+}
+function updateSearchClear(){
+  const btn = document.getElementById('searchClear');
+  const input = document.getElementById('searchInput');
+  if(!btn || !input) return;
+  btn.hidden = !input.value.trim();
+  btn.setAttribute('aria-label', t('clearSearch'));
+  btn.title = t('clearSearch');
+}
+
 async function loadPosts(){
   const feed = document.getElementById('feed');
-  feedLoading = false; searchQuery = '';
+  beginFeedLoad();
+  const seq = ++searchSeq;
+  searchQuery = ''; searchResultCount = 0; searchHasMore = false;
+  activeHashtag = ''; activeHashtagCount = 0; activeHashtagHasMore = false;
+  const si = document.getElementById('searchInput'); if(si) si.value = '';
+  document.body.classList.remove('hashtag-mode');
+  updateHashtagHero(); updateSearchInfo(); updateSearchClear();
+  document.title = t('title');
   try {
     const pg = await fetchFeedPage(0);
+    if(seq !== searchSeq) return;
     feedOrder = pg.posts;
     allPosts = pg.posts.slice();
     feedOffset = pg.next;
@@ -1487,30 +1669,46 @@ async function loadPosts(){
     // لو الحظر شال كل منشورات الصفحة الأولى وفي بعدها، كمّل تحميل
     if(!feedOrder.length && feedHasMore) loadMoreFeed();
   } catch(e){
+    if(seq !== searchSeq) return;
     feed.innerHTML = '<div class="empty">'+SVG.empty+'<br>'+t('requestFail')+'<br><button class="load-more-btn" style="margin-top:14px;" onclick="loadPosts()">↻</button></div>';
   }
 }
 
 async function loadMoreFeed(){
-  if(feedLoading || !feedHasMore || searchQuery) return;
+  if(feedLoading || !feedHasMore) return;
+  const seq = searchSeq;
   feedLoading = true;
   setFeedSentinel();
+  let stale = false;
   try {
-    const pg = await fetchFeedPage(feedOffset);
+    const pg = await fetchFeedPage(feedOffset, currentFeedQuery() || null);
+    if(seq !== searchSeq){ stale = true; return; }
     feedOffset = pg.next;
     feedHasMore = pg.hasMore;
-    const fresh = pg.posts.filter(p => !feedOrder.some(x => x.id === p.id));
+    let fresh = pg.posts.filter(p => !feedOrder.some(x => x.id === p.id));
+    if(activeHashtag) fresh = fresh.filter(p => contentHasHashtag(p.content, activeHashtag));
     feedOrder = feedOrder.concat(fresh);
     mergeIntoAll(fresh);
     appendPosts(fresh);
+    if(activeHashtag){
+      activeHashtagCount = feedOrder.length;
+      activeHashtagHasMore = feedHasMore;
+      updateHashtagHero();
+    } else if(searchQuery){
+      searchResultCount = feedOrder.length;
+      searchHasMore = feedHasMore;
+      updateSearchInfo();
+    }
   } catch(e){
+    if(seq !== searchSeq){ stale = true; return; }
     showToast(t('requestFail'), 'error');
   } finally {
+    if(stale) return;
     feedLoading = false;
     setFeedSentinel();
     observeFeedSentinel();
-    // لو الصفحة كانت كلها محظورين وفي بعدها، كمّل
-    if(feedHasMore && !searchQuery && feedOrder.length === 0) loadMoreFeed();
+    // لو الصفحة كانت كلها محظورين/غير مطابقة وفي بعدها، كمّل
+    if(feedHasMore && feedOrder.length === 0) loadMoreFeed();
   }
 }
 
@@ -1518,7 +1716,7 @@ async function loadMoreFeed(){
 function setFeedSentinel(){
   const feed = document.getElementById('feed');
   let el = document.getElementById('feedSentinel');
-  const needed = feedHasMore && !searchQuery;
+  const needed = feedHasMore;
   if(!needed){ if(el) el.remove(); return; }
   if(!el){ el = document.createElement('div'); el.id = 'feedSentinel'; el.className = 'feed-sentinel'; feed.appendChild(el); }
   else if(el.parentNode === feed && feed.lastElementChild !== el) feed.appendChild(el);
@@ -1541,6 +1739,10 @@ function appendPosts(posts){
   const feed = document.getElementById('feed');
   const sentinel = document.getElementById('feedSentinel');
   if(!posts.length) return;
+  // لو كنا نعرض حالة "لا توجد نتائج" ووصلت نتائج من صفحة تالية،
+  // نشيل الحالة الفارغة قبل إضافة المنشورات.
+  const empty = feed.querySelector(':scope > .empty');
+  if(empty) empty.remove();
   const tmp = document.createElement('div');
   tmp.innerHTML = posts.map(p => renderPost(p)).join('');
   const nodes = Array.from(tmp.children);
@@ -1549,9 +1751,14 @@ function appendPosts(posts){
 }
 
 function renderFeedDone(){ loadLinkPreviews(document.getElementById('feed')); }
-function renderFeed(posts){
+function renderFeed(posts, emptyHtml){
   const feed = document.getElementById('feed');
-  if(!posts.length){ feed.innerHTML = feedEmptyHtml(); if(feedObserver){ feedObserver.disconnect(); feedObserver = null; } return; }
+  if(!posts.length){
+    feed.innerHTML = emptyHtml || feedEmptyHtml();
+    if(feedHasMore){ setFeedSentinel(); observeFeedSentinel(); }
+    else if(feedObserver){ feedObserver.disconnect(); feedObserver = null; }
+    return;
+  }
   feed.innerHTML = posts.map(p => renderPost(p)).join('');
   setFeedSentinel();
   observeFeedSentinel();
@@ -1704,24 +1911,80 @@ async function sharePost(id){
 }
 
 let searchTimer = null, searchSeq = 0;
-async function runFeedSearch(raw){
-  const q = raw.trim();
-  searchQuery = q.toLowerCase();
+async function runFeedSearch(raw, opts = {}){
+  const q = String(raw || '').trim();
+  if(!q){ resetFeedView(opts); return; }
+  beginFeedLoad();
+  activeHashtag = ''; activeHashtagCount = 0; activeHashtagHasMore = false;
+  document.body.classList.remove('hashtag-mode');
+  searchQuery = q;
+  searchResultCount = 0; searchHasMore = false;
+  updateHashtagHero(); updateSearchInfo(); updateSearchClear();
+  document.title = t('searchResultsFor',{q:q}) + ' | ' + t('title');
+  const feed = document.getElementById('feed');
+  if(feed) feed.innerHTML = '<div class="loading"><div class="spinner"></div><div>'+esc(t('searching'))+'</div></div>';
   const seq = ++searchSeq;
-  if(!q){ renderFeed(feedOrder); return; }
+  if(!opts.skipHistory){
+    const url = '/?q=' + encodeURIComponent(q);
+    if(opts.history === 'replace') history.replaceState({q}, '', url);
+    else history.pushState({q}, '', url);
+  }
   try {
     const pg = await fetchFeedPage(0, q);
-    if(seq !== searchSeq) return; // نتيجة قديمة
-    // سيرفر قديم ما يعرف q: فلتر محلي
-    const list = pg.posts.filter(p => (p.content||'').toLowerCase().includes(searchQuery) || (p.publisher||'').toLowerCase().includes(searchQuery));
-    mergeIntoAll(list);
-    renderFeed(list);
-  } catch(e){ if(seq === searchSeq) showToast(t('requestFail'), 'error'); }
+    if(seq !== searchSeq) return;
+    feedOrder = pg.posts;
+    mergeIntoAll(pg.posts);
+    feedOffset = pg.next;
+    feedHasMore = pg.hasMore;
+    searchResultCount = pg.posts.length;
+    searchHasMore = pg.hasMore;
+    renderFeed(pg.posts, searchEmptyHtml(q));
+    updateSearchInfo();
+    if(!pg.posts.length && pg.hasMore) loadMoreFeed();
+    if(!opts.instant) window.scrollTo({top:0, behavior:'smooth'});
+  } catch(e){
+    if(seq !== searchSeq) return;
+    feedOrder = []; feedHasMore = false;
+    searchResultCount = 0; searchHasMore = false;
+    renderFeed([], searchEmptyHtml(q));
+    updateSearchInfo();
+    showToast(t('requestFail'), 'error');
+  }
 }
-document.getElementById('searchInput').addEventListener('input', function(){
-  const v = this.value;
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => runFeedSearch(v), 300);
+const searchInputEl = document.getElementById('searchInput');
+if(searchInputEl){
+  searchInputEl.addEventListener('input', function(){
+    updateSearchClear();
+    const v = this.value;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => runFeedSearch(v, {history:'replace'}), 300);
+  });
+  searchInputEl.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      clearTimeout(searchTimer);
+      runFeedSearch(this.value, {history:'replace'});
+    } else if(e.key === 'Escape'){
+      e.preventDefault();
+      clearSearch();
+    }
+  });
+}
+const searchClearBtn = document.getElementById('searchClear');
+if(searchClearBtn) searchClearBtn.addEventListener('click', () => clearSearch());
+window.addEventListener('popstate', () => {
+  const params = new URLSearchParams(location.search);
+  const tag = normalizeHashtag(params.get('t') || params.get('tag') || '');
+  const q = (params.get('q') || '').trim();
+  if(tag){
+    openHashtag(tag, {skipHistory:true, instant:true});
+  } else if(q){
+    const input = document.getElementById('searchInput'); if(input) input.value = q;
+    updateSearchClear();
+    runFeedSearch(q, {skipHistory:true, instant:true});
+  } else {
+    resetFeedView({skipHistory:true, instant:true});
+  }
 });
 
 // ----- Post Editor & Media Upload -----
@@ -2327,7 +2590,18 @@ async function delComment(commentId, postId){
   }
 
   if (ME && TOKEN) await loadBlockedSet();
-  await loadPosts();
+  const initParams = new URLSearchParams(location.search);
+  const initTag = normalizeHashtag(initParams.get('t') || initParams.get('tag') || '');
+  const initQ = (initParams.get('q') || '').trim();
+  if(initTag){
+    await openHashtag(initTag, {skipHistory:true, instant:true});
+  } else if(initQ){
+    const si = document.getElementById('searchInput'); if(si) si.value = initQ;
+    updateSearchClear();
+    await runFeedSearch(initQ, {skipHistory:true, instant:true});
+  } else {
+    await loadPosts();
+  }
   loadStories();
   if (ME && TOKEN) {
     loadUnread();
@@ -2414,6 +2688,10 @@ try { window.fetchLinkPreview = fetchLinkPreview; } catch(e) {}
 try { window.linkPreviewCardHtml = linkPreviewCardHtml; } catch(e) {}
 try { window.loadLinkPreviews = loadLinkPreviews; } catch(e) {}
 try { window.filterByHashtag = filterByHashtag; } catch(e) {}
+try { window.openHashtag = openHashtag; } catch(e) {}
+try { window.closeHashtag = closeHashtag; } catch(e) {}
+try { window.clearSearch = clearSearch; } catch(e) {}
+try { window.runFeedSearch = runFeedSearch; } catch(e) {}
 try { window.loadBlockedSet = loadBlockedSet; } catch(e) {}
 try { window.togglePostOpts = togglePostOpts; } catch(e) {}
 try { window.closePostOpts = closePostOpts; } catch(e) {}

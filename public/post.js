@@ -133,7 +133,7 @@ function linkifyContent(html){
         const a = document.createElement('a');
         a.textContent = sym + word;
         if(sym === '@'){ a.className = 'mention-tag'; a.href = '/profile?u=' + encodeURIComponent(word); }
-        else { a.className = 'hashtag-tag'; a.href = '/?tag=' + encodeURIComponent(word); }
+        else { a.className = 'hashtag-tag'; a.href = '/tag?t=' + encodeURIComponent(word); }
         frag.appendChild(a);
         last = start + full.length;
       }

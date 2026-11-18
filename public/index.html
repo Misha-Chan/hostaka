@@ -171,10 +171,36 @@
     </div>
     <div class="search-wrap">
       <input type="text" id="searchInput" placeholder="Search posts..." data-i18n-placeholder="index.searchPosts" autocomplete="off">
+      <button type="button" class="search-clear" id="searchClear" hidden aria-label="Clear search" title="Clear search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
       <span class="search-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
     </div>
   </div>
 </section>
+
+<!-- Hashtag page hero: shown when /tag?t=... or /?tag=... is open -->
+<section class="hashtag-hero" id="hashtagHero" hidden>
+  <div class="hashtag-hero-inner">
+    <div class="hashtag-hero-mark" aria-hidden="true">#</div>
+    <div class="hashtag-hero-copy">
+      <h2 id="hashtagTitle" dir="auto">#</h2>
+      <p id="hashtagMeta"></p>
+    </div>
+    <button type="button" class="hashtag-hero-back" id="hashtagBack" onclick="closeHashtag()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <span id="hashtagBackText">All posts</span>
+    </button>
+  </div>
+</section>
+
+<!-- Search results summary: shown while a search query is active -->
+<div class="feed-info" id="searchInfo" hidden>
+  <div class="feed-info-text" id="searchInfoText"></div>
+  <button type="button" class="feed-info-clear" id="searchInfoClear" onclick="clearSearch()" aria-label="Clear search" title="Clear search">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+</div>
 
 <!-- Stories rail: horizontal row under search on mobile, becomes a fixed column in the side gutter on wide screens -->
 <div class="stories-rail" id="storiesRail" style="display:none;">

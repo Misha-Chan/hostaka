@@ -700,10 +700,10 @@ const q = {
     const args = [v, v, v, v];
     let extra = '';
     if (search) {
-      // بحث بالمحتوى واسم الناشر (الهروب بـ ! عشان % و _ ما تتحول لـ wildcard)
+      // بحث بالمحتوى واسم الناشر واسم الصفحة (الهروب بـ ! عشان % و _ ما تتحول لـ wildcard)
       const like = '%' + String(search).toLowerCase().replace(/[!%_]/g, m => '!' + m) + '%';
-      extra = ` AND (LOWER(r.content) LIKE ? ESCAPE '!' OR LOWER(COALESCE(u.username, r.publisher, '')) LIKE ? ESCAPE '!' OR LOWER(COALESCE(u.display_name, '')) LIKE ? ESCAPE '!')`;
-      args.push(like, like, like);
+      extra = ` AND (LOWER(r.content) LIKE ? ESCAPE '!' OR LOWER(COALESCE(u.username, r.publisher, '')) LIKE ? ESCAPE '!' OR LOWER(COALESCE(u.display_name, '')) LIKE ? ESCAPE '!' OR LOWER(COALESCE(p.name, '')) LIKE ? ESCAPE '!')`;
+      args.push(like, like, like, like);
     }
     // تفضيل منشورات اللي يتابعهم المستخدم: منشورهم يُحسب كأنه أحدث بـ FOLLOWED_BOOST_DAYS أيام،
     // فيطلع قبل غيره بدون ما منشور قديم جداً لمتابَع يدفن كل الجديد.
